@@ -11,11 +11,8 @@ actor RebelRagsProductImageService {
     private var associations: [String: ProductImageAssociation] = [:]
 
     private init() {
-        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
-        cacheDirectory = supportDirectory
-            .appendingPathComponent("SalesLens", isDirectory: true)
-            .appendingPathComponent("ProductImages", isDirectory: true)
+        SalesLensDataLocation.migrateLegacyDataIfNeeded()
+        cacheDirectory = SalesLensDataLocation.productImagesDirectory
         associationsURL = cacheDirectory.appendingPathComponent("associations.json")
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
         if let data = try? Data(contentsOf: associationsURL),

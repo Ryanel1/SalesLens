@@ -61,9 +61,8 @@ final class SalesStore: ObservableObject {
     private var cachedLatestUploadedDateByCustomer: [String: Date]?
 
     init() {
-        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
-        let appDirectory = supportDirectory.appendingPathComponent("SalesLens", isDirectory: true)
+        SalesLensDataLocation.migrateLegacyDataIfNeeded()
+        let appDirectory = SalesLensDataLocation.sharedDirectory
         self.persistenceURL = appDirectory.appendingPathComponent("sales-records.json")
         self.accountsURL = appDirectory.appendingPathComponent("accounts.json")
         load()
@@ -1948,6 +1947,85 @@ private struct TopSellerKey: Hashable {
 private struct TopStyleKey: Hashable {
     let brandName: String
     let styleNumber: String
+}
+
+enum SalesLensDataLocation {
+    private static let appSupportFolderName = "SalesLens"
+    private static let sharedFolderName = "SalesLens Data"
+
+    static var sharedDirectory: URL {
+        if let dropboxDirectory {
+            return dropboxDirectory.appendingPathComponent(sharedFolderName, isDirectory: true)
+        }
+        return legacyDirectory
+    }
+
+    static var legacyDirectory: URL {
+        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return supportDirectory.appendingPathComponent(appSupportFolderName, isDirectory: true)
+    }
+
+    static var productImagesDirectory: URL {
+        sharedDirectory.appendingPathComponent("ProductImages", isDirectory: true)
+    }
+
+    static var displayPath: String {
+        sharedDirectory.path
+    }
+
+    static func migrateLegacyDataIfNeeded() {
+        let destinationDirectory = sharedDirectory
+        let sourceDirectory = legacyDirectory
+        guard destinationDirectory.standardizedFileURL != sourceDirectory.standardizedFileURL else { return }
+
+        do {
+            try FileManager.default.createDirectory(at: destinationDirectory, withIntermediateDirectories: true)
+            copyIfNeeded("sales-records.json", from: sourceDirectory, to: destinationDirectory)
+            copyIfNeeded("accounts.json", from: sourceDirectory, to: destinationDirectory)
+            copyDirectoryIfNeeded("ProductImages", from: sourceDirectory, to: destinationDirectory)
+        } catch {
+            // If Dropbox is unavailable for any reason, save/load calls will surface the specific failure.
+        }
+    }
+
+    private static var dropboxDirectory: URL? {
+        let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
+        let candidates = [
+            homeDirectory.appendingPathComponent("Dropbox", isDirectory: true),
+            homeDirectory
+                .appendingPathComponent("Library", isDirectory: true)
+                .appendingPathComponent("CloudStorage", isDirectory: true)
+                .appendingPathComponent("Dropbox", isDirectory: true)
+        ]
+
+        return candidates.first { url in
+            var isDirectory: ObjCBool = false
+            return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
+        }
+    }
+
+    private static func copyIfNeeded(_ fileName: String, from sourceDirectory: URL, to destinationDirectory: URL) {
+        let sourceURL = sourceDirectory.appendingPathComponent(fileName)
+        let destinationURL = destinationDirectory.appendingPathComponent(fileName)
+        guard FileManager.default.fileExists(atPath: sourceURL.path),
+              !FileManager.default.fileExists(atPath: destinationURL.path) else {
+            return
+        }
+
+        try? FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+    }
+
+    private static func copyDirectoryIfNeeded(_ directoryName: String, from sourceDirectory: URL, to destinationDirectory: URL) {
+        let sourceURL = sourceDirectory.appendingPathComponent(directoryName, isDirectory: true)
+        let destinationURL = destinationDirectory.appendingPathComponent(directoryName, isDirectory: true)
+        guard FileManager.default.fileExists(atPath: sourceURL.path),
+              !FileManager.default.fileExists(atPath: destinationURL.path) else {
+            return
+        }
+
+        try? FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+    }
 }
 
 private struct StyleSummary {
