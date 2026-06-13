@@ -453,10 +453,10 @@ export default function Home() {
 
               <div className="segmentedControl" aria-label="Period">
                 <button className={periodMode === "monthly" ? "active" : ""} onClick={() => setPeriodMode("monthly")}>
-                  Monthly
+                  Monthly Sales Tracker
                 </button>
                 <button className={periodMode === "ytd" ? "active" : ""} onClick={() => setPeriodMode("ytd")}>
-                  YTD
+                  YTD Sales Tracker
                 </button>
               </div>
 
@@ -521,7 +521,7 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Year-To-Date Sales Tracker</h3>
+                <h3>YTD Sales Tracker</h3>
                 <p>{ytdTitle(selectedMonthValue)} compared with the same date range last year.</p>
               </div>
               <strong className={changeClass(ytdLine.currentTotal - ytdLine.priorTotal)}>
@@ -541,7 +541,7 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Month Summary</h3>
+                <h3>Monthly Sales Tracker</h3>
                 <p>{periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue)}</p>
               </div>
               <strong className={changeClass(currentMetrics.sales - priorMetrics.sales)}>

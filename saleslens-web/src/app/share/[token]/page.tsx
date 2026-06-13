@@ -67,7 +67,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </article>
         </section>
 
-        <ReportSection title="Year-To-Date Sales Tracker" subtitle={`${payload.periodTitle} compared with the same date range last year.`}>
+        <ReportSection title="YTD Sales Tracker" subtitle={`${payload.periodTitle} compared with the same date range last year.`}>
           <div className="metricGrid three">
             <MetricCard label="Current YTD" value={currencyText(payload.ytdLine.currentTotal)} />
             <MetricCard label="Prior YTD" value={currencyText(payload.ytdLine.priorTotal)} />
