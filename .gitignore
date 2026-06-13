@@ -17,3 +17,4 @@ analysis_outputs/
 saleslens-web/.next/
 saleslens-web/node_modules/
 saleslens-web/.env*.local
+saleslens-web/.env.import.local

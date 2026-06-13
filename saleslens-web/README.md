@@ -36,3 +36,18 @@ Deploy this folder to Vercel. Add the same environment variables in the Vercel p
    - `style_catalog_entries`
 
 For the first private version, Row Level Security allows any authenticated SalesLens user to read and manage data. Before inviting anyone else, tighten this with account/user roles.
+
+## Import Local Mac App Data
+
+Create `.env.import.local` from `.env.import.example` and add the Supabase service role key. Do not commit this file.
+
+```bash
+node scripts/import-local-data.mjs --replace
+```
+
+The importer reads:
+
+```text
+~/Library/Application Support/SalesLens/sales-records.json
+~/Library/Application Support/SalesLens/ProductImages/associations.json
+```
