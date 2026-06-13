@@ -271,6 +271,44 @@ select {
   color: var(--ink-dark);
 }
 
+.shareButton {
+  align-self: end;
+  background: var(--good);
+  border-radius: 8px;
+  color: var(--ink-dark);
+  font-weight: 900;
+  padding: 0.75rem 0.95rem;
+}
+
+.sharePanel {
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--good);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+}
+
+.sharePanel div {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.sharePanel a {
+  color: var(--warn);
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .overviewStrip {
   display: grid;
   gap: 0.75rem;
@@ -330,12 +368,14 @@ select {
   padding-bottom: 0.9rem;
 }
 
+.sectionTitle h2,
 .sectionTitle h3 {
   font-size: 1.45rem;
   margin-bottom: 0.25rem;
   position: relative;
 }
 
+.sectionTitle h2::after,
 .sectionTitle h3::after {
   background: var(--accent);
   border-radius: 999px;
@@ -729,6 +769,66 @@ tbody tr:nth-child(even) {
   text-align: right;
 }
 
+.publicShell {
+  min-height: 100vh;
+  padding: 1.25rem;
+}
+
+.publicReport {
+  margin: 0 auto;
+  max-width: 1240px;
+}
+
+.publicHeader {
+  align-items: end;
+  background:
+    linear-gradient(135deg, rgba(252, 175, 62, 0.14), transparent 42%),
+    var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1.2rem;
+}
+
+.publicHeader h1 {
+  font-size: 2.6rem;
+  line-height: 1;
+  margin-bottom: 0.45rem;
+}
+
+.publicHeader p,
+.publicHeader span {
+  color: var(--muted);
+}
+
+.publicHeader div:last-child {
+  display: grid;
+  gap: 0.3rem;
+  text-align: right;
+}
+
+.publicHeader strong {
+  color: var(--warn);
+}
+
+.publicEmpty {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin: 16vh auto 0;
+  max-width: 640px;
+  padding: 2rem;
+}
+
+.publicOverview {
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 1180px) {
   .appShell {
     grid-template-columns: 1fr;
@@ -756,6 +856,16 @@ tbody tr:nth-child(even) {
     justify-content: flex-start;
   }
 
+  .sharePanel,
+  .publicHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .publicHeader div:last-child {
+    text-align: left;
+  }
+
   .artGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -779,7 +889,8 @@ tbody tr:nth-child(even) {
 
   .controlDock,
   .controlDock label,
-  .segmentedControl {
+  .segmentedControl,
+  .shareButton {
     width: 100%;
   }
 
@@ -801,5 +912,10 @@ tbody tr:nth-child(even) {
   .unitBar strong {
     grid-column: 2;
     text-align: left;
+  }
+
+  .sharePanel div {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

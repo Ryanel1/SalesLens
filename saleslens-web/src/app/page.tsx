@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, monthText, numberText } from "@/lib/formatters";
+import type { ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
 
 type PeriodMode = "monthly" | "ytd";
@@ -108,6 +109,8 @@ export default function Home() {
   const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], images: [] });
   const [dashboardStatus, setDashboardStatus] = useState("");
+  const [shareStatus, setShareStatus] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
     if (!supabase) {
@@ -254,6 +257,59 @@ export default function Home() {
     setStatus("");
   }
 
+  async function createShareLink() {
+    if (!supabase || !selectedCustomer || !user) return;
+
+    setShareStatus("Generating share link...");
+    setShareUrl("");
+
+    const token = createReportToken();
+    const title = `${selectedCustomer.name} ${periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue)}`;
+    const payload: ReportSnapshotPayload = {
+      version: 1,
+      generatedAt: new Date().toISOString(),
+      accountName: selectedCustomer.name,
+      brandFilter,
+      periodMode,
+      selectedMonth: selectedMonthValue,
+      periodTitle: periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue),
+      priorPeriodTitle: periodMode === "monthly" ? monthText(priorYearMonth) : ytdTitle(priorYearMonth),
+      lastUploaded,
+      currentMetrics,
+      priorMetrics,
+      ytdLine,
+      salesMix,
+      bestDay: {
+        date: bestDay.date,
+        sales: bestDay.sales,
+        units: bestDay.units,
+        transactions: bestDay.transactions,
+        items: bestDay.items,
+      },
+      topStyles,
+      topArt,
+      allStyles,
+    };
+
+    const { error } = await supabase.from("report_snapshots").insert({
+      token,
+      title,
+      customer_id: selectedCustomer.id,
+      created_by: user.id,
+      payload,
+    });
+
+    if (error) {
+      setShareStatus(error.message);
+      return;
+    }
+
+    const url = `${window.location.origin}/share/${token}`;
+    setShareUrl(url);
+    setShareStatus("Share link ready.");
+    await navigator.clipboard?.writeText(url).catch(() => undefined);
+  }
+
   if (user) {
     return (
       <main className="appShell">
@@ -331,8 +387,26 @@ export default function Home() {
                   Jan 1-YTD
                 </button>
               </div>
+
+              <button className="shareButton" onClick={createShareLink} disabled={!periodRecords.length}>
+                Share Report
+              </button>
             </div>
           </header>
+
+          {(shareStatus || shareUrl) ? (
+            <section className="sharePanel">
+              <strong>{shareStatus}</strong>
+              {shareUrl ? (
+                <div>
+                  <a href={shareUrl} target="_blank" rel="noreferrer">{shareUrl}</a>
+                  <button className="ghostButton" onClick={() => navigator.clipboard?.writeText(shareUrl)}>
+                    Copy
+                  </button>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="overviewStrip" aria-label="Current dashboard context">
             <article>
@@ -992,4 +1066,10 @@ function ytdTitle(month: string | null) {
 
 function countText(value: number, singular: string, plural: string) {
   return `${numberText(value)} ${value === 1 ? singular : plural}`;
+}
+
+function createReportToken() {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return `rpt_${Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0")).join("")}`;
 }

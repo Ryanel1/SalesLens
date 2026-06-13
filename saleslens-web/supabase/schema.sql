@@ -96,6 +96,21 @@ create table if not exists public.style_catalog_entries (
   unique(brand_class, style_number)
 );
 
+create table if not exists public.report_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  token text not null unique,
+  title text not null,
+  customer_id uuid references public.customers(id) on delete set null,
+  created_by uuid references auth.users(id) on delete set null,
+  payload jsonb not null,
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists report_snapshots_token_idx
+  on public.report_snapshots(token);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -131,11 +146,43 @@ create trigger style_catalog_entries_set_updated_at
 before update on public.style_catalog_entries
 for each row execute function public.set_updated_at();
 
+drop trigger if exists report_snapshots_set_updated_at on public.report_snapshots;
+create trigger report_snapshots_set_updated_at
+before update on public.report_snapshots
+for each row execute function public.set_updated_at();
+
+create or replace function public.get_report_snapshot(report_token text)
+returns table (
+  token text,
+  title text,
+  payload jsonb,
+  created_at timestamptz,
+  expires_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    report_snapshots.token,
+    report_snapshots.title,
+    report_snapshots.payload,
+    report_snapshots.created_at,
+    report_snapshots.expires_at
+  from public.report_snapshots
+  where report_snapshots.token = report_token
+    and (report_snapshots.expires_at is null or report_snapshots.expires_at > now())
+  limit 1;
+$$;
+
+grant execute on function public.get_report_snapshot(text) to anon, authenticated;
+
 alter table public.customers enable row level security;
 alter table public.uploads enable row level security;
 alter table public.sales_records enable row level security;
 alter table public.product_images enable row level security;
 alter table public.style_catalog_entries enable row level security;
+alter table public.report_snapshots enable row level security;
 
 drop policy if exists "Authenticated users can read customers" on public.customers;
 create policy "Authenticated users can read customers"
@@ -201,6 +248,31 @@ on public.style_catalog_entries for all
 to authenticated
 using (true)
 with check (true);
+
+drop policy if exists "Authenticated users can read report snapshots" on public.report_snapshots;
+create policy "Authenticated users can read report snapshots"
+on public.report_snapshots for select
+to authenticated
+using (created_by = auth.uid());
+
+drop policy if exists "Authenticated users can create report snapshots" on public.report_snapshots;
+create policy "Authenticated users can create report snapshots"
+on public.report_snapshots for insert
+to authenticated
+with check (created_by = auth.uid());
+
+drop policy if exists "Authenticated users can update report snapshots" on public.report_snapshots;
+create policy "Authenticated users can update report snapshots"
+on public.report_snapshots for update
+to authenticated
+using (created_by = auth.uid())
+with check (created_by = auth.uid());
+
+drop policy if exists "Authenticated users can delete report snapshots" on public.report_snapshots;
+create policy "Authenticated users can delete report snapshots"
+on public.report_snapshots for delete
+to authenticated
+using (created_by = auth.uid());
 
 insert into public.customers (name, display_order)
 values
