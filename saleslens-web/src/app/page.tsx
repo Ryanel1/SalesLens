@@ -392,27 +392,23 @@ export default function Home() {
             ))}
           </nav>
 
-          <div className="sidebarFooter">
-            <section className="uploadPanel">
-              <div>
-                <p className="eyebrow">Upload / Import</p>
-                <h3>Add new sales data</h3>
-                <p>Files upload into <strong>{selectedCustomer?.name ?? "No account selected"}</strong>.</p>
-              </div>
-              <label className="fileButton">
-                Choose Spreadsheet
-                <input
-                  accept=".xls,.xlsx,.csv"
-                  type="file"
-                  onChange={(event) => {
-                    void importFile(event.target.files?.[0] ?? null);
-                    event.currentTarget.value = "";
-                  }}
-                />
-              </label>
-              {importStatus ? <p className="importStatus">{importStatus}</p> : null}
-            </section>
+          <section className="uploadPanel">
+            <p className="eyebrow">Upload / Import</p>
+            <label className="fileButton">
+              Choose Spreadsheet
+              <input
+                accept=".xls,.xlsx,.csv"
+                type="file"
+                onChange={(event) => {
+                  void importFile(event.target.files?.[0] ?? null);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            {importStatus ? <p className="importStatus">{importStatus}</p> : null}
+          </section>
 
+          <div className="sidebarFooter">
             <p>Last Date Uploaded</p>
             <strong>{dateText(lastUploaded)}</strong>
             <button className="ghostButton" onClick={signOut}>
