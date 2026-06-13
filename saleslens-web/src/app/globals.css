@@ -815,6 +815,15 @@ tbody tr:nth-child(even) {
   color: var(--warn);
 }
 
+.printButton {
+  background: var(--accent);
+  border-radius: 8px;
+  color: var(--ink-dark);
+  font-weight: 900;
+  margin-top: 0.5rem;
+  padding: 0.7rem 0.9rem;
+}
+
 .publicEmpty {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -917,5 +926,39 @@ tbody tr:nth-child(even) {
   .sharePanel div {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: white;
+    color: #1f2324;
+  }
+
+  .publicShell {
+    padding: 0;
+  }
+
+  .publicReport {
+    max-width: none;
+  }
+
+  .printButton {
+    display: none;
+  }
+
+  .publicHeader,
+  .sectionBlock,
+  .overviewStrip article,
+  .metric,
+  .lineCard,
+  .insightCard,
+  .styleCompareCard,
+  .artCard {
+    box-shadow: none;
   }
 }

@@ -8,6 +8,7 @@ import {
   type SnapshotMetricSet,
   type SnapshotTopStyle,
 } from "@/lib/reportSnapshot";
+import { PrintButton } from "./PrintButton";
 
 export default async function SharedReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -39,6 +40,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           <div>
             <strong>{payload.brandFilter}</strong>
             <span>Generated {dateText(payload.generatedAt.slice(0, 10))}</span>
+            <PrintButton />
           </div>
         </header>
 
