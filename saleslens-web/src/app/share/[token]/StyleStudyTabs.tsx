@@ -8,20 +8,24 @@ export function StyleStudyTabs({
   monthlyStyles,
   ytdStyles,
   previousMonthTitle,
+  currentLabel = "Current Month",
+  currentCompareLabel = "Compare",
 }: {
   monthlyStyles: SnapshotTopStyle[];
   ytdStyles: SnapshotTopStyle[];
   previousMonthTitle: string;
+  currentLabel?: string;
+  currentCompareLabel?: string;
 }) {
   const [mode, setMode] = useState<"month" | "ytd">("month");
   const styles = mode === "month" ? monthlyStyles : ytdStyles;
-  const compareLabel = mode === "month" ? "Compare" : "LY";
+  const compareLabel = mode === "month" ? currentCompareLabel : "LY";
 
   return (
     <>
       <div className="studyTabs" aria-label="Style study views">
         <button className={mode === "month" ? "active" : ""} onClick={() => setMode("month")}>
-          Current Month
+          {currentLabel}
         </button>
         <button className={mode === "ytd" ? "active" : ""} onClick={() => setMode("ytd")}>
           YTD

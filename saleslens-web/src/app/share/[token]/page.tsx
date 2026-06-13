@@ -172,6 +172,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
             ytdStyles={payload.styleStudyYtd ?? payload.topStyles}
             previousMonthTitle={payload.previousMonthTitle ?? "last month"}
+            currentLabel={payload.periodMode === "monthly" ? "Current Month" : "Selected Year"}
+            currentCompareLabel={payload.periodMode === "monthly" ? "Compare" : "LY"}
           />
         </ReportSection>
 
@@ -189,8 +191,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                 <div className="artMeta">
                   <strong>{row.artCode}</strong>
                   <span>{row.style} | {row.color}</span>
-                  <span>Month: {numberText(row.units)} Units | {currencyText(row.sales)}</span>
-                  <span>YTD: {numberText(row.cyUnits)} Units | {currencyText(row.cySales)}</span>
+                  <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.units)} Units | {currencyText(row.sales)}</span>
+                  {payload.periodMode === "monthly" ? (
+                    <span>YTD: {numberText(row.cyUnits)} Units | {currencyText(row.cySales)}</span>
+                  ) : null}
                 </div>
               </article>
             ))}
