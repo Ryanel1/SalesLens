@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { parseSalesWorkbook, type ParsedSalesRecord } from "@/lib/importSalesData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, monthText, numberText } from "@/lib/formatters";
 import type { ReportSnapshotPayload } from "@/lib/reportSnapshot";
@@ -18,6 +19,7 @@ type SalesRecord = {
   product_class: string | null;
   master_style: string | null;
   color: string | null;
+  size: string | null;
   catalog_color_name: string | null;
   style_number: string | null;
   raw_style_identifier: string | null;
@@ -111,6 +113,8 @@ export default function Home() {
   const [dashboardStatus, setDashboardStatus] = useState("");
   const [shareStatus, setShareStatus] = useState("");
   const [shareUrl, setShareUrl] = useState("");
+  const [importStatus, setImportStatus] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!supabase) {
@@ -195,7 +199,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, [supabase, selectedCustomerId]);
+  }, [supabase, selectedCustomerId, reloadKey]);
 
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null;
   const months = useMemo(() => availableMonths(dashboardData.records), [dashboardData.records]);
@@ -310,6 +314,58 @@ export default function Home() {
     await navigator.clipboard?.writeText(url).catch(() => undefined);
   }
 
+  async function importFile(file: File | null) {
+    if (!file || !supabase || !selectedCustomer || !user) return;
+
+    setImportStatus(`Reading ${file.name}...`);
+    try {
+      const parsed = await parseSalesWorkbook(file, selectedCustomer.name);
+      if (parsed.records.length === 0) {
+        setImportStatus(`No importable records found. Skipped ${parsed.skippedCount} rows.`);
+        return;
+      }
+
+      setImportStatus(`Checking for duplicate records...`);
+      const existingKeys = await loadExistingRecordKeys(
+        supabase,
+        selectedCustomer.id,
+        parsed.salesPeriodStart,
+        parsed.salesPeriodEnd,
+      );
+      const newRecords = parsed.records.filter((record) => !existingKeys.has(recordKey(record)));
+      const duplicateCount = parsed.records.length - newRecords.length;
+
+      const totalSales = sum(newRecords.map((record) => record.amount));
+      const totalUnits = sum(newRecords.map((record) => record.units ?? 0));
+      const uploadId = await createUploadBatch(supabase, {
+        customerId: selectedCustomer.id,
+        fileName: file.name,
+        userId: user.id,
+        receivedDate: parsed.receivedDate,
+        salesPeriodStart: parsed.salesPeriodStart,
+        salesPeriodEnd: parsed.salesPeriodEnd,
+        rowCount: newRecords.length,
+        skippedCount: parsed.skippedCount + duplicateCount,
+        totalSales,
+        totalUnits,
+        status: newRecords.length ? "imported" : "duplicate",
+      });
+
+      if (newRecords.length > 0) {
+        setImportStatus(`Saving ${numberText(newRecords.length)} records...`);
+        await insertSalesRecords(supabase, selectedCustomer.id, uploadId, newRecords);
+      }
+
+      setImportStatus(
+        `Imported ${numberText(newRecords.length)} records from ${file.name}. Skipped ${numberText(parsed.skippedCount)} rows and ${numberText(duplicateCount)} duplicates.`,
+      );
+      setSelectedMonth(null);
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      setImportStatus(error instanceof Error ? error.message : "Import failed.");
+    }
+  }
+
   if (user) {
     return (
       <main className="appShell">
@@ -407,6 +463,26 @@ export default function Home() {
               ) : null}
             </section>
           ) : null}
+
+          <section className="uploadPanel">
+            <div>
+              <p className="eyebrow">Upload / Import</p>
+              <h3>Add new sales data</h3>
+              <p>Files upload into the selected account: <strong>{selectedCustomer?.name ?? "No account selected"}</strong>.</p>
+            </div>
+            <label className="fileButton">
+              Choose Spreadsheet
+              <input
+                accept=".xls,.xlsx,.csv"
+                type="file"
+                onChange={(event) => {
+                  void importFile(event.target.files?.[0] ?? null);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            {importStatus ? <p className="importStatus">{importStatus}</p> : null}
+          </section>
 
           <section className="overviewStrip" aria-label="Current dashboard context">
             <article>
@@ -778,7 +854,7 @@ async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await client
       .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,product_class,master_style,color,catalog_color_name,style_number,raw_style_identifier,art_code")
+      .select("id,customer_id,transaction_date,amount,units,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code")
       .eq("customer_id", customerId)
       .order("transaction_date", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -1072,4 +1148,122 @@ function createReportToken() {
   const bytes = new Uint8Array(24);
   crypto.getRandomValues(bytes);
   return `rpt_${Array.from(bytes, (byte) => byte.toString(36).padStart(2, "0")).join("")}`;
+}
+
+async function loadExistingRecordKeys(
+  client: SupabaseClient,
+  customerId: string,
+  startDate: string | null,
+  endDate: string | null,
+) {
+  let query = client
+    .from("sales_records")
+    .select("transaction_date,amount,units,master_style,color,catalog_color_name,style_number,art_code,size,raw_style_identifier")
+    .eq("customer_id", customerId);
+
+  if (startDate) query = query.gte("transaction_date", startDate);
+  if (endDate) query = query.lte("transaction_date", endDate);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  return new Set(((data ?? []) as SalesRecordForDuplicateCheck[]).map(recordKey));
+}
+
+async function createUploadBatch(
+  client: SupabaseClient,
+  input: {
+    customerId: string;
+    fileName: string;
+    userId: string;
+    receivedDate: string | null;
+    salesPeriodStart: string | null;
+    salesPeriodEnd: string | null;
+    rowCount: number;
+    skippedCount: number;
+    totalSales: number;
+    totalUnits: number;
+    status: "imported" | "duplicate";
+  },
+) {
+  const { data, error } = await client
+    .from("uploads")
+    .insert({
+      customer_id: input.customerId,
+      source_file: input.fileName,
+      original_file_name: input.fileName,
+      imported_by: input.userId,
+      received_date: input.receivedDate,
+      sales_period_start: input.salesPeriodStart,
+      sales_period_end: input.salesPeriodEnd,
+      row_count: input.rowCount,
+      skipped_count: input.skippedCount,
+      total_sales: input.totalSales,
+      total_units: input.totalUnits,
+      status: input.status,
+    })
+    .select("id")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return (data as { id: string }).id;
+}
+
+async function insertSalesRecords(
+  client: SupabaseClient,
+  customerId: string,
+  uploadId: string,
+  records: ParsedSalesRecord[],
+) {
+  for (const chunk of chunks(records, 500)) {
+    const { error } = await client.from("sales_records").insert(
+      chunk.map((record) => ({
+        ...record,
+        customer_id: customerId,
+        upload_id: uploadId,
+      })),
+    );
+
+    if (error) throw new Error(error.message);
+  }
+}
+
+function chunks<T>(items: T[], size: number) {
+  const result: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    result.push(items.slice(index, index + size));
+  }
+  return result;
+}
+
+type SalesRecordForDuplicateCheck = Pick<
+  SalesRecord,
+  | "transaction_date"
+  | "amount"
+  | "units"
+  | "master_style"
+  | "color"
+  | "catalog_color_name"
+  | "style_number"
+  | "art_code"
+  | "size"
+  | "raw_style_identifier"
+>;
+
+function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
+  return [
+    record.transaction_date,
+    Number(record.amount ?? 0).toFixed(2),
+    record.units ?? "",
+    compactKey(record.style_number),
+    compactKey(record.art_code),
+    compactKey(record.catalog_color_name ?? record.color),
+    compactKey(record.size),
+    compactKey(record.master_style),
+    compactKey(record.raw_style_identifier),
+  ].join("|");
+}
+
+function compactKey(value: string | null | undefined) {
+  return (value ?? "").trim().toUpperCase();
 }

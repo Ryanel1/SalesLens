@@ -309,6 +309,56 @@ select {
   white-space: nowrap;
 }
 
+.uploadPanel {
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent-2);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.uploadPanel h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.25rem;
+}
+
+.uploadPanel p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.uploadPanel strong {
+  color: var(--warn);
+}
+
+.fileButton {
+  align-self: center;
+  background: var(--accent-2);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0.8rem 1rem;
+  text-align: center;
+}
+
+.fileButton input {
+  display: none;
+}
+
+.importStatus {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  grid-column: 1 / -1;
+}
+
 .overviewStrip {
   display: grid;
   gap: 0.75rem;
@@ -866,9 +916,14 @@ tbody tr:nth-child(even) {
   }
 
   .sharePanel,
+  .uploadPanel,
   .publicHeader {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .uploadPanel {
+    grid-template-columns: 1fr;
   }
 
   .publicHeader div:last-child {
@@ -899,7 +954,8 @@ tbody tr:nth-child(even) {
   .controlDock,
   .controlDock label,
   .segmentedControl,
-  .shareButton {
+  .shareButton,
+  .fileButton {
     width: 100%;
   }
 
