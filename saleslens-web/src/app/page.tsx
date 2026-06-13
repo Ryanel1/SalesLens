@@ -406,8 +406,8 @@ export default function Home() {
           </div>
 
           <div className="navControls">
-            <label>
-              Account
+            <label className="navField">
+              <span>Account</span>
               <select
                 value={selectedCustomerId ?? ""}
                 onChange={(event) => {
@@ -424,28 +424,28 @@ export default function Home() {
               </select>
             </label>
 
-            <label className="fileButton">
-              Upload / Import
-              <input
-                accept=".xls,.xlsx,.csv"
-                type="file"
-                onChange={(event) => {
-                  void importFile(event.target.files?.[0] ?? null);
-                  event.currentTarget.value = "";
-                }}
-              />
-            </label>
+            <div className="navUploadField">
+              <div className="navDateMeta">
+                <p>Last Date Uploaded</p>
+                <strong>{dateText(lastUploaded)}</strong>
+              </div>
+              <label className="fileButton">
+                Upload / Import
+                <input
+                  accept=".xls,.xlsx,.csv"
+                  type="file"
+                  onChange={(event) => {
+                    void importFile(event.target.files?.[0] ?? null);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
           </div>
 
-          <div className="navStatus">
-            <div>
-              <p>Last Date Uploaded</p>
-              <strong>{dateText(lastUploaded)}</strong>
-            </div>
-            <button className="ghostButton" onClick={signOut}>
-              Sign Out
-            </button>
-          </div>
+          <button className="ghostButton navSignOut" onClick={signOut}>
+            Sign Out
+          </button>
           {(customerStatus || importStatus) ? (
             <p className="navMessage">{importStatus || customerStatus}</p>
           ) : null}

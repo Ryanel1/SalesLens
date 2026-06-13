@@ -166,8 +166,8 @@ select {
   border-bottom: var(--hairline);
   backdrop-filter: blur(18px);
   display: grid;
-  gap: 1.4rem;
-  grid-template-columns: minmax(230px, 0.7fr) minmax(360px, 1fr) auto;
+  gap: clamp(1.2rem, 2.4vw, 2.4rem);
+  grid-template-columns: minmax(230px, 0.42fr) minmax(520px, 1fr) auto;
   min-height: 150px;
   padding: 1.4rem clamp(1.25rem, 4vw, 4rem);
   position: sticky;
@@ -202,35 +202,51 @@ select {
 .navControls {
   align-items: end;
   display: grid;
-  gap: 0.8rem;
-  grid-template-columns: minmax(210px, 1fr) auto;
+  gap: 0.9rem;
+  grid-template-columns: minmax(280px, 1fr) 168px;
 }
 
-.navControls label:not(.fileButton) {
+.navField,
+.navUploadField {
   display: grid;
-  gap: 0.42rem;
+  gap: 0.45rem;
+  min-width: 0;
 }
 
-.navStatus {
-  align-items: center;
+.navField select {
+  min-height: 44px;
+}
+
+.navField span,
+.navDateMeta p {
   color: var(--taupe);
-  display: flex;
-  gap: 1rem;
-  justify-content: end;
-}
-
-.navStatus p {
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.08em;
-  margin-bottom: 0.25rem;
+  line-height: 1;
+  margin: 0;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-.navStatus strong {
+.navDateMeta {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+}
+
+.navDateMeta strong {
   color: var(--charcoal);
   display: block;
+  font-size: 0.82rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.navSignOut {
+  align-self: end;
+  justify-self: end;
+  min-height: 44px;
   white-space: nowrap;
 }
 
@@ -305,14 +321,17 @@ select {
 }
 
 .fileButton {
-  align-self: center;
   background: transparent;
   border: 1px solid var(--charcoal);
   color: var(--charcoal);
   cursor: pointer;
+  display: inline-grid;
+  min-height: 44px;
+  align-items: center;
   font-weight: 900;
-  padding: 0.9rem 1rem;
-  text-align: center;
+  justify-content: start;
+  padding: 0 1rem;
+  text-align: left;
 }
 
 .fileButton input {
@@ -959,10 +978,6 @@ tbody tr:nth-child(even) {
     min-height: auto;
   }
 
-  .navStatus {
-    justify-content: space-between;
-  }
-
   .navMessage {
     grid-column: 1;
     margin-top: -0.5rem;
@@ -1026,9 +1041,8 @@ tbody tr:nth-child(even) {
     position: static;
   }
 
-  .navStatus {
-    align-items: stretch;
-    flex-direction: column;
+  .navSignOut {
+    justify-self: stretch;
   }
 
   .sectionTitle {
