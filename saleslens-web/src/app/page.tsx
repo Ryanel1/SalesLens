@@ -462,9 +462,12 @@ export default function Home() {
             </div>
           </div>
 
-          <button className="ghostButton navSignOut" onClick={signOut}>
-            Sign Out
-          </button>
+          <div className="navSignOutField">
+            <span>{user.email ?? "Signed in"}</span>
+            <button className="ghostButton navSignOut" onClick={signOut}>
+              Sign Out
+            </button>
+          </div>
           {(customerStatus || importStatus) ? (
             <p className="navMessage">{importStatus || customerStatus}</p>
           ) : null}
