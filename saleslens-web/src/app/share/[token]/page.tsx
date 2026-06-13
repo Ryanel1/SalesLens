@@ -29,10 +29,11 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   }
 
   const payload = snapshot.payload;
+  const reportFileName = `${payload.accountName}-${payload.periodTitle}-SalesLens`.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
 
   return (
     <main className="publicShell">
-      <section className="publicReport">
+      <section className="publicReport" id="saleslens-report-capture">
         <header className="publicHeader">
           <div>
             <div className="publicBrand">
@@ -45,7 +46,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           <div>
             <strong>{payload.brandFilter}</strong>
             <span>Generated {dateText(payload.generatedAt.slice(0, 10))}</span>
-            <PrintButton />
+            <PrintButton fileName={reportFileName} />
           </div>
         </header>
 

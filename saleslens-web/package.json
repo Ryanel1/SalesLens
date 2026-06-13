@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
+    "html2canvas": "latest",
+    "jspdf": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
