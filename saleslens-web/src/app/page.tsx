@@ -508,7 +508,7 @@ export default function Home() {
               <strong>{brandFilter}</strong>
             </article>
             <article>
-              <span>Loaded Rows</span>
+              <span>Imported Transactions</span>
               <strong>{numberText(totalRecordsMetrics.transactions)}</strong>
             </article>
             <article>
@@ -647,7 +647,7 @@ export default function Home() {
           </section>
 
           <p className="dataFootnote">
-            Total loaded for this account/filter: {numberText(totalRecordsMetrics.transactions)} rows,{" "}
+            Total imported for this account/filter: {numberText(totalRecordsMetrics.transactions)} transactions,{" "}
             {numberText(totalRecordsMetrics.units)} units, {currencyText(totalRecordsMetrics.sales)}.
           </p>
         </section>
