@@ -9,6 +9,7 @@ import type { Customer, CustomerSummary } from "@/lib/types";
 export default function Home() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -124,15 +125,13 @@ export default function Home() {
       return;
     }
 
-    setStatus("Sending sign-in link...");
-    const { error } = await supabase.auth.signInWithOtp({
+    setStatus("Signing in...");
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: typeof window === "undefined" ? undefined : window.location.origin,
-      },
+      password,
     });
 
-    setStatus(error ? error.message : "Check your email for the SalesLens sign-in link.");
+    setStatus(error ? error.message : "");
   }
 
   async function signOut() {
@@ -235,21 +234,30 @@ export default function Home() {
       <section className="loginPanel">
         <p className="eyebrow">Private Sales Dashboard</p>
         <h1>SalesLens</h1>
-        <p className="intro">
-          Sign in to view sales summaries, compare prior-year performance, and export reports.
-        </p>
+        <p className="intro">Sign in to view sales summaries, compare prior-year performance, and export reports.</p>
 
         <label htmlFor="email">Email</label>
+        <input
+          autoComplete="email"
+          id="email"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="ryanlestersells@gmail.com"
+        />
+
+        <label htmlFor="password">Password</label>
         <div className="loginRow">
           <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="ryanlestersells@gmail.com"
+            autoComplete="current-password"
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Enter your password"
           />
-          <button onClick={signIn} disabled={!email}>
-            Send Link
+          <button onClick={signIn} disabled={!email || !password}>
+            Sign In
           </button>
         </div>
         {status ? <p className="status">{status}</p> : null}
