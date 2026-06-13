@@ -263,9 +263,12 @@ select {
 }
 
 .navSignOut {
+  align-items: center;
   align-self: end;
+  display: inline-grid;
+  height: 44px;
   justify-self: end;
-  min-height: 44px;
+  padding: 0 1rem;
   white-space: nowrap;
 }
 
