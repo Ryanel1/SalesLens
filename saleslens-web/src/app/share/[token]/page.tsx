@@ -41,7 +41,6 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
               <span>by Lester Sales</span>
             </div>
             <h1>{payload.accountName}</h1>
-            <p>{payload.periodTitle} sales snapshot</p>
           </div>
           <div>
             <strong>{payload.brandFilter}</strong>
