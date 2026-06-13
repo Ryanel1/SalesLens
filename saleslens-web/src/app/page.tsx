@@ -460,7 +460,7 @@ export default function Home() {
                   Monthly
                 </button>
                 <button className={periodMode === "ytd" ? "active" : ""} onClick={() => setPeriodMode("ytd")}>
-                  Jan 1-YTD
+                  YTD
                 </button>
               </div>
 
