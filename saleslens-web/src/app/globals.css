@@ -318,7 +318,6 @@ select {
   padding: 0.95rem 1rem;
 }
 
-.sharePanel,
 .uploadPanel,
 .notice,
 .sectionBlock,
@@ -328,30 +327,6 @@ select {
   background: rgba(255, 253, 248, 0.94);
   border: var(--hairline);
   box-shadow: var(--shadow);
-}
-
-.sharePanel {
-  align-items: center;
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  margin-bottom: 1.2rem;
-  padding: 1rem 1.2rem;
-}
-
-.sharePanel div {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
-  min-width: 0;
-}
-
-.sharePanel a {
-  color: var(--steel-dark);
-  font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .uploadPanel {
@@ -398,6 +373,66 @@ select {
   font-size: 0.9rem;
   font-weight: 700;
   grid-column: 1 / -1;
+}
+
+.modalOverlay {
+  align-items: center;
+  background: rgba(36, 35, 33, 0.28);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1.25rem;
+  position: fixed;
+  z-index: 40;
+}
+
+.shareModal {
+  background: var(--paper);
+  border: var(--hairline);
+  box-shadow: 0 30px 90px rgba(36, 35, 33, 0.22);
+  max-width: 620px;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  position: relative;
+  width: min(100%, 620px);
+}
+
+.shareModal h3 {
+  color: var(--soft-black);
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  margin-bottom: 0.8rem;
+}
+
+.shareModal p {
+  color: var(--taupe);
+}
+
+.modalCloseButton {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--stone-2);
+  color: var(--charcoal);
+  display: flex;
+  font-weight: 900;
+  height: 2.25rem;
+  justify-content: center;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  width: 2.25rem;
+}
+
+.shareLinkBox {
+  border: var(--hairline);
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+}
+
+.shareLinkBox a {
+  color: var(--steel-dark);
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .overviewStrip {
@@ -938,7 +973,6 @@ tbody tr:nth-child(even) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .sharePanel,
   .uploadPanel {
     align-items: stretch;
     display: grid;
@@ -1004,10 +1038,6 @@ tbody tr:nth-child(even) {
     text-align: left;
   }
 
-  .sharePanel div {
-    align-items: stretch;
-    flex-direction: column;
-  }
 }
 
 @media print {

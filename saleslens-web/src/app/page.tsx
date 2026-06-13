@@ -471,17 +471,31 @@ export default function Home() {
           </header>
 
           {(shareStatus || shareUrl) ? (
-            <section className="sharePanel">
-              <strong>{shareStatus}</strong>
-              {shareUrl ? (
-                <div>
-                  <a href={shareUrl} target="_blank" rel="noreferrer">{shareUrl}</a>
-                  <button className="ghostButton" onClick={() => navigator.clipboard?.writeText(shareUrl)}>
-                    Copy
-                  </button>
-                </div>
-              ) : null}
-            </section>
+            <div className="modalOverlay" role="presentation">
+              <section className="shareModal" role="dialog" aria-modal="true" aria-labelledby="share-report-title">
+                <button
+                  aria-label="Close share report"
+                  className="modalCloseButton"
+                  onClick={() => {
+                    setShareStatus("");
+                    setShareUrl("");
+                  }}
+                >
+                  X
+                </button>
+                <p className="eyebrow">Share Snapshot</p>
+                <h3 id="share-report-title">Report link</h3>
+                <p>{shareStatus}</p>
+                {shareUrl ? (
+                  <div className="shareLinkBox">
+                    <a href={shareUrl} target="_blank" rel="noreferrer">{shareUrl}</a>
+                    <button className="ghostButton" onClick={() => navigator.clipboard?.writeText(shareUrl)}>
+                      Copy Link
+                    </button>
+                  </div>
+                ) : null}
+              </section>
+            </div>
           ) : null}
 
           <section className="overviewStrip" aria-label="Current dashboard context">
