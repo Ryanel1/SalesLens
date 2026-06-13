@@ -553,7 +553,7 @@ export default function Home() {
             </article>
             <article>
               <span>Imported Transactions</span>
-              <strong>{numberText(totalRecordsMetrics.transactions)}</strong>
+              <strong>{numberText(currentMetrics.transactions)}</strong>
             </article>
             <article>
               <span>Last Date Uploaded</span>
@@ -734,7 +734,7 @@ export default function Home() {
           </section>
 
           <p className="dataFootnote">
-            Total imported for this account/filter: {numberText(totalRecordsMetrics.transactions)} transactions,{" "}
+            All imported records for this account/filter: {numberText(totalRecordsMetrics.transactions)} transactions,{" "}
             {numberText(totalRecordsMetrics.units)} units, {currencyText(totalRecordsMetrics.sales)}.
           </p>
         </section>
