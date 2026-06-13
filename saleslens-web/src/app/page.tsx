@@ -71,14 +71,16 @@ export default function Home() {
       return;
     }
 
+    const client = supabase;
+    const customerId = selectedCustomerId;
     let isMounted = true;
     setSummaryStatus("Loading sales summary...");
 
     async function loadSummary() {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("sales_records")
         .select("amount,units,transaction_date")
-        .eq("customer_id", selectedCustomerId);
+        .eq("customer_id", customerId);
 
       if (!isMounted) return;
 
@@ -98,7 +100,7 @@ export default function Home() {
         .reverse();
 
       setSummary({
-        customerId: selectedCustomerId,
+        customerId,
         sales: records.reduce((total, record) => total + Number(record.amount ?? 0), 0),
         units: records.reduce((total, record) => total + Number(record.units ?? 0), 0),
         transactions: records.length,
