@@ -8,8 +8,6 @@ import { currencyText, dateText, monthText, numberText } from "@/lib/formatters"
 import type { ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
 
-type PeriodMode = "monthly" | "ytd";
-
 type SalesRecord = {
   id: string;
   customer_id: string;
@@ -109,7 +107,7 @@ export default function Home() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("All");
-  const [periodMode, setPeriodMode] = useState<PeriodMode>("monthly");
+  const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], images: [] });
   const [dashboardStatus, setDashboardStatus] = useState("");
   const [shareStatus, setShareStatus] = useState("");
@@ -207,23 +205,29 @@ export default function Home() {
   const selectedMonthValue = selectedMonth ?? months[0] ?? null;
   const selectedYear = selectedMonthValue ? Number(selectedMonthValue.slice(0, 4)) : null;
   const priorYearMonth = selectedMonthValue && selectedYear ? `${selectedYear - 1}${selectedMonthValue.slice(4)}` : null;
+  const previousMonth = selectedMonthValue ? addMonths(selectedMonthValue, -1) : null;
 
   const recordsForCustomer = useMemo(() => {
     return dashboardData.records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
   }, [brandFilter, dashboardData.records]);
 
-  const periodRecords = useMemo(() => {
+  const monthlyRecords = useMemo(() => {
     if (!selectedMonthValue) return [];
-    return recordsForPeriod(recordsForCustomer, selectedMonthValue, periodMode);
-  }, [periodMode, recordsForCustomer, selectedMonthValue]);
+    return recordsForPeriod(recordsForCustomer, selectedMonthValue, "monthly");
+  }, [recordsForCustomer, selectedMonthValue]);
 
-  const priorPeriodRecords = useMemo(() => {
+  const priorYearMonthlyRecords = useMemo(() => {
     if (!priorYearMonth) return [];
-    return recordsForPeriod(recordsForCustomer, priorYearMonth, periodMode);
-  }, [periodMode, priorYearMonth, recordsForCustomer]);
+    return recordsForPeriod(recordsForCustomer, priorYearMonth, "monthly");
+  }, [priorYearMonth, recordsForCustomer]);
 
-  const currentMetrics = useMemo(() => metricSet(periodRecords), [periodRecords]);
-  const priorMetrics = useMemo(() => metricSet(priorPeriodRecords), [priorPeriodRecords]);
+  const previousMonthRecords = useMemo(() => {
+    if (!previousMonth) return [];
+    return recordsForPeriod(recordsForCustomer, previousMonth, "monthly");
+  }, [previousMonth, recordsForCustomer]);
+
+  const currentMetrics = useMemo(() => metricSet(monthlyRecords), [monthlyRecords]);
+  const priorMetrics = useMemo(() => metricSet(priorYearMonthlyRecords), [priorYearMonthlyRecords]);
   const totalRecordsMetrics = useMemo(() => metricSet(recordsForCustomer), [recordsForCustomer]);
   const ytdCurrentRecords = useMemo(
     () => currentYearRecords(recordsForCustomer, selectedMonthValue),
@@ -238,13 +242,14 @@ export default function Home() {
     [selectedMonthValue, ytdCurrentRecords, ytdPriorRecords],
   );
   const topArt = useMemo(
-    () => topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images),
-    [dashboardData.images, periodRecords, ytdCurrentRecords],
+    () => topArtRows(monthlyRecords, ytdCurrentRecords, dashboardData.images),
+    [dashboardData.images, monthlyRecords, ytdCurrentRecords],
   );
-  const topStyles = useMemo(() => topStyleRows(periodRecords, priorPeriodRecords), [periodRecords, priorPeriodRecords]);
-  const allStyles = useMemo(() => allStyleRows(periodRecords), [periodRecords]);
-  const salesMix = useMemo(() => salesMixSlices(periodRecords), [periodRecords]);
-  const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
+  const monthlyStyleStudy = useMemo(() => topStyleRows(monthlyRecords, previousMonthRecords), [monthlyRecords, previousMonthRecords]);
+  const ytdStyleStudy = useMemo(() => topStyleRows(ytdCurrentRecords, ytdPriorRecords), [ytdCurrentRecords, ytdPriorRecords]);
+  const allStyles = useMemo(() => allStyleRows(monthlyRecords), [monthlyRecords]);
+  const salesMix = useMemo(() => salesMixSlices(monthlyRecords), [monthlyRecords]);
+  const bestDay = useMemo(() => bestSalesDay(monthlyRecords), [monthlyRecords]);
   const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, selectedMonthValue), [recordsForCustomer, selectedMonthValue]);
   const lastUploaded = latestDate(recordsForCustomer);
 
@@ -281,16 +286,17 @@ export default function Home() {
     setShareUrl("");
 
     const token = createReportToken();
-    const title = `${selectedCustomer.name} ${periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue)}`;
+    const title = `${selectedCustomer.name} ${monthText(selectedMonthValue)} Sales Snapshot`;
     const payload: ReportSnapshotPayload = {
       version: 1,
       generatedAt: new Date().toISOString(),
       accountName: selectedCustomer.name,
       brandFilter,
-      periodMode,
+      periodMode: "monthly",
       selectedMonth: selectedMonthValue,
-      periodTitle: periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue),
-      priorPeriodTitle: periodMode === "monthly" ? monthText(priorYearMonth) : ytdTitle(priorYearMonth),
+      periodTitle: monthText(selectedMonthValue),
+      priorPeriodTitle: monthText(priorYearMonth),
+      previousMonthTitle: monthText(previousMonth),
       lastUploaded,
       currentMetrics,
       priorMetrics,
@@ -304,7 +310,9 @@ export default function Home() {
         transactions: bestDay.transactions,
         items: bestDay.items,
       },
-      topStyles,
+      topStyles: ytdStyleStudy,
+      styleStudyMonthly: monthlyStyleStudy,
+      styleStudyYtd: ytdStyleStudy,
       topArt,
       allStyles,
     };
@@ -465,16 +473,7 @@ export default function Home() {
                 </select>
               </label>
 
-              <div className="segmentedControl" aria-label="Period">
-                <button className={periodMode === "monthly" ? "active" : ""} onClick={() => setPeriodMode("monthly")}>
-                  Monthly Sales Tracker
-                </button>
-                <button className={periodMode === "ytd" ? "active" : ""} onClick={() => setPeriodMode("ytd")}>
-                  YTD Sales Tracker
-                </button>
-              </div>
-
-              <button className="shareButton" onClick={createShareLink} disabled={!periodRecords.length}>
+              <button className="shareButton" onClick={createShareLink} disabled={!monthlyRecords.length}>
                 Share Report
               </button>
             </div>
@@ -510,8 +509,8 @@ export default function Home() {
 
           <section className="overviewStrip" aria-label="Current dashboard context">
             <article>
-              <span>Selected Period</span>
-              <strong>{periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue)}</strong>
+              <span>Selected Month</span>
+              <strong>{monthText(selectedMonthValue)}</strong>
             </article>
             <article>
               <span>Brand/Class</span>
@@ -528,7 +527,7 @@ export default function Home() {
           </section>
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
-          {!dashboardStatus && periodRecords.length === 0 ? (
+          {!dashboardStatus && monthlyRecords.length === 0 ? (
             <section className="notice">No records match the current account, month, and brand/class filters.</section>
           ) : null}
 
@@ -583,7 +582,7 @@ export default function Home() {
             <div className="sectionTitle">
               <div>
                 <h3>Monthly Sales Tracker</h3>
-                <p>{periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue)}</p>
+                <p>{monthText(selectedMonthValue)} compared with {monthText(priorYearMonth)}.</p>
               </div>
               <strong className={changeClass(currentMetrics.sales - priorMetrics.sales)}>
                 {changeText(currentMetrics.sales, priorMetrics.sales)}
@@ -607,13 +606,25 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Top 10 Styles vs Last Year</h3>
-                <p>Style-level units, sales, colors, and artwork breadth.</p>
+                <h3>Style Study</h3>
+                <p>
+                  {styleStudyMode === "month"
+                    ? `Top 10 Styles vs ${monthText(previousMonth)}`
+                    : "Top 10 Styles vs Last YTD"}
+                </p>
               </div>
             </div>
+            <div className="studyTabs" aria-label="Style study views">
+              <button className={styleStudyMode === "month" ? "active" : ""} onClick={() => setStyleStudyMode("month")}>
+                Current Month
+              </button>
+              <button className={styleStudyMode === "ytd" ? "active" : ""} onClick={() => setStyleStudyMode("ytd")}>
+                YTD
+              </button>
+            </div>
             <div className="styleComparisonGrid">
-              {topStyles.map((style) => (
-                <StyleComparisonCard key={style.style} style={style} />
+              {(styleStudyMode === "month" ? monthlyStyleStudy : ytdStyleStudy).map((style) => (
+                <StyleComparisonCard key={style.style} style={style} compareLabel={styleStudyMode === "month" ? "Compare" : "LY"} />
               ))}
             </div>
           </section>
@@ -829,7 +840,7 @@ function CompareBar({ label, value, max, secondary = false }: { label: string; v
   );
 }
 
-function StyleComparisonCard({ style }: { style: TopStyle }) {
+function StyleComparisonCard({ style, compareLabel }: { style: TopStyle; compareLabel: string }) {
   const maxUnits = Math.max(style.units, style.priorUnits, 1);
   return (
     <article className="styleCompareCard">
@@ -847,7 +858,7 @@ function StyleComparisonCard({ style }: { style: TopStyle }) {
         <span className={changeClass(style.artCount - style.priorArtCount)}>
           {countText(style.artCount, "Artwork", "Artworks")}
         </span>{" "}
-        | LY:{" "}
+        | {compareLabel}:{" "}
         <span className={changeClass(style.priorColorCount - style.colorCount)}>
           {countText(style.priorColorCount, "Color", "Colors")}
         </span>
@@ -858,7 +869,7 @@ function StyleComparisonCard({ style }: { style: TopStyle }) {
       </p>
       <div className="styleBars">
         <CompareUnitBar label="CY" value={style.units} max={maxUnits} />
-        <CompareUnitBar label="LY" value={style.priorUnits} max={maxUnits} secondary />
+        <CompareUnitBar label={compareLabel} value={style.priorUnits} max={maxUnits} secondary />
       </div>
     </article>
   );
@@ -946,7 +957,7 @@ function availableMonths(records: SalesRecord[]) {
     .reverse();
 }
 
-function recordsForPeriod(records: SalesRecord[], month: string, periodMode: PeriodMode) {
+function recordsForPeriod(records: SalesRecord[], month: string, periodMode: "monthly" | "ytd") {
   return records.filter((record) => {
     const recordMonth = monthKey(record.transaction_date);
     if (!recordMonth) return false;
@@ -1240,6 +1251,13 @@ function colorName(record: SalesRecord) {
 
 function monthKey(value: string | null) {
   return value?.slice(0, 7) ?? null;
+}
+
+function addMonths(month: string, offset: number) {
+  const date = new Date(`${month}-01T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setMonth(date.getMonth() + offset);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function amountValue(record: SalesRecord) {

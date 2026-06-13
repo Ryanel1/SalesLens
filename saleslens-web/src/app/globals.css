@@ -143,8 +143,7 @@ select {
 }
 
 .loginRow button,
-.ghostButton,
-.segmentedControl button {
+.ghostButton {
   color: var(--charcoal);
   font-weight: 800;
   padding: 0.85rem 1rem;
@@ -285,24 +284,6 @@ select {
 .controlDock label {
   display: grid;
   gap: 0.45rem;
-}
-
-.segmentedControl {
-  border: var(--hairline);
-  display: grid;
-  grid-column: span 2;
-  grid-template-columns: 1fr 1fr;
-  overflow: hidden;
-}
-
-.segmentedControl button {
-  background: transparent;
-  color: var(--taupe);
-}
-
-.segmentedControl button.active {
-  background: var(--steel);
-  color: var(--paper);
 }
 
 .shareButton {
@@ -771,6 +752,32 @@ select {
   text-align: right;
 }
 
+.studyTabs {
+  border: var(--hairline);
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  margin: 0.2rem 0 1.2rem;
+  overflow: hidden;
+}
+
+.studyTabs button {
+  background: transparent;
+  color: var(--taupe);
+  font-weight: 900;
+  padding: 0.85rem 1.1rem;
+}
+
+.studyTabs button.active {
+  background: var(--charcoal);
+  color: var(--paper);
+}
+
+.studySubtitle {
+  color: var(--taupe);
+  font-weight: 800;
+  margin: -0.25rem 0 1rem;
+}
+
 .styleComparisonGrid {
   display: grid;
   gap: 1px;
@@ -1036,13 +1043,12 @@ tbody tr:nth-child(even) {
   }
 
   .controlDock label,
-  .segmentedControl,
+  .studyTabs,
   .shareButton,
   .fileButton {
     width: 100%;
   }
 
-  .segmentedControl,
   .shareButton {
     grid-column: span 1;
   }

@@ -6,9 +6,9 @@ import {
   type ReportSnapshotPayload,
   type ReportSnapshotRecord,
   type SnapshotMetricSet,
-  type SnapshotTopStyle,
 } from "@/lib/reportSnapshot";
 import { PrintButton } from "./PrintButton";
+import { StyleStudyTabs } from "./StyleStudyTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -167,12 +167,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </div>
         </ReportSection>
 
-        <ReportSection title="Top 10 Styles vs Last Year" subtitle="Style-level units, sales, colors, and artwork breadth.">
-          <div className="styleComparisonGrid">
-            {payload.topStyles.map((style) => (
-              <StyleCard key={style.style} style={style} />
-            ))}
-          </div>
+        <ReportSection title="Style Study" subtitle="Style-level units, sales, colors, and artwork breadth.">
+          <StyleStudyTabs
+            monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
+            ytdStyles={payload.styleStudyYtd ?? payload.topStyles}
+            previousMonthTitle={payload.previousMonthTitle ?? "last month"}
+          />
         </ReportSection>
 
         <ReportSection
@@ -308,41 +308,6 @@ function CompareBar({ label, value, max, secondary = false }: { label: string; v
         <span style={{ width: `${Math.max(4, (value / max) * 100)}%` }} />
       </div>
       <strong>{currencyText(value)}</strong>
-    </div>
-  );
-}
-
-function StyleCard({ style }: { style: SnapshotTopStyle }) {
-  const maxUnits = Math.max(style.units, style.priorUnits, 1);
-  return (
-    <article className="styleCompareCard">
-      <div className="styleCompareTop">
-        <strong>#{style.rank} {style.style}</strong>
-        <span>{style.brand}</span>
-        <em className={changeClass(style.sales - style.priorSales)}>{currencyText(style.sales - style.priorSales)}</em>
-      </div>
-      <p>
-        CY: <span className={changeClass(style.colorCount - style.priorColorCount)}>{style.colorCount} Colors</span>,{" "}
-        <span className={changeClass(style.artCount - style.priorArtCount)}>{style.artCount} Artworks</span> | LY:{" "}
-        <span className={changeClass(style.priorColorCount - style.colorCount)}>{style.priorColorCount} Colors</span>,{" "}
-        <span className={changeClass(style.priorArtCount - style.artCount)}>{style.priorArtCount} Artworks</span>
-      </p>
-      <div className="styleBars">
-        <CompareUnitBar label="CY" value={style.units} max={maxUnits} />
-        <CompareUnitBar label="LY" value={style.priorUnits} max={maxUnits} secondary />
-      </div>
-    </article>
-  );
-}
-
-function CompareUnitBar({ label, value, max, secondary = false }: { label: string; value: number; max: number; secondary?: boolean }) {
-  return (
-    <div className="unitBar">
-      <span>{label}</span>
-      <div className={`barTrack ${secondary ? "secondary" : ""}`}>
-        <span style={{ width: `${Math.max(3, (value / max) * 100)}%` }} />
-      </div>
-      <strong>{numberText(value)}</strong>
     </div>
   );
 }

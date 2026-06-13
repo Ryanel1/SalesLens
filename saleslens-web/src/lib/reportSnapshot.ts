@@ -76,10 +76,11 @@ export type ReportSnapshotPayload = {
   generatedAt: string;
   accountName: string;
   brandFilter: string;
-  periodMode: "monthly" | "ytd";
+  periodMode?: "monthly" | "ytd";
   selectedMonth: string | null;
   periodTitle: string;
   priorPeriodTitle: string;
+  previousMonthTitle?: string;
   lastUploaded: string | null;
   currentMetrics: SnapshotMetricSet;
   priorMetrics: SnapshotMetricSet;
@@ -88,6 +89,8 @@ export type ReportSnapshotPayload = {
   salesMix: SnapshotSalesMixSlice[];
   bestDay: SnapshotBestDay;
   topStyles: SnapshotTopStyle[];
+  styleStudyMonthly?: SnapshotTopStyle[];
+  styleStudyYtd?: SnapshotTopStyle[];
   topArt: SnapshotTopArt[];
   allStyles: SnapshotTopStyle[];
 };
