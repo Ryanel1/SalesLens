@@ -35,7 +35,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
       <section className="publicReport">
         <header className="publicHeader">
           <div>
-            <p className="eyebrow">Lester Sales</p>
+            <div className="publicBrand">
+              <strong>SalesLens</strong>
+              <span>by Lester Sales</span>
+            </div>
             <h1>{payload.accountName}</h1>
             <p>{payload.periodTitle} sales snapshot</p>
           </div>

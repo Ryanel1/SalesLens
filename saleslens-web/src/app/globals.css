@@ -947,6 +947,28 @@ tbody tr:nth-child(even) {
   padding: clamp(1.5rem, 4vw, 3rem);
 }
 
+.publicBrand {
+  display: grid;
+  gap: 0.1rem;
+  margin-bottom: 0.8rem;
+}
+
+.publicBrand strong {
+  color: var(--soft-black);
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.publicBrand span {
+  color: var(--taupe);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .publicHeader h1 {
   color: var(--soft-black);
   font-size: clamp(3rem, 7vw, 7rem);
