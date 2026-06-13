@@ -114,6 +114,7 @@ export default function Home() {
   const [shareUrl, setShareUrl] = useState("");
   const [importStatus, setImportStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [navCompact, setNavCompact] = useState(false);
 
   useEffect(() => {
     if (!supabase) {
@@ -128,6 +129,13 @@ export default function Home() {
 
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
+
+  useEffect(() => {
+    const updateNavSize = () => setNavCompact(window.scrollY > 24);
+    updateNavSize();
+    window.addEventListener("scroll", updateNavSize, { passive: true });
+    return () => window.removeEventListener("scroll", updateNavSize);
+  }, []);
 
   useEffect(() => {
     if (!supabase) {
@@ -391,33 +399,33 @@ export default function Home() {
   if (user) {
     return (
       <main className="appShell">
-        <aside className="sidebar">
-          <div>
-            <p className="eyebrow">Lester Sales</p>
+        <nav className={navCompact ? "topNav compact" : "topNav"} aria-label="SalesLens controls">
+          <div className="navBrand">
             <h1>SalesLens</h1>
+            <p>by Lester Sales</p>
           </div>
 
-          <nav className="accountStack" aria-label="Accounts">
-            {customerStatus ? <p className="muted">{customerStatus}</p> : null}
-            {customers.map((customer) => (
-              <button
-                className={customer.id === selectedCustomerId ? "accountButton active" : "accountButton"}
-                key={customer.id}
-                onClick={() => {
-                  setSelectedCustomerId(customer.id);
+          <div className="navControls">
+            <label>
+              Account
+              <select
+                value={selectedCustomerId ?? ""}
+                onChange={(event) => {
+                  setSelectedCustomerId(event.target.value);
                   setSelectedMonth(null);
                   setBrandFilter("All");
                 }}
               >
-                {customer.name}
-              </button>
-            ))}
-          </nav>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <section className="uploadPanel">
-            <p className="eyebrow">Upload / Import</p>
             <label className="fileButton">
-              Choose Spreadsheet
+              Upload / Import
               <input
                 accept=".xls,.xlsx,.csv"
                 type="file"
@@ -427,17 +435,21 @@ export default function Home() {
                 }}
               />
             </label>
-            {importStatus ? <p className="importStatus">{importStatus}</p> : null}
-          </section>
+          </div>
 
-          <div className="sidebarFooter">
-            <p>Last Date Uploaded</p>
-            <strong>{dateText(lastUploaded)}</strong>
+          <div className="navStatus">
+            <div>
+              <p>Last Date Uploaded</p>
+              <strong>{dateText(lastUploaded)}</strong>
+            </div>
             <button className="ghostButton" onClick={signOut}>
               Sign Out
             </button>
           </div>
-        </aside>
+          {(customerStatus || importStatus) ? (
+            <p className="navMessage">{importStatus || customerStatus}</p>
+          ) : null}
+        </nav>
 
         <section className="dashboard">
           <header className="dashboardHeader">

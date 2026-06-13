@@ -156,90 +156,90 @@ select {
 
 .appShell {
   display: grid;
-  grid-template-columns: 272px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
 }
 
-.sidebar {
-  background: rgba(255, 253, 248, 0.9);
-  border-right: var(--hairline);
-  display: flex;
-  flex-direction: column;
-  gap: 2.2rem;
-  height: 100vh;
-  padding: 2rem 1.4rem;
+.topNav {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.92);
+  border-bottom: var(--hairline);
+  backdrop-filter: blur(18px);
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: minmax(230px, 0.7fr) minmax(360px, 1fr) auto;
+  min-height: 150px;
+  padding: 1.4rem clamp(1.25rem, 4vw, 4rem);
   position: sticky;
   top: 0;
+  transition: min-height 180ms ease, padding 180ms ease, box-shadow 180ms ease;
+  z-index: 20;
 }
 
-.sidebar h1 {
+.topNav.compact {
+  box-shadow: 0 18px 40px rgba(39, 36, 31, 0.08);
+  min-height: 96px;
+  padding-bottom: 0.85rem;
+  padding-top: 0.85rem;
+}
+
+.navBrand h1 {
   color: var(--soft-black);
-  font-size: 2.6rem;
-  margin-bottom: 0;
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  line-height: 0.95;
+  margin-bottom: 0.15rem;
 }
 
-.accountStack {
-  display: grid;
-  gap: 0.7rem;
-}
-
-.accountButton {
-  background: transparent;
-  border: var(--hairline);
-  color: var(--charcoal);
-  font-weight: 850;
-  padding: 1rem;
-  text-align: left;
-  transition: background 160ms ease, border-color 160ms ease;
-}
-
-.accountButton.active {
-  background: var(--charcoal);
-  border-color: var(--charcoal);
-  color: var(--paper);
-}
-
-.sidebarFooter {
+.navBrand p {
   color: var(--taupe);
-  margin-top: auto;
-}
-
-.sidebar .uploadPanel {
-  box-shadow: none;
-  display: grid;
-  gap: 0.65rem;
-  grid-template-columns: 1fr;
-  margin: -0.9rem 0 0;
-  padding: 0.8rem;
-}
-
-.sidebar .uploadPanel .eyebrow {
-  font-size: 0.66rem;
-  margin-bottom: 0;
-}
-
-.sidebar .fileButton {
-  padding: 0.7rem 0.8rem;
-  width: 100%;
-}
-
-.sidebar .importStatus {
   font-size: 0.78rem;
-  line-height: 1.35;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  margin: 0;
+  text-transform: uppercase;
 }
 
-.sidebarFooter p {
+.navControls {
+  align-items: end;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: minmax(210px, 1fr) auto;
+}
+
+.navControls label:not(.fileButton) {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.navStatus {
+  align-items: center;
+  color: var(--taupe);
+  display: flex;
+  gap: 1rem;
+  justify-content: end;
+}
+
+.navStatus p {
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   margin-bottom: 0.25rem;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.sidebarFooter strong {
+.navStatus strong {
   color: var(--charcoal);
   display: block;
-  margin-bottom: 1.1rem;
+  white-space: nowrap;
+}
+
+.navMessage {
+  color: var(--taupe);
+  font-size: 0.78rem;
+  font-weight: 750;
+  grid-column: 2 / span 1;
+  margin: -0.75rem 0 0;
 }
 
 .ghostButton {
@@ -294,7 +294,6 @@ select {
   padding: 0.95rem 1rem;
 }
 
-.uploadPanel,
 .notice,
 .sectionBlock,
 .overviewStrip article,
@@ -303,30 +302,6 @@ select {
   background: rgba(255, 253, 248, 0.94);
   border: var(--hairline);
   box-shadow: var(--shadow);
-}
-
-.uploadPanel {
-  align-items: center;
-  display: grid;
-  gap: 1.2rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-  margin-bottom: 1.2rem;
-  padding: 1.25rem;
-}
-
-.uploadPanel h3 {
-  color: var(--soft-black);
-  font-size: 1.8rem;
-  margin-bottom: 0.35rem;
-}
-
-.uploadPanel p {
-  color: var(--taupe);
-  margin-bottom: 0;
-}
-
-.uploadPanel strong {
-  color: var(--charcoal);
 }
 
 .fileButton {
@@ -342,13 +317,6 @@ select {
 
 .fileButton input {
   display: none;
-}
-
-.importStatus {
-  color: var(--taupe);
-  font-size: 0.9rem;
-  font-weight: 700;
-  grid-column: 1 / -1;
 }
 
 .modalOverlay {
@@ -982,21 +950,22 @@ tbody tr:nth-child(even) {
 }
 
 @media (max-width: 1180px) {
-  .appShell {
+  .topNav {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 
-  .sidebar {
-    height: auto;
-    position: static;
+  .topNav.compact {
+    min-height: auto;
   }
 
-  .accountStack {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .navStatus {
+    justify-content: space-between;
   }
 
-  .sidebarFooter {
-    margin-top: 0;
+  .navMessage {
+    grid-column: 1;
+    margin-top: -0.5rem;
   }
 
   .dashboardHeader,
@@ -1006,12 +975,6 @@ tbody tr:nth-child(even) {
 
   .controlDock {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .uploadPanel {
-    align-items: stretch;
-    display: grid;
-    grid-template-columns: 1fr;
   }
 
   .publicHeader div:last-child {
@@ -1026,7 +989,7 @@ tbody tr:nth-child(even) {
 @media (max-width: 820px) {
   .loginShell,
   .dashboard,
-  .sidebar,
+  .topNav,
   .publicShell {
     padding: 1rem;
   }
@@ -1038,6 +1001,7 @@ tbody tr:nth-child(even) {
   .insightGrid,
   .ytdInsightGrid,
   .styleComparisonGrid,
+  .navControls,
   .controlDock {
     grid-template-columns: 1fr;
   }
@@ -1053,9 +1017,18 @@ tbody tr:nth-child(even) {
     grid-column: span 1;
   }
 
-  .accountStack,
   .artGrid {
     grid-template-columns: 1fr;
+  }
+
+  .topNav {
+    align-items: stretch;
+    position: static;
+  }
+
+  .navStatus {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .sectionTitle {
