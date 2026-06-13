@@ -334,6 +334,25 @@ export default function Home() {
             </div>
           </header>
 
+          <section className="overviewStrip" aria-label="Current dashboard context">
+            <article>
+              <span>Selected Period</span>
+              <strong>{periodMode === "monthly" ? monthText(selectedMonthValue) : ytdTitle(selectedMonthValue)}</strong>
+            </article>
+            <article>
+              <span>Brand/Class</span>
+              <strong>{brandFilter}</strong>
+            </article>
+            <article>
+              <span>Loaded Rows</span>
+              <strong>{numberText(totalRecordsMetrics.transactions)}</strong>
+            </article>
+            <article>
+              <span>Last Date Uploaded</span>
+              <strong>{dateText(lastUploaded)}</strong>
+            </article>
+          </section>
+
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
           {!dashboardStatus && periodRecords.length === 0 ? (
             <section className="notice">No records match the current account, month, and brand/class filters.</section>
@@ -412,10 +431,11 @@ export default function Home() {
               {topArt.map((row) => (
                 <article className="artCard" key={row.key}>
                   <div className="artImage">
+                    <b>#{row.rank}</b>
                     {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
                   </div>
                   <div className="artMeta">
-                    <strong>#{row.rank} {row.artCode}</strong>
+                    <strong>{row.artCode}</strong>
                     <span>{row.style} | {row.color}</span>
                     <span>{numberText(row.units)} Units | {currencyText(row.sales)}</span>
                     <span>CY: {numberText(row.cyUnits)} | {currencyText(row.cySales)}</span>
