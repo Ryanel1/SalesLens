@@ -61,8 +61,9 @@ final class SalesStore: ObservableObject {
     private var cachedLatestUploadedDateByCustomer: [String: Date]?
 
     init() {
-        SalesLensDataLocation.migrateLegacyDataIfNeeded()
-        let appDirectory = SalesLensDataLocation.sharedDirectory
+        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        let appDirectory = supportDirectory.appendingPathComponent("SalesLens", isDirectory: true)
         self.persistenceURL = appDirectory.appendingPathComponent("sales-records.json")
         self.accountsURL = appDirectory.appendingPathComponent("accounts.json")
         load()
@@ -1464,10 +1465,11 @@ final class SalesStore: ObservableObject {
                 && token.count >= 4
                 && !isRebelRagsArtCodeToken(token)
         }
-        let artCode = tokens.first { token in
+        let artCodeToken = tokens.first { token in
             guard token != styleNumber else { return false }
             return isRebelRagsArtCodeToken(token)
         }
+        let artCode = artCodeToken.map(normalizedRebelRagsArtCode)
 
         return (styleNumber, artCode)
     }
@@ -1476,7 +1478,18 @@ final class SalesStore: ObservableObject {
         if token.range(of: #"^(APC|APO|AEC|AE|AP)[A-Z0-9]+$"#, options: .regularExpression) != nil {
             return true
         }
+        if token.range(of: #"^[A-Z]{1,3}[0-9]{6,}$"#, options: .regularExpression) != nil {
+            return true
+        }
         return token.count >= 6 && token.allSatisfy(\.isNumber)
+    }
+
+    private func normalizedRebelRagsArtCode(_ token: String) -> String {
+        if token.range(of: #"^[A-Z]{1,3}[0-9]{6,}$"#, options: .regularExpression) != nil {
+            let digits = token.drop { $0.isLetter }
+            return String(digits)
+        }
+        return token
     }
 
     private func duplicateImportBatchIDsToRemove() -> Set<String> {
@@ -1947,85 +1960,6 @@ private struct TopSellerKey: Hashable {
 private struct TopStyleKey: Hashable {
     let brandName: String
     let styleNumber: String
-}
-
-enum SalesLensDataLocation {
-    private static let appSupportFolderName = "SalesLens"
-    private static let sharedFolderName = "SalesLens Data"
-
-    static var sharedDirectory: URL {
-        if let dropboxDirectory {
-            return dropboxDirectory.appendingPathComponent(sharedFolderName, isDirectory: true)
-        }
-        return legacyDirectory
-    }
-
-    static var legacyDirectory: URL {
-        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
-        return supportDirectory.appendingPathComponent(appSupportFolderName, isDirectory: true)
-    }
-
-    static var productImagesDirectory: URL {
-        sharedDirectory.appendingPathComponent("ProductImages", isDirectory: true)
-    }
-
-    static var displayPath: String {
-        sharedDirectory.path
-    }
-
-    static func migrateLegacyDataIfNeeded() {
-        let destinationDirectory = sharedDirectory
-        let sourceDirectory = legacyDirectory
-        guard destinationDirectory.standardizedFileURL != sourceDirectory.standardizedFileURL else { return }
-
-        do {
-            try FileManager.default.createDirectory(at: destinationDirectory, withIntermediateDirectories: true)
-            copyIfNeeded("sales-records.json", from: sourceDirectory, to: destinationDirectory)
-            copyIfNeeded("accounts.json", from: sourceDirectory, to: destinationDirectory)
-            copyDirectoryIfNeeded("ProductImages", from: sourceDirectory, to: destinationDirectory)
-        } catch {
-            // If Dropbox is unavailable for any reason, save/load calls will surface the specific failure.
-        }
-    }
-
-    private static var dropboxDirectory: URL? {
-        let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
-        let candidates = [
-            homeDirectory.appendingPathComponent("Dropbox", isDirectory: true),
-            homeDirectory
-                .appendingPathComponent("Library", isDirectory: true)
-                .appendingPathComponent("CloudStorage", isDirectory: true)
-                .appendingPathComponent("Dropbox", isDirectory: true)
-        ]
-
-        return candidates.first { url in
-            var isDirectory: ObjCBool = false
-            return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
-        }
-    }
-
-    private static func copyIfNeeded(_ fileName: String, from sourceDirectory: URL, to destinationDirectory: URL) {
-        let sourceURL = sourceDirectory.appendingPathComponent(fileName)
-        let destinationURL = destinationDirectory.appendingPathComponent(fileName)
-        guard FileManager.default.fileExists(atPath: sourceURL.path),
-              !FileManager.default.fileExists(atPath: destinationURL.path) else {
-            return
-        }
-
-        try? FileManager.default.copyItem(at: sourceURL, to: destinationURL)
-    }
-
-    private static func copyDirectoryIfNeeded(_ directoryName: String, from sourceDirectory: URL, to destinationDirectory: URL) {
-        let sourceURL = sourceDirectory.appendingPathComponent(directoryName, isDirectory: true)
-        let destinationURL = destinationDirectory.appendingPathComponent(directoryName, isDirectory: true)
-        guard FileManager.default.fileExists(atPath: sourceURL.path),
-              !FileManager.default.fileExists(atPath: destinationURL.path) else {
-            return
-        }
-
-        try? FileManager.default.copyItem(at: sourceURL, to: destinationURL)
-    }
 }
 
 private struct StyleSummary {

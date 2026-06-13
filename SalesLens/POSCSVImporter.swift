@@ -486,10 +486,11 @@ enum POSCSVImporter {
             isRebelRagsStyleToken(token)
         }
 
-        let artCode = tokens.first { token in
+        let artCodeToken = tokens.first { token in
             guard token != styleNumber else { return false }
             return isRebelRagsArtCodeToken(token)
         }
+        let artCode = artCodeToken.map(normalizedRebelRagsArtCode)
 
         return RebelRagsProductIdentifier(styleNumber: styleNumber, artCode: artCode)
     }
@@ -505,7 +506,18 @@ enum POSCSVImporter {
         if token.range(of: #"^(APC|APO|AEC|AE|AP)[A-Z0-9]+$"#, options: .regularExpression) != nil {
             return true
         }
+        if token.range(of: #"^[A-Z]{1,3}[0-9]{6,}$"#, options: .regularExpression) != nil {
+            return true
+        }
         return token.count >= 6 && token.allSatisfy(\.isNumber)
+    }
+
+    private static func normalizedRebelRagsArtCode(_ token: String) -> String {
+        if token.range(of: #"^[A-Z]{1,3}[0-9]{6,}$"#, options: .regularExpression) != nil {
+            let digits = token.drop { $0.isLetter }
+            return String(digits)
+        }
+        return token
     }
 
     private static func rebelRagsColor(_ rawValue: String) -> RebelRagsColor {

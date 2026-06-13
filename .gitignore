@@ -13,3 +13,7 @@ analysis_outputs/
 
 # App runtime data lives outside this repo in Application Support.
 
+# SalesLens web app
+saleslens-web/.next/
+saleslens-web/node_modules/
+saleslens-web/.env*.local

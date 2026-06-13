@@ -11,8 +11,11 @@ actor RebelRagsProductImageService {
     private var associations: [String: ProductImageAssociation] = [:]
 
     private init() {
-        SalesLensDataLocation.migrateLegacyDataIfNeeded()
-        cacheDirectory = SalesLensDataLocation.productImagesDirectory
+        let supportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        cacheDirectory = supportDirectory
+            .appendingPathComponent("SalesLens", isDirectory: true)
+            .appendingPathComponent("ProductImages", isDirectory: true)
         associationsURL = cacheDirectory.appendingPathComponent("associations.json")
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
         if let data = try? Data(contentsOf: associationsURL),
@@ -44,8 +47,8 @@ actor RebelRagsProductImageService {
         let cacheURL = cacheDirectory.appendingPathComponent("\(key).image")
         let lookup = imageLookup(for: seller)
 
-        if lookup.isManualOverride,
-           associations[key]?.lookupArtCode != lookup.searchArtCode {
+        if let association = associations[key],
+           shouldInvalidateAssociation(association, for: seller, lookup: lookup) {
             memoryCache.removeValue(forKey: key)
             try? FileManager.default.removeItem(at: cacheURL)
             associations.removeValue(forKey: key)
@@ -95,6 +98,15 @@ actor RebelRagsProductImageService {
     }
 
     private func matchingImageMatch(for seller: TopSeller, lookup: ProductImageLookup) async throws -> ProductImageMatch? {
+        if let productURL = lookup.productURL {
+            let (detailData, _) = try await fetch(productURL)
+            guard let detailHTML = String(data: detailData, encoding: .utf8),
+                  let imageURL = productImageURL(in: detailHTML, for: seller, relativeTo: productURL) else {
+                return nil
+            }
+            return ProductImageMatch(productURL: productURL, imageURL: imageURL)
+        }
+
         guard let encodedArtCode = lookup.searchArtCode.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
               let searchURL = URL(string: "https://www.rebelrags.net/all-products/browse/keyword/\(encodedArtCode)") else {
             return nil
@@ -154,21 +166,32 @@ actor RebelRagsProductImageService {
 
         // Rebel Rags publishes the white Script Ole Miss basic tee under APC03479022; some POS exports identify it as 03456518.
         if isWhiteScriptBasicTee
-            || (style == "CT1000" && ["03456518", "0346518"].contains(artCode)) {
-            return ProductImageLookup(searchArtCode: "03479022", isManualOverride: true)
+            || (style == "CT1000" && color == "WHITE" && ["03456518", "0346518"].contains(artCode)) {
+            return ProductImageLookup(searchArtCode: "03479022", isManualOverride: true, productURL: nil)
         }
 
-        return ProductImageLookup(searchArtCode: seller.artCode, isManualOverride: false)
+        if style == "GDH100",
+           artCode == "004116649",
+           let productURL = URL(string: "https://www.rebelrags.net/gear/block-rebs-comfort-wash-ss-tee-31521") {
+            return ProductImageLookup(searchArtCode: seller.artCode, isManualOverride: true, productURL: productURL)
+        }
+
+        if style == "GDH135",
+           artCode == "004116649",
+           let productURL = URL(string: "https://www.rebelrags.net/gear/block-rebs-comfort-wash-ss-boxy-tee-31522") {
+            return ProductImageLookup(searchArtCode: seller.artCode, isManualOverride: true, productURL: productURL)
+        }
+
+        return ProductImageLookup(searchArtCode: seller.artCode, isManualOverride: false, productURL: nil)
     }
 
     private func productImageURL(in html: String, for seller: TopSeller, relativeTo baseURL: URL) -> URL? {
         let pattern = #"(https?://www\.rebelrags\.net/prodimages/[^"']+-l\.(?:jpg|jpeg|png)|/prodimages/[^"']+-l\.(?:jpg|jpeg|png))"#
-        let expectedColor = normalized(seller.colorName)
         let imageURLs = captures(for: pattern, in: html)
         let rawURL = imageURLs.first(where: {
-            normalized(URL(fileURLWithPath: $0).deletingPathExtension().lastPathComponent).contains(expectedColor)
+            imageURL($0, matchesColor: seller.colorName)
         }) ?? imageURLs.first(where: {
-            normalized(URL(fileURLWithPath: $0).deletingPathExtension().lastPathComponent).contains("DEFAULT")
+            canUseDefaultImageURL($0, for: seller, allImageURLs: imageURLs)
         })
         guard let rawURL else {
             return nil
@@ -199,6 +222,72 @@ actor RebelRagsProductImageService {
         [seller.styleNumber, seller.artCode, seller.colorName]
             .map(normalized)
             .joined(separator: "_")
+    }
+
+    private func shouldInvalidateAssociation(_ association: ProductImageAssociation, for seller: TopSeller, lookup: ProductImageLookup) -> Bool {
+        if association.lookupArtCode != lookup.searchArtCode {
+            return true
+        }
+        guard let productURL = lookup.productURL else {
+            return !cachedImageURL(association.imageURL, isAllowedFor: seller)
+        }
+        return association.productURL != productURL.absoluteString || !cachedImageURL(association.imageURL, isAllowedFor: seller)
+    }
+
+    private func cachedImageURL(_ value: String, isAllowedFor seller: TopSeller) -> Bool {
+        imageURL(value, matchesColor: seller.colorName)
+            || imageColorToken(for: value) == "DEFAULT"
+    }
+
+    private func imageURL(_ value: String, matchesColor colorName: String) -> Bool {
+        let filename = normalized(imageFilename(for: value))
+        return colorSearchTerms(for: colorName).contains { filename.contains($0) }
+    }
+
+    private func canUseDefaultImageURL(_ value: String, for seller: TopSeller, allImageURLs: [String]) -> Bool {
+        guard imageColorToken(for: value) == "DEFAULT" else { return false }
+        return allowsDefaultImage(for: seller) || imageURLsOnlyHaveDefaultColor(allImageURLs)
+    }
+
+    private func imageURLsOnlyHaveDefaultColor(_ imageURLs: [String]) -> Bool {
+        let tokens = Set(imageURLs.map(imageColorToken).filter { !$0.isEmpty })
+        return !tokens.isEmpty && tokens.isSubset(of: ["DEFAULT"])
+    }
+
+    private func imageColorToken(for value: String) -> String {
+        let filename = imageFilename(for: value)
+        let parts = filename.split(separator: "-").map(String.init)
+        guard parts.count >= 2 else { return "" }
+        return normalized(parts[parts.count - 2])
+    }
+
+    private func imageFilename(for value: String) -> String {
+        let decoded = decodeHTMLEntities(value)
+        let path = URL(string: decoded)?.lastPathComponent ?? URL(fileURLWithPath: decoded).lastPathComponent
+        return (path as NSString).deletingPathExtension
+    }
+
+    private func colorSearchTerms(for colorName: String) -> [String] {
+        let normalizedColor = normalized(colorName)
+        var terms = [normalizedColor]
+        if normalizedColor == "LIGHTBLUE" {
+            terms.append("LTBLUE")
+        }
+        if normalizedColor == "HEATHERGREY" {
+            terms.append("HEATHERGRAY")
+        }
+        if normalizedColor == "SILVERGREY" {
+            terms.append("SILVERGRAY")
+        }
+        return terms
+    }
+
+    private func allowsDefaultImage(for seller: TopSeller) -> Bool {
+        let color = normalized(seller.colorName)
+        if color == "WHITE" {
+            return true
+        }
+        return false
     }
 
     private func captures(for pattern: String, in text: String) -> [String] {
@@ -236,6 +325,7 @@ private struct ProductImageMatch {
 private struct ProductImageLookup {
     let searchArtCode: String
     let isManualOverride: Bool
+    let productURL: URL?
 }
 
 private struct ProductImageAssociation: Codable {

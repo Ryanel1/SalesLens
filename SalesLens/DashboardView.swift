@@ -1181,9 +1181,12 @@ private struct TopFiveStyleComparisonRow: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
-                    scopeLine
-                        .font(.caption)
-                        .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 1) {
+                        currentScopeLine
+                        priorYearScopeLine
+                    }
+                    .font(.caption)
+                    .lineLimit(1)
                 }
 
                 Spacer()
@@ -1235,7 +1238,7 @@ private struct TopFiveStyleComparisonRow: View {
         }
     }
 
-    private var scopeLine: Text {
+    private var currentScopeLine: Text {
         Text("CY: ")
             .foregroundColor(.secondary)
         + Text(countText(style.colorCount, singular: "Color", plural: "Colors"))
@@ -1244,7 +1247,10 @@ private struct TopFiveStyleComparisonRow: View {
             .foregroundColor(.secondary)
         + Text(countText(style.artCount, singular: "Artwork", plural: "Artworks"))
             .foregroundColor(comparisonColor(current: style.artCount, previous: style.priorYearArtCount))
-        + Text(" | LY: ")
+    }
+
+    private var priorYearScopeLine: Text {
+        Text("LY: ")
             .foregroundColor(.secondary)
         + Text(countText(style.priorYearColorCount, singular: "Color", plural: "Colors"))
             .foregroundColor(comparisonColor(current: style.priorYearColorCount, previous: style.colorCount))
