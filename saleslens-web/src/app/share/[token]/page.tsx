@@ -10,6 +10,8 @@ import {
 } from "@/lib/reportSnapshot";
 import { PrintButton } from "./PrintButton";
 
+export const dynamic = "force-dynamic";
+
 export default async function SharedReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const snapshot = await loadSnapshot(token);
@@ -208,15 +210,22 @@ async function loadSnapshot(token: string): Promise<ReportSnapshotRecord | null>
 
   const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
   const { data, error } = await supabase.rpc("get_report_snapshot", { report_token: token }).single();
+  const row = data as {
+    token: string;
+    title: string;
+    payload: unknown;
+    created_at: string;
+    expires_at: string | null;
+  } | null;
 
-  if (error || !data || !isReportSnapshotPayload(data.payload)) return null;
+  if (error || !row || !isReportSnapshotPayload(row.payload)) return null;
 
   return {
-    token: data.token,
-    title: data.title,
-    payload: data.payload,
-    created_at: data.created_at,
-    expires_at: data.expires_at,
+    token: row.token,
+    title: row.title,
+    payload: row.payload,
+    created_at: row.created_at,
+    expires_at: row.expires_at,
   };
 }
 
