@@ -948,8 +948,9 @@ tbody tr:nth-child(even) {
 }
 
 .publicBrand {
-  display: grid;
-  gap: 0.1rem;
+  align-items: baseline;
+  display: flex;
+  gap: 0.45rem;
   margin-bottom: 0.8rem;
 }
 
