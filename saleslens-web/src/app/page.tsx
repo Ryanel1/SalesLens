@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { Customer } from "@/lib/types";
+import { currencyText, dateText, monthText, numberText } from "@/lib/formatters";
+import type { Customer, CustomerSummary } from "@/lib/types";
 
 export default function Home() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -12,6 +13,9 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerStatus, setCustomerStatus] = useState("Loading accounts...");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [summary, setSummary] = useState<CustomerSummary | null>(null);
+  const [summaryStatus, setSummaryStatus] = useState("");
 
   useEffect(() => {
     if (!supabase) {
@@ -51,6 +55,7 @@ export default function Home() {
           return;
         }
         setCustomers(data ?? []);
+        setSelectedCustomerId((current) => current ?? data?.[0]?.id ?? null);
         setCustomerStatus("");
       });
 
@@ -58,6 +63,60 @@ export default function Home() {
       isMounted = false;
     };
   }, [supabase, user]);
+
+  useEffect(() => {
+    if (!supabase || !selectedCustomerId) {
+      setSummary(null);
+      return;
+    }
+
+    let isMounted = true;
+    setSummaryStatus("Loading sales summary...");
+
+    async function loadSummary() {
+      const { data, error } = await supabase
+        .from("sales_records")
+        .select("amount,units,transaction_date")
+        .eq("customer_id", selectedCustomerId);
+
+      if (!isMounted) return;
+
+      if (error) {
+        setSummaryStatus(error.message);
+        setSummary(null);
+        return;
+      }
+
+      const records = data ?? [];
+      const dates = records
+        .map((record) => record.transaction_date)
+        .filter((date): date is string => Boolean(date))
+        .sort();
+      const months = [...new Set(dates.map((date) => date.slice(0, 7)))]
+        .sort()
+        .reverse();
+
+      setSummary({
+        customerId: selectedCustomerId,
+        sales: records.reduce((total, record) => total + Number(record.amount ?? 0), 0),
+        units: records.reduce((total, record) => total + Number(record.units ?? 0), 0),
+        transactions: records.length,
+        earliestDate: dates[0] ?? null,
+        latestDate: dates.at(-1) ?? null,
+        latestMonth: months[0] ?? null,
+        months,
+      });
+      setSummaryStatus("");
+    }
+
+    loadSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase, selectedCustomerId]);
+
+  const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null;
 
   async function signIn() {
     if (!supabase) {
@@ -113,20 +172,56 @@ export default function Home() {
             {customers.length > 0 ? (
               <div className="accountList">
                 {customers.map((customer) => (
-                  <button className="accountButton" key={customer.id}>
+                  <button
+                    className={customer.id === selectedCustomerId ? "accountButton active" : "accountButton"}
+                    key={customer.id}
+                    onClick={() => setSelectedCustomerId(customer.id)}
+                  >
                     {customer.name}
                   </button>
                 ))}
               </div>
             ) : null}
           </article>
-          <article>
+          <article className="wideCard">
             <span>02</span>
+            <h3>{selectedCustomer?.name ?? "Account"} Summary</h3>
+            {summaryStatus ? <p>{summaryStatus}</p> : null}
+            {summary ? (
+              <>
+                <div className="metricGrid">
+                  <div className="metric">
+                    <p>Sales</p>
+                    <strong>{currencyText(summary.sales)}</strong>
+                  </div>
+                  <div className="metric">
+                    <p>Units</p>
+                    <strong>{numberText(summary.units)}</strong>
+                  </div>
+                  <div className="metric">
+                    <p>Transactions</p>
+                    <strong>{numberText(summary.transactions)}</strong>
+                  </div>
+                  <div className="metric">
+                    <p>Last Date Uploaded</p>
+                    <strong>{dateText(summary.latestDate)}</strong>
+                  </div>
+                </div>
+                <div className="summaryLine">
+                  <span>Range: {dateText(summary.earliestDate)} to {dateText(summary.latestDate)}</span>
+                  <span>Latest Month: {monthText(summary.latestMonth)}</span>
+                  <span>Months Loaded: {numberText(summary.months.length)}</span>
+                </div>
+              </>
+            ) : null}
+          </article>
+          <article>
+            <span>03</span>
             <h3>Reports</h3>
             <p>Monthly, year-to-date, Top 25 by Art, and PDF exports will be rebuilt here.</p>
           </article>
           <article>
-            <span>03</span>
+            <span>04</span>
             <h3>Images</h3>
             <p>Product image overrides and cached Rebel Rags images will move into Supabase Storage.</p>
           </article>

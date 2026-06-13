@@ -180,6 +180,44 @@ input {
   min-width: 9rem;
 }
 
+.accountButton.active {
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.metricGrid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.metric p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.metric strong {
+  display: block;
+  font-size: 1.25rem;
+}
+
+.summaryLine {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1rem;
+}
+
 @media (max-width: 760px) {
   .loginShell,
   .shell {
@@ -198,5 +236,9 @@ input {
 
   .wideCard {
     grid-column: span 1;
+  }
+
+  .metricGrid {
+    grid-template-columns: 1fr;
   }
 }
