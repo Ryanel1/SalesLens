@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Customer } from "@/lib/types";
 
 export default function Home() {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("");
   const [user, setUser] = useState<User | null>(null);
@@ -13,15 +14,25 @@ export default function Home() {
   const [customerStatus, setCustomerStatus] = useState("Loading accounts...");
 
   useEffect(() => {
+    if (!supabase) {
+      setStatus("SalesLens is missing Supabase environment variables.");
+      return;
+    }
+
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
+    if (!supabase) {
+      setCustomerStatus("SalesLens is missing Supabase environment variables.");
+      return;
+    }
+
     if (!user) {
       setCustomers([]);
       return;
@@ -46,9 +57,14 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [supabase, user]);
 
   async function signIn() {
+    if (!supabase) {
+      setStatus("SalesLens is missing Supabase environment variables.");
+      return;
+    }
+
     setStatus("Sending sign-in link...");
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -61,6 +77,7 @@ export default function Home() {
   }
 
   async function signOut() {
+    if (!supabase) return;
     await supabase.auth.signOut();
     setStatus("");
   }

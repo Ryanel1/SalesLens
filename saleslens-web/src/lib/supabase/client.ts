@@ -1,6 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
-import { assertSupabaseConfig } from "./config";
+import { getSupabaseConfig } from "./config";
 
-const { supabaseUrl, supabaseAnonKey } = assertSupabaseConfig();
+export function createSupabaseBrowserClient() {
+  const config = getSupabaseConfig();
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  if (!config) {
+    return null;
+  }
+
+  return createClient(config.supabaseUrl, config.supabaseAnonKey);
+}
