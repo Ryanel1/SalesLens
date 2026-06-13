@@ -222,7 +222,7 @@ select {
   display: grid;
   gap: 0.9rem;
   grid-template-columns: minmax(0, 250px) 168px;
-  justify-content: start;
+  justify-content: end;
 }
 
 .navField,
@@ -249,9 +249,10 @@ select {
 }
 
 .navDateMeta {
-  display: grid;
-  gap: 0.35rem;
-  min-height: 2.25rem;
+  align-items: baseline;
+  display: flex;
+  gap: 0.3rem;
+  min-height: 1rem;
 }
 
 .navDateMeta strong {

@@ -445,8 +445,8 @@ export default function Home() {
 
             <div className="navUploadField">
               <div className="navDateMeta">
-                <p>Last Date Uploaded</p>
-                <strong>{dateText(lastUploaded)}</strong>
+                <p>Last Upload:</p>
+                <strong>{compactDateText(lastUploaded)}</strong>
               </div>
               <label className="fileButton">
                 Upload / Import
@@ -1376,6 +1376,13 @@ function amountValue(record: SalesRecord) {
 
 function latestDate(records: SalesRecord[]) {
   return records.map((record) => record.transaction_date).sort().at(-1) ?? null;
+}
+
+function compactDateText(value: string | null) {
+  if (!value) return "-";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "-";
+  return `${date.getMonth() + 1}.${date.getDate()}.${String(date.getFullYear()).slice(-2)}`;
 }
 
 function clean(value: string | null | undefined) {
