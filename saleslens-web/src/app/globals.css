@@ -26,13 +26,31 @@
 body {
   margin: 0;
   background:
-    linear-gradient(var(--stone) 1px, transparent 1px),
-    linear-gradient(90deg, var(--stone) 1px, transparent 1px),
+    linear-gradient(rgba(255, 253, 248, 0.82), rgba(246, 242, 234, 0.9)),
+    url("/images/campus-stadium-night-blur.jpg") center / cover fixed,
     var(--canvas);
-  background-size: 96px 96px;
   color: var(--charcoal);
   font-family: "Inter", "Montserrat", "Roboto", Arial, Helvetica, sans-serif;
+  isolation: isolate;
   line-height: 1.55;
+  min-height: 100vh;
+}
+
+body::before {
+  background:
+    linear-gradient(rgba(231, 222, 209, 0.42) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(231, 222, 209, 0.42) 1px, transparent 1px);
+  background-size: 96px 96px;
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 button,
