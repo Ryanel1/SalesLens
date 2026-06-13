@@ -60,6 +60,17 @@ export type SnapshotYtdLine = {
   priorTotal: number;
 };
 
+export type SnapshotYtdInsights = {
+  averageMonthlySales: number;
+  priorAverageMonthlySales: number;
+  stylesSold: number;
+  priorStylesSold: number;
+  colorsSold: number;
+  priorColorsSold: number;
+  artworksSold: number;
+  priorArtworksSold: number;
+};
+
 export type ReportSnapshotPayload = {
   version: 1;
   generatedAt: string;
@@ -73,6 +84,7 @@ export type ReportSnapshotPayload = {
   currentMetrics: SnapshotMetricSet;
   priorMetrics: SnapshotMetricSet;
   ytdLine: SnapshotYtdLine;
+  ytdInsights?: SnapshotYtdInsights;
   salesMix: SnapshotSalesMixSlice[];
   bestDay: SnapshotBestDay;
   topStyles: SnapshotTopStyle[];

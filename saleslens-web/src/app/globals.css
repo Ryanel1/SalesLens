@@ -558,6 +558,7 @@ select {
 
 .lineCard {
   height: 150px;
+  margin-bottom: 1px;
   padding: 1rem;
   position: relative;
 }
@@ -620,6 +621,40 @@ select {
 
 .priorLine {
   stroke: var(--oat);
+}
+
+.ytdInsightGrid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ytdInsightCard {
+  background: var(--paper-soft);
+  border: var(--hairline);
+  padding: 1rem;
+}
+
+.ytdInsightCard p {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.55rem;
+  text-transform: uppercase;
+}
+
+.ytdInsightCard strong {
+  color: var(--soft-black);
+  display: block;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+}
+
+.ytdInsightCard span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 850;
+  margin-top: 0.25rem;
 }
 
 .insightGrid {
@@ -994,6 +1029,7 @@ tbody tr:nth-child(even) {
   .metricGrid.three,
   .metricGrid.four,
   .insightGrid,
+  .ytdInsightGrid,
   .styleComparisonGrid,
   .controlDock {
     grid-template-columns: 1fr;

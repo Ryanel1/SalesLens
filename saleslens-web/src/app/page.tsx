@@ -224,9 +224,21 @@ export default function Home() {
   const currentMetrics = useMemo(() => metricSet(periodRecords), [periodRecords]);
   const priorMetrics = useMemo(() => metricSet(priorPeriodRecords), [priorPeriodRecords]);
   const totalRecordsMetrics = useMemo(() => metricSet(recordsForCustomer), [recordsForCustomer]);
+  const ytdCurrentRecords = useMemo(
+    () => currentYearRecords(recordsForCustomer, selectedMonthValue),
+    [recordsForCustomer, selectedMonthValue],
+  );
+  const ytdPriorRecords = useMemo(
+    () => (priorYearMonth ? currentYearRecords(recordsForCustomer, priorYearMonth) : []),
+    [priorYearMonth, recordsForCustomer],
+  );
+  const ytdInsights = useMemo(
+    () => ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, selectedMonthValue),
+    [selectedMonthValue, ytdCurrentRecords, ytdPriorRecords],
+  );
   const topArt = useMemo(
-    () => topArtRows(periodRecords, currentYearRecords(recordsForCustomer, selectedMonthValue), dashboardData.images),
-    [dashboardData.images, periodRecords, recordsForCustomer, selectedMonthValue],
+    () => topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images),
+    [dashboardData.images, periodRecords, ytdCurrentRecords],
   );
   const topStyles = useMemo(() => topStyleRows(periodRecords, priorPeriodRecords), [periodRecords, priorPeriodRecords]);
   const allStyles = useMemo(() => allStyleRows(periodRecords), [periodRecords]);
@@ -282,6 +294,7 @@ export default function Home() {
       currentMetrics,
       priorMetrics,
       ytdLine,
+      ytdInsights,
       salesMix,
       bestDay: {
         date: bestDay.date,
@@ -536,6 +549,33 @@ export default function Home() {
             </div>
 
             <MiniLineChart current={ytdLine.current} prior={ytdLine.prior} currentYear={selectedYear} />
+
+            <div className="ytdInsightGrid">
+              <YtdInsightCard
+                label="Avg Monthly Sales"
+                value={currencyText(ytdInsights.averageMonthlySales)}
+                detail={`${currencyText(ytdInsights.priorAverageMonthlySales)} LY`}
+                tone={ytdInsights.averageMonthlySales - ytdInsights.priorAverageMonthlySales}
+              />
+              <YtdInsightCard
+                label="Styles Sold"
+                value={numberText(ytdInsights.stylesSold)}
+                detail={`${numberText(ytdInsights.priorStylesSold)} LY`}
+                tone={ytdInsights.stylesSold - ytdInsights.priorStylesSold}
+              />
+              <YtdInsightCard
+                label="Colors Sold"
+                value={numberText(ytdInsights.colorsSold)}
+                detail={`${numberText(ytdInsights.priorColorsSold)} LY`}
+                tone={ytdInsights.colorsSold - ytdInsights.priorColorsSold}
+              />
+              <YtdInsightCard
+                label="Artworks Sold"
+                value={numberText(ytdInsights.artworksSold)}
+                detail={`${numberText(ytdInsights.priorArtworksSold)} LY`}
+                tone={ytdInsights.artworksSold - ytdInsights.priorArtworksSold}
+              />
+            </div>
           </section>
 
           <section className="sectionBlock">
@@ -693,6 +733,16 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
     <article className={`metric ${tone == null ? "" : changeClass(tone)}`}>
       <p>{label}</p>
       <strong>{value}</strong>
+    </article>
+  );
+}
+
+function YtdInsightCard({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {
+  return (
+    <article className="ytdInsightCard">
+      <p>{label}</p>
+      <strong>{value}</strong>
+      <span className={changeClass(tone)}>{detail}</span>
     </article>
   );
 }
@@ -1046,6 +1096,33 @@ function ytdPoints(records: SalesRecord[], month: string | null) {
     prior,
     currentTotal: current.at(-1) ?? 0,
     priorTotal: prior.at(-1) ?? 0,
+  };
+}
+
+function ytdInsightMetrics(currentRecords: SalesRecord[], priorRecords: SalesRecord[], month: string | null) {
+  const monthCount = month ? Number(month.slice(5, 7)) : 0;
+  const currentSales = sum(currentRecords.map(amountValue));
+  const priorSales = sum(priorRecords.map(amountValue));
+  const currentBreadth = breadthMetrics(currentRecords);
+  const priorBreadth = breadthMetrics(priorRecords);
+
+  return {
+    averageMonthlySales: monthCount ? currentSales / monthCount : 0,
+    priorAverageMonthlySales: monthCount ? priorSales / monthCount : 0,
+    stylesSold: currentBreadth.styles,
+    priorStylesSold: priorBreadth.styles,
+    colorsSold: currentBreadth.colors,
+    priorColorsSold: priorBreadth.colors,
+    artworksSold: currentBreadth.artworks,
+    priorArtworksSold: priorBreadth.artworks,
+  };
+}
+
+function breadthMetrics(records: SalesRecord[]) {
+  return {
+    styles: uniqueCount(records.map(normalizedStyle)),
+    colors: uniqueCount(records.map(colorName)),
+    artworks: uniqueCount(records.map((record) => clean(record.art_code))),
   };
 }
 

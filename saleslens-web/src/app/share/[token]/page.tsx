@@ -78,6 +78,34 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             />
           </div>
           <StaticLineChart payload={payload} />
+          {payload.ytdInsights ? (
+            <div className="ytdInsightGrid">
+              <YtdInsightCard
+                label="Avg Monthly Sales"
+                value={currencyText(payload.ytdInsights.averageMonthlySales)}
+                detail={`${currencyText(payload.ytdInsights.priorAverageMonthlySales)} LY`}
+                tone={payload.ytdInsights.averageMonthlySales - payload.ytdInsights.priorAverageMonthlySales}
+              />
+              <YtdInsightCard
+                label="Styles Sold"
+                value={numberText(payload.ytdInsights.stylesSold)}
+                detail={`${numberText(payload.ytdInsights.priorStylesSold)} LY`}
+                tone={payload.ytdInsights.stylesSold - payload.ytdInsights.priorStylesSold}
+              />
+              <YtdInsightCard
+                label="Colors Sold"
+                value={numberText(payload.ytdInsights.colorsSold)}
+                detail={`${numberText(payload.ytdInsights.priorColorsSold)} LY`}
+                tone={payload.ytdInsights.colorsSold - payload.ytdInsights.priorColorsSold}
+              />
+              <YtdInsightCard
+                label="Artworks Sold"
+                value={numberText(payload.ytdInsights.artworksSold)}
+                detail={`${numberText(payload.ytdInsights.priorArtworksSold)} LY`}
+                tone={payload.ytdInsights.artworksSold - payload.ytdInsights.priorArtworksSold}
+              />
+            </div>
+          ) : null}
         </ReportSection>
 
         <ReportSection title="Sales Summary" subtitle={`${payload.periodTitle} vs ${payload.priorPeriodTitle}`}>
@@ -248,6 +276,16 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
     <article className={`metric ${tone == null ? "" : changeClass(tone)}`}>
       <p>{label}</p>
       <strong>{value}</strong>
+    </article>
+  );
+}
+
+function YtdInsightCard({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {
+  return (
+    <article className="ytdInsightCard">
+      <p>{label}</p>
+      <strong>{value}</strong>
+      <span className={changeClass(tone)}>{detail}</span>
     </article>
   );
 }
