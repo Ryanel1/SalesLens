@@ -177,7 +177,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
         <ReportSection
           title="Top 25 by Art"
-          subtitle={`Top 25 Total: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
+          subtitle={`${payload.periodTitle} Top 25 Total: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
         >
           <div className="artGrid">
             {payload.topArt.map((row) => (
@@ -189,8 +189,8 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                 <div className="artMeta">
                   <strong>{row.artCode}</strong>
                   <span>{row.style} | {row.color}</span>
-                  <span>{numberText(row.units)} Units | {currencyText(row.sales)}</span>
-                  <span>CY: {numberText(row.cyUnits)} | {currencyText(row.cySales)}</span>
+                  <span>Month: {numberText(row.units)} Units | {currencyText(row.sales)}</span>
+                  <span>YTD: {numberText(row.cyUnits)} Units | {currencyText(row.cySales)}</span>
                 </div>
               </article>
             ))}

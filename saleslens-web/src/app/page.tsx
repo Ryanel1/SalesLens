@@ -646,7 +646,7 @@ export default function Home() {
               <div>
                 <h3>Top 25 by Art</h3>
                 <p>
-                  Top 25 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
+                  {monthText(selectedMonthValue)} Top 25 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
                   {currencyText(sum(topArt.map((row) => row.sales)))}
                 </p>
               </div>
@@ -661,8 +661,8 @@ export default function Home() {
                   <div className="artMeta">
                     <strong>{row.artCode}</strong>
                     <span>{row.style} | {row.color}</span>
-                    <span>{numberText(row.units)} Units | {currencyText(row.sales)}</span>
-                    <span>CY: {numberText(row.cyUnits)} | {currencyText(row.cySales)}</span>
+                    <span>Month: {numberText(row.units)} Units | {currencyText(row.sales)}</span>
+                    <span>YTD: {numberText(row.cyUnits)} Units | {currencyText(row.cySales)}</span>
                   </div>
                 </article>
               ))}
