@@ -32,6 +32,7 @@ type ProductImage = {
   color: string;
   image_url: string | null;
   storage_path: string | null;
+  resolved_url?: string | null;
 };
 
 type DashboardData = {
@@ -931,7 +932,12 @@ async function fetchProductImages(client: SupabaseClient, customerId: string) {
     .from("product_images")
     .select("style_number,art_code,color,image_url,storage_path")
     .eq("customer_id", customerId);
-  return { images: (data ?? []) as ProductImage[] };
+  return {
+    images: ((data ?? []) as ProductImage[]).map((image) => ({
+      ...image,
+      resolved_url: image.image_url ?? storagePublicUrl(client, image.storage_path),
+    })),
+  };
 }
 
 function availableMonths(records: SalesRecord[]) {
@@ -967,7 +973,7 @@ function metricSet(records: SalesRecord[]): MetricSet {
 
 function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: ProductImage[]): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
-  const imageMap = new Map(images.map((image) => [imageKey(image.style_number, image.art_code, image.color), image.image_url]));
+  const imageLookup = imageLookupMaps(images);
   return groupedRows(records, artKey)
     .map(([key, group]) => {
       const first = group[0];
@@ -988,12 +994,56 @@ function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: P
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
-        imageUrl: imageMap.get(imageKey(style, artCode, color)) ?? null,
+        imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
     .sort(sortBySales)
     .slice(0, 25)
     .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function storagePublicUrl(client: SupabaseClient, storagePath: string | null) {
+  if (!storagePath) return null;
+  return client.storage.from("product-images").getPublicUrl(storagePath).data.publicUrl;
+}
+
+function imageLookupMaps(images: ProductImage[]) {
+  const exact = new Map<string, string>();
+  const styleArt = new Map<string, Set<string>>();
+  const art = new Map<string, Set<string>>();
+
+  images.forEach((image) => {
+    const url = image.resolved_url ?? image.image_url;
+    if (!url) return;
+    exact.set(imageKey(image.style_number, image.art_code, image.color), url);
+    addToSetMap(styleArt, imageStyleArtKey(image.style_number, image.art_code), url);
+    addToSetMap(art, compactImagePart(image.art_code), url);
+  });
+
+  return { exact, styleArt, art };
+}
+
+function findProductImageUrl(
+  lookup: ReturnType<typeof imageLookupMaps>,
+  style: string,
+  artCode: string,
+  color: string,
+) {
+  const exact = lookup.exact.get(imageKey(style, artCode, color));
+  if (exact) return exact;
+
+  const styleArt = oneUniqueValue(lookup.styleArt.get(imageStyleArtKey(style, artCode)));
+  if (styleArt) return styleArt;
+
+  return oneUniqueValue(lookup.art.get(compactImagePart(artCode)));
+}
+
+function addToSetMap(map: Map<string, Set<string>>, key: string, value: string) {
+  map.set(key, (map.get(key) ?? new Set()).add(value));
+}
+
+function oneUniqueValue(values: Set<string> | undefined) {
+  return values?.size === 1 ? [...values][0] : null;
 }
 
 function topStyleRows(records: SalesRecord[], priorRecords: SalesRecord[]) {
@@ -1173,7 +1223,15 @@ function artKey(record: SalesRecord) {
 }
 
 function imageKey(style: string, artCode: string, color: string) {
-  return [clean(style).toUpperCase(), clean(artCode).toUpperCase(), clean(color).toUpperCase()].join("|");
+  return [compactImagePart(style), compactImagePart(artCode), compactImagePart(color)].join("|");
+}
+
+function imageStyleArtKey(style: string, artCode: string) {
+  return [compactImagePart(style), compactImagePart(artCode)].join("|");
+}
+
+function compactImagePart(value: string | null | undefined) {
+  return clean(value).toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
 function colorName(record: SalesRecord) {

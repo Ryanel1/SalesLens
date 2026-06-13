@@ -51,3 +51,19 @@ The importer reads:
 ~/Library/Application Support/SalesLens/sales-records.json
 ~/Library/Application Support/SalesLens/ProductImages/associations.json
 ```
+
+## Sync Local Product Images
+
+To make cached Rebel Rags product images available to the web app, use the same `.env.import.local` service role key and run:
+
+```bash
+npm run sync:images
+```
+
+The script uploads local files from:
+
+```text
+~/Library/Application Support/SalesLens/ProductImages/*.image
+```
+
+It creates or updates the public Supabase Storage bucket `product-images`, then upserts matching `product_images` rows for Rebel Rags.

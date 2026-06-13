@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sync:images": "node scripts/sync-product-images.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
