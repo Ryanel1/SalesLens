@@ -33,7 +33,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   const reportFileName = `${payload.accountName}-${payload.periodTitle}-SalesLens`.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
 
   return (
-    <main className="publicShell">
+    <main className={`publicShell ${accountThemeClass(payload.accountName)}`}>
       <section className="publicReport" id="saleslens-report-capture">
         <header className="publicHeader">
           <div>
@@ -359,6 +359,13 @@ function changeClass(value: number) {
   if (value > 0) return "positive";
   if (value < 0) return "negative";
   return "neutral";
+}
+
+function accountThemeClass(name?: string | null) {
+  const normalized = (name ?? "").toLowerCase();
+  if (normalized.includes("rebel")) return "accountThemeRebelRags";
+  if (normalized.includes("volshop") || normalized.includes("vol shop")) return "accountThemeVolshop";
+  return "accountThemeDefault";
 }
 
 function sum(values: number[]) {

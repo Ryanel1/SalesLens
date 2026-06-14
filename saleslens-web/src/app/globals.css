@@ -1013,10 +1013,13 @@ select {
   color: var(--taupe);
   font-size: 0.7rem;
   font-weight: 900;
+  justify-self: stretch;
   line-height: 1;
   letter-spacing: 0.08em;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.6rem;
+  text-align: center;
   text-transform: uppercase;
+  width: 100%;
 }
 
 .inventoryTopStyles div {
@@ -1251,22 +1254,33 @@ tbody tr:nth-child(even) {
 }
 
 .publicShell {
+  background:
+    radial-gradient(circle at 52% 8%, rgba(255, 253, 248, 0.24), transparent 0.35rem),
+    radial-gradient(circle at 80% 12%, var(--account-glow, rgba(111, 135, 149, 0.18)), transparent 34rem),
+    linear-gradient(120deg, rgba(17, 16, 14, 0.26), rgba(36, 35, 33, 0.1) 46%, rgba(17, 16, 14, 0.34)),
+    url("/images/campus-stadium-night-blur.jpg") center / cover fixed;
   min-height: 100vh;
   padding: clamp(1rem, 4vw, 4rem);
 }
 
 .publicReport {
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  box-shadow: 0 30px 90px rgba(36, 35, 33, 0.16);
+  backdrop-filter: blur(22px) saturate(1.04);
   margin: 0 auto;
   max-width: 1280px;
+  padding: clamp(1rem, 2.8vw, 2rem);
 }
 
 .publicHeader {
   align-items: end;
+  border-bottom: var(--hairline);
   display: grid;
   gap: clamp(1.5rem, 4vw, 4rem);
   grid-template-columns: minmax(0, 1fr) auto;
   margin-bottom: 1.2rem;
-  padding: clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(1.2rem, 3vw, 2.4rem) 0 clamp(1rem, 2vw, 1.4rem);
 }
 
 .publicBrand {
@@ -1293,7 +1307,7 @@ tbody tr:nth-child(even) {
 }
 
 .publicHeader h1 {
-  color: var(--soft-black);
+  color: var(--steel);
   font-size: clamp(3rem, 7vw, 7rem);
   margin-bottom: 0.55rem;
 }
@@ -1314,11 +1328,18 @@ tbody tr:nth-child(even) {
 }
 
 .printButton {
-  background: var(--charcoal);
+  background: var(--steel-dark);
+  border: 1px solid transparent;
   color: var(--paper);
+  font-size: 0.82rem;
   font-weight: 900;
   margin-top: 0.65rem;
   padding: 0.8rem 1rem;
+  text-transform: uppercase;
+}
+
+.printButton:hover {
+  background: var(--charcoal);
 }
 
 .publicEmpty {
@@ -1329,6 +1350,32 @@ tbody tr:nth-child(even) {
 
 .publicOverview {
   margin-bottom: 1.2rem;
+}
+
+.publicReport .sectionBlock {
+  background: rgba(255, 253, 248, 0.78);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  backdrop-filter: blur(16px) saturate(1.04);
+}
+
+.publicReport .overviewStrip {
+  background: rgba(255, 253, 248, 0.76);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  backdrop-filter: blur(16px) saturate(1.04);
+}
+
+.publicReport .overviewStrip article {
+  background: transparent;
+  border: 0;
+}
+
+.publicReport .metric,
+.publicReport .lineCard,
+.publicReport .ytdInsightCard,
+.publicReport .insightCard,
+.publicReport .styleCompareCard,
+.publicReport .artCard {
+  background: rgba(255, 253, 248, 0.84);
 }
 
 @media (max-width: 1180px) {
