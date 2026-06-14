@@ -86,6 +86,7 @@ type InventorySnapshot = {
   totalUnits: number;
   styles: number;
   artworks: number;
+  byBrand: { brand: string; units: number }[];
 } | null;
 
 const PAGE_SIZE = 1000;
@@ -888,6 +889,14 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
         <span>{numberText(snapshot.styles)} styles</span>
         <span>{numberText(snapshot.artworks)} artworks</span>
       </div>
+      <div className="inventoryBreakout">
+        {snapshot.byBrand.map((row) => (
+          <div key={row.brand}>
+            <span>{row.brand}</span>
+            <strong>{numberText(row.units)}</strong>
+          </div>
+        ))}
+      </div>
     </article>
   );
 }
@@ -1433,6 +1442,7 @@ function inventorySnapshotForRecords(records: SalesRecord[]): InventorySnapshot 
     totalUnits: sum(snapshotRecords.map((record) => record.inventory_units ?? 0)),
     styles: uniqueCount(snapshotRecords.map(styleKey)),
     artworks: uniqueCount(snapshotRecords.map((record) => clean(record.art_code))),
+    byBrand: inventoryByBrand(snapshotRecords),
   };
 }
 
@@ -1447,6 +1457,15 @@ function latestInventoryRecords(records: SalesRecord[]) {
   const latestInventoryDate = inventoryRecords.map((record) => record.transaction_date).sort().at(-1);
   if (!latestInventoryDate) return [];
   return inventoryRecords.filter((record) => record.transaction_date === latestInventoryDate);
+}
+
+function inventoryByBrand(records: SalesRecord[]) {
+  return groupedRows(records, brandName)
+    .map(([brand, group]) => ({
+      brand,
+      units: sum(group.map((record) => record.inventory_units ?? 0)),
+    }))
+    .sort((left, right) => right.units - left.units || left.brand.localeCompare(right.brand));
 }
 
 function latestDate(records: SalesRecord[]) {

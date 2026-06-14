@@ -878,8 +878,26 @@ select {
 }
 
 .inventoryCard {
+  align-content: center;
   display: grid;
-  gap: 1rem;
+  gap: 1.05rem;
+  text-align: center;
+}
+
+.inventoryCard .cardHeading {
+  display: grid;
+  gap: 0.25rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.inventoryCard .cardHeading h4 {
+  margin-bottom: 0;
+}
+
+.inventoryCard .cardHeading strong {
+  color: var(--taupe);
+  font-size: 0.86rem;
 }
 
 .inventoryTotal {
@@ -897,22 +915,54 @@ select {
 
 .inventoryTotal strong {
   color: var(--soft-black);
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2.7rem, 5vw, 4.4rem);
   line-height: 0.95;
 }
 
 .inventoryStats {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  justify-content: center;
 }
 
 .inventoryStats span {
-  border: 1px solid rgba(216, 207, 193, 0.9);
+  background: rgba(255, 253, 248, 0.62);
+  border: 1px solid rgba(216, 207, 193, 0.8);
   color: var(--taupe);
   font-size: 0.78rem;
   font-weight: 850;
-  padding: 0.32rem 0.55rem;
+  padding: 0.38rem 0.7rem;
+}
+
+.inventoryBreakout {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.1rem;
+}
+
+.inventoryBreakout div {
+  background: rgba(246, 242, 234, 0.68);
+  border: 1px solid rgba(216, 207, 193, 0.72);
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.65rem;
+}
+
+.inventoryBreakout span {
+  color: var(--taupe);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inventoryBreakout strong {
+  color: var(--soft-black);
+  font-size: 1.18rem;
+  line-height: 1;
 }
 
 .bestRow {
