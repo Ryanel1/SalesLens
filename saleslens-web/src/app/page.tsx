@@ -336,6 +336,7 @@ export default function Home() {
       priorMetrics,
       ytdLine,
       ytdInsights,
+      inventorySnapshot,
       salesMix,
       bestDay: {
         date: bestDay.date,

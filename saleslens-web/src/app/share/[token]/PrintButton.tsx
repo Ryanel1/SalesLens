@@ -6,10 +6,11 @@ export function PrintButton({ fileName }: { fileName: string }) {
   const [isSaving, setIsSaving] = useState(false);
 
   async function saveReport() {
-    const report = document.getElementById("saleslens-report-capture");
+    const report = document.querySelector<HTMLElement>(".publicShell") ?? document.getElementById("saleslens-report-capture");
     if (!report || isSaving) return;
 
     setIsSaving(true);
+    document.documentElement.classList.add("pdfCaptureMode");
     try {
       await document.fonts.ready;
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
@@ -18,12 +19,14 @@ export function PrintButton({ fileName }: { fileName: string }) {
         logging: false,
         scale: Math.min(2, window.devicePixelRatio || 1.5),
         useCORS: true,
+        width: report.scrollWidth,
+        height: report.scrollHeight,
         windowWidth: report.scrollWidth,
         windowHeight: report.scrollHeight,
       });
 
       const imageData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdfWidth = 1440;
+      const pdfWidth = canvas.width;
       const pdfHeight = (canvas.height / canvas.width) * pdfWidth;
       const pdf = new jsPDF({
         format: [pdfWidth, pdfHeight],
@@ -36,6 +39,7 @@ export function PrintButton({ fileName }: { fileName: string }) {
     } catch (error) {
       window.alert(error instanceof Error ? `Could not save PDF: ${error.message}` : "Could not save PDF.");
     } finally {
+      document.documentElement.classList.remove("pdfCaptureMode");
       setIsSaving(false);
     }
   }

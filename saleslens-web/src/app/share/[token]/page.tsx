@@ -5,6 +5,7 @@ import {
   isReportSnapshotPayload,
   type ReportSnapshotPayload,
   type ReportSnapshotRecord,
+  type SnapshotInventory,
   type SnapshotMetricSet,
 } from "@/lib/reportSnapshot";
 import { PrintButton } from "./PrintButton";
@@ -35,43 +36,55 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   return (
     <main className={`publicShell ${accountThemeClass(payload.accountName)}`}>
       <section className="publicReport" id="saleslens-report-capture">
-        <header className="publicHeader">
+        <header className="dashboardHeader publicDashboardHeader">
           <div>
-            <div className="publicBrand">
-              <strong>SalesLens</strong>
-              <span>by Lester Sales</span>
-            </div>
+            <p className="eyebrow">Sales Snapshot</p>
             <h1>{payload.accountName}</h1>
+            <p className="muted">Track current sales, prior-year movement, product breadth, and top sellers.</p>
           </div>
-          <div>
-            <strong>{payload.brandFilter}</strong>
-            <span>Generated {dateText(payload.generatedAt.slice(0, 10))}</span>
+
+          <div className="controlDock publicControlDock">
+            <article className="readonlyControl">
+              <span>Brand/Class</span>
+              <strong>{payload.brandFilter}</strong>
+            </article>
+            <article className="readonlyControl">
+              <span>Period</span>
+              <strong>{payload.periodTitle}</strong>
+            </article>
+            <article className="readonlyControl">
+              <span>Last Date Uploaded</span>
+              <strong>{dateText(payload.lastUploaded)}</strong>
+            </article>
             <PrintButton fileName={reportFileName} />
           </div>
         </header>
 
         <section className="overviewStrip publicOverview">
           <article>
-            <span>Period</span>
+            <span>Selected Period</span>
             <strong>{payload.periodTitle}</strong>
           </article>
           <article>
-            <span>Current Sales</span>
-            <strong>{currencyText(payload.currentMetrics.sales)}</strong>
+            <span>Brand/Class</span>
+            <strong>{payload.brandFilter}</strong>
           </article>
           <article>
-            <span>Prior Sales</span>
-            <strong>{currencyText(payload.priorMetrics.sales)}</strong>
+            <span>Imported Transactions</span>
+            <strong>{numberText(payload.currentMetrics.transactions)}</strong>
           </article>
           <article>
-            <span>Change</span>
-            <strong className={changeClass(payload.currentMetrics.sales - payload.priorMetrics.sales)}>
-              {changeText(payload.currentMetrics.sales, payload.priorMetrics.sales)}
-            </strong>
+            <span>Last Date Uploaded</span>
+            <strong>{dateText(payload.lastUploaded)}</strong>
           </article>
         </section>
 
-        <ReportSection title="YTD Sales Tracker" subtitle={`${payload.periodTitle} compared with the same date range last year.`}>
+        <ReportSection
+          title={payload.periodMode === "ytd" ? "Year Sales Tracker" : "YTD Sales Tracker"}
+          subtitle={`${payload.periodTitle} compared with the same date range last year.`}
+          aside={changeText(payload.ytdLine.currentTotal, payload.ytdLine.priorTotal)}
+          asideTone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
+        >
           <div className="metricGrid three">
             <MetricCard label="Current YTD" value={currencyText(payload.ytdLine.currentTotal)} />
             <MetricCard label="Prior YTD" value={currencyText(payload.ytdLine.priorTotal)} />
@@ -112,7 +125,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           ) : null}
         </ReportSection>
 
-        <ReportSection title="Sales Summary" subtitle={`${payload.periodTitle} vs ${payload.priorPeriodTitle}`}>
+        <ReportSection
+          title={payload.periodMode === "ytd" ? "Selected Year Summary" : "Monthly Sales Tracker"}
+          subtitle={`${payload.periodTitle} compared with ${payload.priorPeriodTitle}.`}
+          aside={changeText(payload.currentMetrics.sales, payload.priorMetrics.sales)}
+          asideTone={payload.currentMetrics.sales - payload.priorMetrics.sales}
+        >
           <div className="metricGrid four">
             <MetricCard label="Sales" value={currencyText(payload.currentMetrics.sales)} />
             <MetricCard label="Transactions" value={numberText(payload.currentMetrics.transactions)} />
@@ -171,10 +189,21 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </div>
         </ReportSection>
 
+        {payload.inventorySnapshot ? (
+          <ReportSection
+            title="Inventory Snapshot"
+            subtitle={`Current on-hand inventory from the latest inventory data inside ${payload.periodTitle}.`}
+            aside={dateText(payload.inventorySnapshot.date)}
+          >
+            <InventoryCard snapshot={payload.inventorySnapshot} />
+          </ReportSection>
+        ) : null}
+
         <ReportSection title="Top Performing Styles" subtitle="Style-level units, sales, colors, and artwork breadth.">
           <StyleStudyTabs
             monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
             ytdStyles={payload.styleStudyYtd ?? payload.topStyles}
+            currentPeriodTitle={payload.periodTitle}
             previousMonthTitle={payload.previousMonthTitle ?? "last month"}
             currentLabel={payload.periodMode === "monthly" ? "Current Month" : "Selected Year"}
             currentCompareLabel="LY"
@@ -268,7 +297,19 @@ async function loadSnapshot(token: string): Promise<ReportSnapshotRecord | null>
   };
 }
 
-function ReportSection({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+function ReportSection({
+  title,
+  subtitle,
+  aside,
+  asideTone,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  aside?: string;
+  asideTone?: number;
+  children: React.ReactNode;
+}) {
   return (
     <section className="sectionBlock">
       <div className="sectionTitle">
@@ -276,6 +317,7 @@ function ReportSection({ title, subtitle, children }: { title: string; subtitle:
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
+        {aside ? <strong className={asideTone == null ? "" : changeClass(asideTone)}>{aside}</strong> : null}
       </div>
       {children}
     </section>
@@ -297,6 +339,60 @@ function YtdInsightCard({ label, value, detail, tone }: { label: string; value: 
       <p>{label}</p>
       <strong>{value}</strong>
       <span className={changeClass(tone)}>{detail}</span>
+    </article>
+  );
+}
+
+function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
+  if (!snapshot) return null;
+  return (
+    <article className="inventoryCard">
+      <div className="inventoryTotal">
+        <span>On Hand Units</span>
+        <strong>{numberText(snapshot.totalUnits)}</strong>
+      </div>
+      <div className="inventorySummaryGrid">
+        <div>
+          <span>Styles In Stock</span>
+          <strong>{numberText(snapshot.styles)}</strong>
+        </div>
+        <div>
+          <span>Artworks In Stock</span>
+          <strong>{numberText(snapshot.artworks)}</strong>
+        </div>
+      </div>
+      <div className="inventoryBreakout">
+        {snapshot.byBrand.map((row) => (
+          <div key={row.brand}>
+            <span>{row.brand}</span>
+            <strong>{numberText(row.units)} Units</strong>
+          </div>
+        ))}
+      </div>
+      <div className="inventoryCoverage">
+        <span>Inventory Coverage</span>
+        <strong>{snapshot.coverage == null ? "-" : `${snapshot.coverage.toFixed(1)}x`}</strong>
+        <p>
+          {snapshot.coverage == null
+            ? "Current inventory is not comparable to the selected period's selling pace."
+            : `Based on current selling trends, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
+          {" "}
+          This helps show whether stock looks heavy, lean, or balanced against recent demand.
+        </p>
+      </div>
+      {snapshot.topStyles.length ? (
+        <div className="inventoryTopStyles">
+          <h4>ON-HAND INVENTORY STYLES</h4>
+          {snapshot.topStyles.map((row) => (
+            <div key={row.style}>
+              <span>{row.brand}</span>
+              <strong>{row.style}</strong>
+              <em>{numberText(row.units)} units</em>
+              <small>{countText(row.artworks, "artwork", "artworks")}</small>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -370,4 +466,8 @@ function accountThemeClass(name?: string | null) {
 
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
+}
+
+function countText(value: number, singular: string, plural: string) {
+  return `${numberText(value)} ${value === 1 ? singular : plural}`;
 }

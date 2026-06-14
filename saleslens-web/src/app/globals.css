@@ -468,7 +468,6 @@ select {
 .notice,
 .sectionBlock,
 .overviewStrip article,
-.publicHeader,
 .publicEmpty {
   background: rgba(255, 253, 248, 0.94);
   border: var(--hairline);
@@ -1260,71 +1259,51 @@ tbody tr:nth-child(even) {
     linear-gradient(120deg, rgba(17, 16, 14, 0.26), rgba(36, 35, 33, 0.1) 46%, rgba(17, 16, 14, 0.34)),
     url("/images/campus-stadium-night-blur.jpg") center / cover fixed;
   min-height: 100vh;
-  padding: clamp(1rem, 4vw, 4rem);
+  padding: 0;
 }
 
 .publicReport {
-  background: rgba(255, 253, 248, 0.88);
-  border: 1px solid rgba(231, 222, 209, 0.72);
-  box-shadow: 0 30px 90px rgba(36, 35, 33, 0.16);
-  backdrop-filter: blur(22px) saturate(1.04);
   margin: 0 auto;
-  max-width: 1280px;
-  padding: clamp(1rem, 2.8vw, 2rem);
+  max-width: none;
+  min-width: 0;
+  padding: clamp(1.25rem, 4vw, 4rem);
 }
 
-.publicHeader {
-  align-items: end;
-  border-bottom: var(--hairline);
-  display: grid;
-  gap: clamp(1.5rem, 4vw, 4rem);
-  grid-template-columns: minmax(0, 1fr) auto;
+.publicDashboardHeader {
   margin-bottom: 1.2rem;
-  padding: clamp(1.2rem, 3vw, 2.4rem) 0 clamp(1rem, 2vw, 1.4rem);
 }
 
-.publicBrand {
-  align-items: baseline;
-  display: flex;
+.publicDashboardHeader h1 {
+  color: var(--steel);
+  font-size: clamp(3.3rem, 7vw, 7.5rem);
+  margin-bottom: 1rem;
+}
+
+.publicControlDock {
+  align-content: end;
+}
+
+.readonlyControl {
+  border: var(--hairline);
+  display: grid;
   gap: 0.45rem;
-  margin-bottom: 0.8rem;
+  min-height: 74px;
+  padding: 0.85rem 0.95rem;
 }
 
-.publicBrand strong {
-  color: var(--soft-black);
-  font-size: clamp(1.1rem, 2vw, 1.55rem);
-  letter-spacing: 0;
-  line-height: 1;
-}
-
-.publicBrand span {
+.readonlyControl span {
   color: var(--taupe);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 900;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   line-height: 1;
   text-transform: uppercase;
 }
 
-.publicHeader h1 {
-  color: var(--steel);
-  font-size: clamp(3rem, 7vw, 7rem);
-  margin-bottom: 0.55rem;
-}
-
-.publicHeader p,
-.publicHeader span {
-  color: var(--taupe);
-}
-
-.publicHeader div:last-child {
-  display: grid;
-  gap: 0.35rem;
-  text-align: right;
-}
-
-.publicHeader strong {
+.readonlyControl strong {
   color: var(--charcoal);
+  font-size: 0.95rem;
+  line-height: 1.2;
 }
 
 .printButton {
@@ -1336,10 +1315,19 @@ tbody tr:nth-child(even) {
   margin-top: 0.65rem;
   padding: 0.8rem 1rem;
   text-transform: uppercase;
+  width: min(190px, 100%);
 }
 
 .printButton:hover {
   background: var(--charcoal);
+}
+
+.pdfCaptureMode .printButton {
+  visibility: hidden;
+}
+
+.pdfCaptureMode .publicShell {
+  background-attachment: scroll;
 }
 
 .publicEmpty {
@@ -1350,32 +1338,6 @@ tbody tr:nth-child(even) {
 
 .publicOverview {
   margin-bottom: 1.2rem;
-}
-
-.publicReport .sectionBlock {
-  background: rgba(255, 253, 248, 0.78);
-  border: 1px solid rgba(231, 222, 209, 0.72);
-  backdrop-filter: blur(16px) saturate(1.04);
-}
-
-.publicReport .overviewStrip {
-  background: rgba(255, 253, 248, 0.76);
-  border: 1px solid rgba(231, 222, 209, 0.72);
-  backdrop-filter: blur(16px) saturate(1.04);
-}
-
-.publicReport .overviewStrip article {
-  background: transparent;
-  border: 0;
-}
-
-.publicReport .metric,
-.publicReport .lineCard,
-.publicReport .ytdInsightCard,
-.publicReport .insightCard,
-.publicReport .styleCompareCard,
-.publicReport .artCard {
-  background: rgba(255, 253, 248, 0.84);
 }
 
 @media (max-width: 1180px) {
@@ -1393,17 +1355,12 @@ tbody tr:nth-child(even) {
     margin-top: -0.5rem;
   }
 
-  .dashboardHeader,
-  .publicHeader {
+  .dashboardHeader {
     grid-template-columns: 1fr;
   }
 
   .controlDock {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .publicHeader div:last-child {
-    text-align: left;
   }
 
   .artGrid {
@@ -1509,7 +1466,7 @@ tbody tr:nth-child(even) {
     display: none;
   }
 
-  .publicHeader,
+  .publicDashboardHeader,
   .sectionBlock,
   .overviewStrip article,
   .metric,

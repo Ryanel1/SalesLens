@@ -7,12 +7,14 @@ import type { SnapshotTopStyle } from "@/lib/reportSnapshot";
 export function StyleStudyTabs({
   monthlyStyles,
   ytdStyles,
+  currentPeriodTitle,
   previousMonthTitle,
   currentLabel = "Current Month",
   currentCompareLabel = "LY",
 }: {
   monthlyStyles: SnapshotTopStyle[];
   ytdStyles: SnapshotTopStyle[];
+  currentPeriodTitle: string;
   previousMonthTitle: string;
   currentLabel?: string;
   currentCompareLabel?: string;
@@ -32,7 +34,7 @@ export function StyleStudyTabs({
         </button>
       </div>
       <p className="studySubtitle">
-        {mode === "month" ? `Top 10 Styles vs ${previousMonthTitle}` : "Top 10 Styles vs Last YTD"}
+        {mode === "month" ? `Top 10 Styles: ${currentPeriodTitle} vs ${previousMonthTitle}` : "Top 10 Styles vs Last YTD"}
       </p>
       <div className="styleComparisonGrid">
         {styles.map((style) => (

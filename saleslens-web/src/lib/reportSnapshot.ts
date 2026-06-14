@@ -73,6 +73,16 @@ export type SnapshotYtdInsights = {
   priorArtworksSold: number;
 };
 
+export type SnapshotInventory = {
+  date: string;
+  totalUnits: number;
+  styles: number;
+  artworks: number;
+  coverage: number | null;
+  byBrand: { brand: string; units: number }[];
+  topStyles: { style: string; brand: string; units: number; artworks: number }[];
+} | null;
+
 export type ReportSnapshotPayload = {
   version: 1;
   generatedAt: string;
@@ -88,6 +98,7 @@ export type ReportSnapshotPayload = {
   priorMetrics: SnapshotMetricSet;
   ytdLine: SnapshotYtdLine;
   ytdInsights?: SnapshotYtdInsights;
+  inventorySnapshot?: SnapshotInventory;
   salesMix: SnapshotSalesMixSlice[];
   bestDay: SnapshotBestDay;
   topStyles: SnapshotTopStyle[];
