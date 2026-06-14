@@ -7,6 +7,7 @@ import {
   type ReportSnapshotRecord,
   type SnapshotInventory,
   type SnapshotMetricSet,
+  type SnapshotYtdInsights,
 } from "@/lib/reportSnapshot";
 import { StyleStudyTabs } from "./StyleStudyTabs";
 
@@ -74,42 +75,23 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             <StaticLineChart payload={payload} />
 
             <div className="ytdTrackerTiles">
-              <div className="metricGrid three">
-                <MetricCard label="Current YTD" value={currencyText(payload.ytdLine.currentTotal)} />
-                <MetricCard label="Prior YTD" value={currencyText(payload.ytdLine.priorTotal)} />
-                <MetricCard
-                  label="Total Change"
-                  value={currencyText(payload.ytdLine.currentTotal - payload.ytdLine.priorTotal)}
-                  tone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
-                />
-              </div>
+              <MetricCard label="Current YTD" value={currencyText(payload.ytdLine.currentTotal)} />
+              <MetricCard label="Prior YTD" value={currencyText(payload.ytdLine.priorTotal)} />
+              <MetricCard
+                label="Total Change"
+                value={currencyText(payload.ytdLine.currentTotal - payload.ytdLine.priorTotal)}
+                tone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
+              />
               {payload.ytdInsights ? (
-                <div className="ytdInsightGrid">
+                <>
                   <YtdInsightCard
                     label="Avg Monthly Sales"
                     value={currencyText(payload.ytdInsights.averageMonthlySales)}
                     detail={`${currencyText(payload.ytdInsights.priorAverageMonthlySales)} LY`}
                     tone={payload.ytdInsights.averageMonthlySales - payload.ytdInsights.priorAverageMonthlySales}
                   />
-                  <YtdInsightCard
-                    label="Styles Sold"
-                    value={numberText(payload.ytdInsights.stylesSold)}
-                    detail={`${numberText(payload.ytdInsights.priorStylesSold)} LY`}
-                    tone={payload.ytdInsights.stylesSold - payload.ytdInsights.priorStylesSold}
-                  />
-                  <YtdInsightCard
-                    label="Colors Sold"
-                    value={numberText(payload.ytdInsights.colorsSold)}
-                    detail={`${numberText(payload.ytdInsights.priorColorsSold)} LY`}
-                    tone={payload.ytdInsights.colorsSold - payload.ytdInsights.priorColorsSold}
-                  />
-                  <YtdInsightCard
-                    label="Artworks Sold"
-                    value={numberText(payload.ytdInsights.artworksSold)}
-                    detail={`${numberText(payload.ytdInsights.priorArtworksSold)} LY`}
-                    tone={payload.ytdInsights.artworksSold - payload.ytdInsights.priorArtworksSold}
-                  />
-                </div>
+                  <ProductBreadthCard insights={payload.ytdInsights} />
+                </>
               ) : null}
             </div>
           </div>
@@ -307,7 +289,7 @@ function ReportSection({
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
-        {aside ? <strong className={asideTone == null ? "" : changeClass(asideTone)}>{aside}</strong> : null}
+        {aside ? <strong className={`changeBadge ${asideTone == null ? "" : changeClass(asideTone)}`}>{aside}</strong> : null}
       </div>
       {children}
     </section>
@@ -329,6 +311,31 @@ function YtdInsightCard({ label, value, detail, tone }: { label: string; value: 
       <p>{label}</p>
       <strong>{value}</strong>
       <span className={changeClass(tone)}>{detail}</span>
+    </article>
+  );
+}
+
+function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
+  return (
+    <article className="ytdInsightCard productBreadthCard">
+      <p>Product Breadth</p>
+      <div>
+        <span>
+          <strong>{numberText(insights.stylesSold)}</strong>
+          Styles
+          <em>{numberText(insights.priorStylesSold)} LY</em>
+        </span>
+        <span>
+          <strong>{numberText(insights.colorsSold)}</strong>
+          Colors
+          <em>{numberText(insights.priorColorsSold)} LY</em>
+        </span>
+        <span>
+          <strong>{numberText(insights.artworksSold)}</strong>
+          Artworks
+          <em>{numberText(insights.priorArtworksSold)} LY</em>
+        </span>
+      </div>
     </article>
   );
 }
@@ -451,18 +458,34 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
         {displayedPrior.map((value, index) => (
           <g key={`prior-${index}`}>
             <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
-            {value ? <text className="pointLabel priorLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
+            {value ? (
+              <text className="pointLabel priorLabel" x={xFor(index)} y={labelY(value, displayedCurrent[index] ?? 0, "prior")}>
+                {compactNumber(value)}
+              </text>
+            ) : null}
           </g>
         ))}
         {displayedCurrent.map((value, index) => (
           <g key={`current-${index}`}>
             <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
-            {value ? <text className="pointLabel currentLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
+            {value ? (
+              <text className="pointLabel currentLabel" x={xFor(index)} y={labelY(value, displayedPrior[index] ?? 0, "current")}>
+                {compactNumber(value)}
+              </text>
+            ) : null}
           </g>
         ))}
       </svg>
     </div>
   );
+
+  function labelY(value: number, pairedValue: number, series: "current" | "prior") {
+    const y = yFor(value);
+    const pairedY = pairedValue ? yFor(pairedValue) : null;
+    const isClose = pairedY != null && Math.abs(y - pairedY) < 6;
+    if (!isClose) return y - 2.4;
+    return series === "prior" ? y - 5.2 : y + 5.1;
+  }
 }
 
 function padMonths(values: number[]) {

@@ -272,7 +272,7 @@ select {
   --steel: #ff8200;
   --steel-dark: #c95f00;
   --clay: #2f2d2a;
-  --oat: #d8b88b;
+  --oat: #8ecae6;
   --account-glow: rgba(255, 130, 0, 0.22);
   --positive-text: #4c4944;
 }
@@ -623,6 +623,34 @@ select {
   margin-bottom: 0;
 }
 
+.changeBadge {
+  align-self: start;
+  background: rgba(255, 253, 248, 0.9);
+  border: 1px solid rgba(216, 207, 193, 0.9);
+  box-shadow: 0 14px 34px rgba(36, 35, 33, 0.08);
+  color: var(--charcoal) !important;
+  display: inline-flex;
+  font-size: clamp(1.25rem, 2vw, 1.85rem);
+  font-weight: 950;
+  justify-self: end;
+  line-height: 1;
+  padding: 0.85rem 1rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.changeBadge.positive {
+  border-left: 5px solid var(--steel);
+}
+
+.changeBadge.negative {
+  border-left: 5px solid var(--clay);
+}
+
+.changeBadge.neutral {
+  border-left: 5px solid var(--taupe-2);
+}
+
 .metricGrid {
   display: grid;
   gap: 1px;
@@ -697,32 +725,49 @@ select {
   align-items: stretch;
   display: grid;
   gap: 1px;
-  grid-template-columns: minmax(0, 1.65fr) minmax(340px, 0.55fr);
+  grid-template-columns: 1fr;
 }
 
 .ytdTrackerTiles {
   display: grid;
   gap: 1px;
-}
-
-.ytdTrackerTiles .metricGrid,
-.ytdTrackerTiles .ytdInsightGrid {
-  margin-bottom: 0;
-}
-
-.ytdTrackerTiles .metricGrid.three,
-.ytdTrackerTiles .metricGrid.three {
-  grid-template-columns: 1fr;
-}
-
-.ytdTrackerTiles .ytdInsightGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .ytdTrackerTiles .metric,
 .ytdTrackerTiles .ytdInsightCard {
   min-height: 0;
-  padding: 0.85rem 1rem;
+  padding: 1rem;
+}
+
+.productBreadthCard > div {
+  align-items: end;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.productBreadthCard span {
+  color: var(--taupe);
+  display: grid;
+  font-size: 0.72rem;
+  font-weight: 850;
+  gap: 0.12rem;
+  text-transform: uppercase;
+}
+
+.productBreadthCard span strong {
+  color: var(--soft-black);
+  font-size: clamp(1.15rem, 1.7vw, 1.55rem);
+  line-height: 1;
+}
+
+.productBreadthCard em {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 850;
+  text-transform: none;
 }
 
 .lineLegend {
@@ -873,6 +918,16 @@ select {
   font-size: 0.85rem;
   font-weight: 850;
   margin-top: 0.25rem;
+}
+
+.productBreadthCard span {
+  display: grid;
+  font-size: 0.72rem;
+  margin-top: 0;
+}
+
+.productBreadthCard span strong {
+  font-size: clamp(1.15rem, 1.7vw, 1.55rem);
 }
 
 .insightGrid {
@@ -1481,6 +1536,7 @@ tbody tr:nth-child(even) {
   .insightGrid,
   .ytdInsightGrid,
   .ytdTrackerLayout,
+  .ytdTrackerTiles,
   .styleComparisonGrid,
   .inventoryCard,
   .inventorySummaryGrid,
@@ -1519,6 +1575,11 @@ tbody tr:nth-child(even) {
 
   .lineCard {
     height: 360px;
+    min-height: 360px;
+  }
+
+  .productBreadthCard > div {
+    grid-template-columns: 1fr;
   }
 
   .topNav {
@@ -1533,6 +1594,10 @@ tbody tr:nth-child(even) {
 
   .sectionTitle {
     grid-template-columns: 1fr;
+  }
+
+  .changeBadge {
+    justify-self: start;
   }
 
   .compareRow,

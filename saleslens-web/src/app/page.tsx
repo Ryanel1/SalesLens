@@ -576,7 +576,7 @@ export default function Home() {
                 <h3>{selectedPeriodKind === "year" ? "Year Sales Tracker" : "YTD Sales Tracker"}</h3>
                 <p>{ytdTitle(periodEndMonth)} compared with the same date range last year.</p>
               </div>
-              <strong className={changeClass(ytdLine.currentTotal - ytdLine.priorTotal)}>
+              <strong className={`changeBadge ${changeClass(ytdLine.currentTotal - ytdLine.priorTotal)}`}>
                 {changeText(ytdLine.currentTotal, ytdLine.priorTotal)}
               </strong>
             </div>
@@ -585,38 +585,16 @@ export default function Home() {
               <MiniLineChart current={ytdLine.current} prior={ytdLine.prior} currentYear={selectedYear} />
 
               <div className="ytdTrackerTiles">
-                <div className="metricGrid three">
-                  <MetricCard label={selectedYear ? `${selectedYear} YTD` : "Current YTD"} value={currencyText(ytdLine.currentTotal)} />
-                  <MetricCard label={selectedYear ? `${selectedYear - 1} YTD` : "Prior YTD"} value={currencyText(ytdLine.priorTotal)} />
-                  <MetricCard label="Total Change" value={currencyText(ytdLine.currentTotal - ytdLine.priorTotal)} tone={ytdLine.currentTotal - ytdLine.priorTotal} />
-                </div>
-
-                <div className="ytdInsightGrid">
-                  <YtdInsightCard
-                    label="Avg Monthly Sales"
-                    value={currencyText(ytdInsights.averageMonthlySales)}
-                    detail={`${currencyText(ytdInsights.priorAverageMonthlySales)} LY`}
-                    tone={ytdInsights.averageMonthlySales - ytdInsights.priorAverageMonthlySales}
-                  />
-                  <YtdInsightCard
-                    label="Styles Sold"
-                    value={numberText(ytdInsights.stylesSold)}
-                    detail={`${numberText(ytdInsights.priorStylesSold)} LY`}
-                    tone={ytdInsights.stylesSold - ytdInsights.priorStylesSold}
-                  />
-                  <YtdInsightCard
-                    label="Colors Sold"
-                    value={numberText(ytdInsights.colorsSold)}
-                    detail={`${numberText(ytdInsights.priorColorsSold)} LY`}
-                    tone={ytdInsights.colorsSold - ytdInsights.priorColorsSold}
-                  />
-                  <YtdInsightCard
-                    label="Artworks Sold"
-                    value={numberText(ytdInsights.artworksSold)}
-                    detail={`${numberText(ytdInsights.priorArtworksSold)} LY`}
-                    tone={ytdInsights.artworksSold - ytdInsights.priorArtworksSold}
-                  />
-                </div>
+                <MetricCard label={selectedYear ? `${selectedYear} YTD` : "Current YTD"} value={currencyText(ytdLine.currentTotal)} />
+                <MetricCard label={selectedYear ? `${selectedYear - 1} YTD` : "Prior YTD"} value={currencyText(ytdLine.priorTotal)} />
+                <MetricCard label="Total Change" value={currencyText(ytdLine.currentTotal - ytdLine.priorTotal)} tone={ytdLine.currentTotal - ytdLine.priorTotal} />
+                <YtdInsightCard
+                  label="Avg Monthly Sales"
+                  value={currencyText(ytdInsights.averageMonthlySales)}
+                  detail={`${currencyText(ytdInsights.priorAverageMonthlySales)} LY`}
+                  tone={ytdInsights.averageMonthlySales - ytdInsights.priorAverageMonthlySales}
+                />
+                <ProductBreadthCard insights={ytdInsights} />
               </div>
             </div>
           </section>
@@ -627,7 +605,7 @@ export default function Home() {
                 <h3>{selectedPeriodKind === "year" ? "Selected Year Summary" : "Monthly Sales Tracker"}</h3>
                 <p>{selectedPeriodTitle} compared with {priorPeriodTitle}.</p>
               </div>
-              <strong className={changeClass(currentMetrics.sales - priorMetrics.sales)}>
+              <strong className={`changeBadge ${changeClass(currentMetrics.sales - priorMetrics.sales)}`}>
                 {changeText(currentMetrics.sales, priorMetrics.sales)}
               </strong>
             </div>
@@ -834,6 +812,31 @@ function YtdInsightCard({ label, value, detail, tone }: { label: string; value: 
       <p>{label}</p>
       <strong>{value}</strong>
       <span className={changeClass(tone)}>{detail}</span>
+    </article>
+  );
+}
+
+function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsightMetrics> }) {
+  return (
+    <article className="ytdInsightCard productBreadthCard">
+      <p>Product Breadth</p>
+      <div>
+        <span>
+          <strong>{numberText(insights.stylesSold)}</strong>
+          Styles
+          <em>{numberText(insights.priorStylesSold)} LY</em>
+        </span>
+        <span>
+          <strong>{numberText(insights.colorsSold)}</strong>
+          Colors
+          <em>{numberText(insights.priorColorsSold)} LY</em>
+        </span>
+        <span>
+          <strong>{numberText(insights.artworksSold)}</strong>
+          Artworks
+          <em>{numberText(insights.priorArtworksSold)} LY</em>
+        </span>
+      </div>
     </article>
   );
 }
@@ -1082,18 +1085,34 @@ function MiniLineChart({
         {displayedPrior.map((value, index) => (
           <g key={`prior-${index}`}>
             <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
-            {value ? <text className="pointLabel priorLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
+            {value ? (
+              <text className="pointLabel priorLabel" x={xFor(index)} y={labelY(value, displayedCurrent[index] ?? 0, "prior")}>
+                {compactNumber(value)}
+              </text>
+            ) : null}
           </g>
         ))}
         {displayedCurrent.map((value, index) => (
           <g key={`current-${index}`}>
             <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
-            {value ? <text className="pointLabel currentLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
+            {value ? (
+              <text className="pointLabel currentLabel" x={xFor(index)} y={labelY(value, displayedPrior[index] ?? 0, "current")}>
+                {compactNumber(value)}
+              </text>
+            ) : null}
           </g>
         ))}
       </svg>
     </div>
   );
+
+  function labelY(value: number, pairedValue: number, series: "current" | "prior") {
+    const y = yFor(value);
+    const pairedY = pairedValue ? yFor(pairedValue) : null;
+    const isClose = pairedY != null && Math.abs(y - pairedY) < 6;
+    if (!isClose) return y - 2.4;
+    return series === "prior" ? y - 5.2 : y + 5.1;
+  }
 }
 
 function padMonths(values: number[]) {
