@@ -1037,29 +1037,52 @@ function MiniLineChart({
   prior: number[];
   currentYear: number | null;
 }) {
-  const maxValue = Math.max(...current, ...prior, 1);
-  const points = (values: number[]) =>
-    values
-      .map((value, index) => {
-        const x = values.length === 1 ? 50 : 6 + (index / (values.length - 1)) * 88;
-        const y = 86 - (value / maxValue) * 70;
-        return `${x},${y}`;
-      })
-      .join(" ");
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const currentValues = padMonths(current);
+  const priorValues = padMonths(prior);
+  const maxValue = Math.max(...currentValues, ...priorValues, 1);
+  const xFor = (index: number) => 7 + (index / 11) * 86;
+  const yFor = (value: number) => 74 - (value / maxValue) * 58;
+  const points = (values: number[]) => values.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
 
   return (
-    <div className="lineCard">
+    <div className="lineCard comparativeChart">
       <div className="lineLegend">
         <span><i className="dot current" />{currentYear ?? "CY"}</span>
         <span><i className="dot prior" />{currentYear ? currentYear - 1 : "LY"}</span>
       </div>
-      <svg viewBox="0 0 100 92" preserveAspectRatio="none" role="img" aria-label="YTD sales line chart">
-        <line x1="6" x2="94" y1="86" y2="86" />
-        <polyline points={points(prior)} className="priorLine" />
-        <polyline points={points(current)} className="currentLine" />
+      <svg viewBox="0 0 100 92" preserveAspectRatio="none" role="img" aria-label="Comparative sales by month">
+        {[0, 1, 2, 3, 4].map((tick) => {
+          const y = 74 - tick * 14.5;
+          return <line key={`h-${tick}`} className="chartGridLine horizontal" x1="7" x2="93" y1={y} y2={y} />;
+        })}
+        {months.map((month, index) => (
+          <g key={month}>
+            <line className="chartGridLine vertical" x1={xFor(index)} x2={xFor(index)} y1="10" y2="74" />
+            <text className="monthLabel" x={xFor(index)} y="87">{month}</text>
+          </g>
+        ))}
+        <polyline points={points(priorValues)} className="priorLine" />
+        <polyline points={points(currentValues)} className="currentLine" />
+        {priorValues.map((value, index) => (
+          <g key={`prior-${index}`}>
+            <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
+            {value ? <text className="pointLabel priorLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
+          </g>
+        ))}
+        {currentValues.map((value, index) => (
+          <g key={`current-${index}`}>
+            <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
+            {value ? <text className="pointLabel currentLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
+          </g>
+        ))}
       </svg>
     </div>
   );
+}
+
+function padMonths(values: number[]) {
+  return Array.from({ length: 12 }, (_, index) => values[index] ?? 0);
 }
 
 async function fetchAllRecords(client: SupabaseClient, customerId: string) {
@@ -1360,16 +1383,16 @@ function ytdPoints(records: SalesRecord[], month: string | null) {
   const lastMonth = Number(month.slice(5, 7));
   const current: number[] = [];
   const prior: number[] = [];
-  for (let index = 1; index <= lastMonth; index += 1) {
+  for (let index = 1; index <= 12; index += 1) {
     const suffix = String(index).padStart(2, "0");
-    current.push(sum(recordsForPeriod(records, `${year}-${suffix}`, "ytd").map(amountValue)));
-    prior.push(sum(recordsForPeriod(records, `${year - 1}-${suffix}`, "ytd").map(amountValue)));
+    current.push(index <= lastMonth ? sum(recordsForPeriod(records, `${year}-${suffix}`, "monthly").map(amountValue)) : 0);
+    prior.push(index <= lastMonth ? sum(recordsForPeriod(records, `${year - 1}-${suffix}`, "monthly").map(amountValue)) : 0);
   }
   return {
     current,
     prior,
-    currentTotal: current.at(-1) ?? 0,
-    priorTotal: prior.at(-1) ?? 0,
+    currentTotal: sum(current),
+    priorTotal: sum(prior),
   };
 }
 

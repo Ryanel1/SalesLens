@@ -44,24 +44,25 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             <p className="muted">Track current sales, prior-year movement, product breadth, and top sellers.</p>
           </div>
 
-          <div className="controlDock publicControlDock">
-            <article className="readonlyControl">
-              <span>Brand/Class</span>
-              <strong>{payload.brandFilter}</strong>
-            </article>
-            <article className="readonlyControl">
-              <span>Period</span>
-              <strong>{payload.periodTitle}</strong>
-            </article>
-          </div>
+          <aside className="publicHeaderAside">
+            <div className="publicContactCard">
+              <span>Sales Rep: Ryan Lester</span>
+              <span>Phone: (502) 689-7374</span>
+              <span>Email: ryanlestersells@gmail.com</span>
+              <span>Website: www.lestersales.net</span>
+            </div>
+            <div className="publicContextCard">
+              <div>
+                <span>Brand/Class</span>
+                <strong>{payload.brandFilter}</strong>
+              </div>
+              <div>
+                <span>Period</span>
+                <strong>{payload.periodTitle}</strong>
+              </div>
+            </div>
+          </aside>
         </header>
-
-        <section className="overviewStrip publicOverview">
-          <article>
-            <span>Imported Transactions</span>
-            <strong>{numberText(payload.currentMetrics.transactions)}</strong>
-          </article>
-        </section>
 
         <ReportSection
           title={payload.periodMode === "ytd" ? "Year Sales Tracker" : "YTD Sales Tracker"}
