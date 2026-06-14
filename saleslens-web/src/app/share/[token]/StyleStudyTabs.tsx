@@ -9,7 +9,7 @@ export function StyleStudyTabs({
   ytdStyles,
   previousMonthTitle,
   currentLabel = "Current Month",
-  currentCompareLabel = "Compare",
+  currentCompareLabel = "LY",
 }: {
   monthlyStyles: SnapshotTopStyle[];
   ytdStyles: SnapshotTopStyle[];
@@ -45,11 +45,16 @@ export function StyleStudyTabs({
 
 function StyleCard({ style, compareLabel }: { style: SnapshotTopStyle; compareLabel: string }) {
   const maxUnits = Math.max(style.units, style.priorUnits, 1);
+  const unitDelta = style.units - style.priorUnits;
   return (
     <article className="styleCompareCard">
       <div className="styleCompareTop">
         <strong>#{style.rank} {style.style}</strong>
         <span>{style.brand}</span>
+        <em className={changeClass(unitDelta)}>
+          {unitDelta >= 0 ? "+" : "-"}
+          {numberText(Math.abs(unitDelta))} units
+        </em>
         <em className={changeClass(style.sales - style.priorSales)}>{currencyText(style.sales - style.priorSales)}</em>
       </div>
       <p>

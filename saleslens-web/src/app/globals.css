@@ -954,7 +954,7 @@ select {
   align-items: baseline;
   display: grid;
   gap: 0.65rem;
-  grid-template-columns: minmax(150px, 1fr) 92px 120px;
+  grid-template-columns: minmax(150px, 1fr) 92px 100px 120px;
 }
 
 .styleCompareTop strong {

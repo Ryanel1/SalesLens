@@ -176,7 +176,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             ytdStyles={payload.styleStudyYtd ?? payload.topStyles}
             previousMonthTitle={payload.previousMonthTitle ?? "last month"}
             currentLabel={payload.periodMode === "monthly" ? "Current Month" : "Selected Year"}
-            currentCompareLabel={payload.periodMode === "monthly" ? "Compare" : "LY"}
+            currentCompareLabel="LY"
           />
         </ReportSection>
 

@@ -232,10 +232,8 @@ export default function Home() {
   }, [period, recordsForCustomer]);
   const selectedYear = period?.year ?? null;
   const priorYearMonth = periodEndMonth && selectedYear ? `${selectedYear - 1}${periodEndMonth.slice(4)}` : null;
-  const previousMonth = period?.kind === "month" ? addMonths(period.value, -1) : null;
   const selectedPeriodTitle = periodTitle(period, periodEndMonth);
   const priorPeriodTitle = priorTitle(period, periodEndMonth);
-  const comparisonPeriodTitle = period?.kind === "month" ? monthText(previousMonth) : priorPeriodTitle;
   const selectedPeriodKind = period?.kind ?? "month";
 
   const periodRecords = useMemo(() => {
@@ -248,11 +246,7 @@ export default function Home() {
     return recordsForPriorPeriod(recordsForCustomer, period);
   }, [period, recordsForCustomer]);
 
-  const previousMonthRecords = useMemo(() => {
-    if (!previousMonth) return [];
-    return recordsForPeriod(recordsForCustomer, previousMonth, "monthly");
-  }, [previousMonth, recordsForCustomer]);
-  const comparisonRecords = period?.kind === "month" ? previousMonthRecords : priorPeriodRecords;
+  const comparisonRecords = priorPeriodRecords;
 
   const currentMetrics = useMemo(() => metricSet(periodRecords), [periodRecords]);
   const priorMetrics = useMemo(() => metricSet(priorPeriodRecords), [priorPeriodRecords]);
@@ -325,7 +319,7 @@ export default function Home() {
       selectedMonth: periodEndMonth,
       periodTitle: selectedPeriodTitle,
       priorPeriodTitle,
-      previousMonthTitle: comparisonPeriodTitle,
+      previousMonthTitle: priorPeriodTitle,
       lastUploaded,
       currentMetrics,
       priorMetrics,
@@ -649,7 +643,7 @@ export default function Home() {
                 <h3>Style Study</h3>
                 <p>
                   {styleStudyMode === "month"
-                    ? `Top 10 Styles: ${selectedPeriodTitle} vs ${comparisonPeriodTitle}`
+                    ? `Top 10 Styles: ${selectedPeriodTitle} vs ${priorPeriodTitle}`
                     : "Top 10 Styles vs Last YTD"}
                 </p>
               </div>
@@ -664,7 +658,7 @@ export default function Home() {
             </div>
             <div className="styleComparisonGrid">
               {(styleStudyMode === "month" ? periodStyleStudy : ytdStyleStudy).map((style) => (
-                <StyleComparisonCard key={style.style} style={style} compareLabel={styleStudyMode === "month" && selectedPeriodKind === "month" ? "Compare" : "LY"} />
+                <StyleComparisonCard key={style.style} style={style} compareLabel="LY" />
               ))}
             </div>
           </section>
@@ -910,11 +904,16 @@ function CompareBar({ label, value, max, secondary = false }: { label: string; v
 
 function StyleComparisonCard({ style, compareLabel }: { style: TopStyle; compareLabel: string }) {
   const maxUnits = Math.max(style.units, style.priorUnits, 1);
+  const unitDelta = style.units - style.priorUnits;
   return (
     <article className="styleCompareCard">
       <div className="styleCompareTop">
         <strong>#{style.rank} {style.style}</strong>
         <span>{style.brand}</span>
+        <em className={changeClass(unitDelta)}>
+          {unitDelta >= 0 ? "+" : "-"}
+          {numberText(Math.abs(unitDelta))} units
+        </em>
         <em className={changeClass(style.sales - style.priorSales)}>{currencyText(style.sales - style.priorSales)}</em>
       </div>
       <p>
