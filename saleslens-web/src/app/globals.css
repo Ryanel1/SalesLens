@@ -274,6 +274,7 @@ select {
   --clay: #2f2d2a;
   --oat: #d8b88b;
   --account-glow: rgba(255, 130, 0, 0.22);
+  --positive-text: #4c4944;
 }
 
 .accountThemeRebelRags {
@@ -333,9 +334,7 @@ select {
 }
 
 .navField,
-.navUploadField,
-.navSignOutField {
-  align-self: end;
+.navUploadField {
   display: grid;
   gap: 0.45rem;
   grid-template-rows: 1rem 44px;
@@ -387,6 +386,10 @@ select {
 }
 
 .navSignOutField {
+  align-self: center;
+  display: grid;
+  gap: 0.45rem;
+  grid-template-rows: 1rem 44px;
   justify-self: end;
   width: max-content;
 }
@@ -666,7 +669,7 @@ select {
 }
 
 .positive {
-  color: var(--steel-dark) !important;
+  color: var(--positive-text, var(--steel-dark)) !important;
 }
 
 .negative {
@@ -878,13 +881,33 @@ select {
   align-items: center;
   display: grid;
   gap: 0.55rem;
-  grid-template-columns: 104px 1fr 104px;
+  grid-template-columns: 136px 1fr 104px;
   margin-top: 0.5rem;
 }
 
 .bestRow strong,
 .bestRow small {
   font-size: 0.78rem;
+}
+
+.bestItem {
+  display: grid;
+  gap: 0.1rem;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.bestItem span,
+.bestItem small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bestItem small {
+  color: var(--taupe);
+  font-size: 0.66rem;
+  font-weight: 800;
 }
 
 .bestRow small {
@@ -1020,6 +1043,7 @@ select {
   color: var(--taupe);
   font-size: 0.78rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .tableWrap {

@@ -7,6 +7,15 @@ export function currencyText(value: number) {
   });
 }
 
+export function wholeCurrencyText(value: number) {
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+}
+
 export function numberText(value: number) {
   return value.toLocaleString("en-US");
 }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { parseSalesWorkbook, type ParsedSalesRecord } from "@/lib/importSalesData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { currencyText, dateText, monthText, numberText } from "@/lib/formatters";
+import { currencyText, dateText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
 
@@ -647,7 +647,7 @@ export default function Home() {
                 <h3>Style Study</h3>
                 <p>
                   {styleStudyMode === "month"
-                    ? `Top 10 Styles vs ${comparisonPeriodTitle}`
+                    ? `Top 10 Styles: ${selectedPeriodTitle} vs ${comparisonPeriodTitle}`
                     : "Top 10 Styles vs Last YTD"}
                 </p>
               </div>
@@ -687,9 +687,9 @@ export default function Home() {
                   <div className="artMeta">
                     <strong>{row.artCode}</strong>
                     <span>{row.style} | {row.color}</span>
-                    <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.units)} Units | {currencyText(row.sales)}</span>
+                    <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
                     {selectedPeriodKind === "month" ? (
-                      <span>YTD: {numberText(row.cyUnits)} Units | {currencyText(row.cySales)}</span>
+                      <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
                     ) : null}
                   </div>
                 </article>
@@ -877,7 +877,10 @@ function BestDayCard({ bestDay }: { bestDay: ReturnType<typeof bestSalesDay> }) 
       </p>
       {bestDay.items.map((item) => (
         <div className="bestRow" key={`${item.style}-${item.artCode}-${item.color}`}>
-          <strong>#{item.rank} {item.style}</strong>
+          <strong className="bestItem">
+            <span>#{item.rank} {item.style}</span>
+            <small>{item.artCode} | {item.color}</small>
+          </strong>
           <span className="barTrack"><span style={{ width: `${(item.units / maxUnits) * 100}%` }} /></span>
           <small>{numberText(item.units)} | {currencyText(item.sales)}</small>
         </div>
