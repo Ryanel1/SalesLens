@@ -199,7 +199,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                     <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
                   ) : null}
                   {row.inventoryUnits != null ? (
-                    <span>Inv: {numberText(row.inventoryUnits)}</span>
+                    <span>Current Inv: {numberText(row.inventoryUnits)}</span>
                   ) : null}
                 </div>
               </article>
