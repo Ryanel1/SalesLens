@@ -81,6 +81,13 @@ type SalesMixSlice = {
   percent: number;
 };
 
+type InventorySnapshot = {
+  date: string;
+  totalUnits: number;
+  styles: number;
+  artworks: number;
+} | null;
+
 const PAGE_SIZE = 1000;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
@@ -272,6 +279,7 @@ export default function Home() {
   const allStyleRowsForPeriod = useMemo(() => allStyleRows(periodRecords), [periodRecords]);
   const allStyles = useMemo(() => allStyleRowsForPeriod.slice(0, 100), [allStyleRowsForPeriod]);
   const salesMix = useMemo(() => salesMixSlices(periodRecords), [periodRecords]);
+  const inventorySnapshot = useMemo(() => inventorySnapshotForRecords(periodRecords), [periodRecords]);
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
   const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, periodEndMonth), [recordsForCustomer, periodEndMonth]);
   const lastUploaded = latestDate(recordsForCustomer);
@@ -633,6 +641,7 @@ export default function Home() {
             <div className="insightGrid">
               <SalesMixCard slices={salesMix} totalUnits={currentMetrics.units} />
               <ComparisonCard current={currentMetrics} prior={priorMetrics} selectedPeriod={selectedPeriodTitle} priorPeriod={priorPeriodTitle} />
+              {inventorySnapshot ? <InventoryCard snapshot={inventorySnapshot} /> : null}
               <BestDayCard bestDay={bestDay} />
             </div>
           </section>
@@ -859,6 +868,26 @@ function ComparisonCard({
       </div>
       <CompareBar label={selectedPeriod} value={current.sales} max={maxSales} />
       <CompareBar label={priorPeriod} value={prior.sales} max={maxSales} secondary />
+    </article>
+  );
+}
+
+function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
+  if (!snapshot) return null;
+  return (
+    <article className="insightCard inventoryCard">
+      <div className="cardHeading">
+        <h4>Inventory Snapshot</h4>
+        <strong>{dateText(snapshot.date)}</strong>
+      </div>
+      <div className="inventoryTotal">
+        <span>On Hand Units</span>
+        <strong>{numberText(snapshot.totalUnits)}</strong>
+      </div>
+      <div className="inventoryStats">
+        <span>{numberText(snapshot.styles)} styles</span>
+        <span>{numberText(snapshot.artworks)} artworks</span>
+      </div>
     </article>
   );
 }
@@ -1143,7 +1172,7 @@ function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: P
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
-        inventoryUnits: inventoryTotal(group),
+        inventoryUnits: inventoryTotalForLatestSnapshot(group),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
@@ -1392,21 +1421,32 @@ function monthKey(value: string | null) {
   return value?.slice(0, 7) ?? null;
 }
 
-function addMonths(month: string, offset: number) {
-  const date = new Date(`${month}-01T00:00:00`);
-  if (Number.isNaN(date.getTime())) return null;
-  date.setMonth(date.getMonth() + offset);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
 function amountValue(record: SalesRecord) {
   return Number(record.amount ?? 0);
 }
 
-function inventoryTotal(records: SalesRecord[]) {
+function inventorySnapshotForRecords(records: SalesRecord[]): InventorySnapshot {
+  const snapshotRecords = latestInventoryRecords(records);
+  if (!snapshotRecords.length) return null;
+  return {
+    date: snapshotRecords[0].transaction_date,
+    totalUnits: sum(snapshotRecords.map((record) => record.inventory_units ?? 0)),
+    styles: uniqueCount(snapshotRecords.map(styleKey)),
+    artworks: uniqueCount(snapshotRecords.map((record) => clean(record.art_code))),
+  };
+}
+
+function inventoryTotalForLatestSnapshot(records: SalesRecord[]) {
+  const snapshotRecords = latestInventoryRecords(records);
+  if (!snapshotRecords.length) return null;
+  return sum(snapshotRecords.map((record) => record.inventory_units ?? 0));
+}
+
+function latestInventoryRecords(records: SalesRecord[]) {
   const inventoryRecords = records.filter((record) => record.inventory_units != null);
-  if (!inventoryRecords.length) return null;
-  return sum(inventoryRecords.map((record) => record.inventory_units ?? 0));
+  const latestInventoryDate = inventoryRecords.map((record) => record.transaction_date).sort().at(-1);
+  if (!latestInventoryDate) return [];
+  return inventoryRecords.filter((record) => record.transaction_date === latestInventoryDate);
 }
 
 function latestDate(records: SalesRecord[]) {

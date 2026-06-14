@@ -785,7 +785,7 @@ select {
 .insightGrid {
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .insightCard {
@@ -875,6 +875,44 @@ select {
   font-size: 0.9rem;
   font-weight: 750;
   margin-bottom: 0.8rem;
+}
+
+.inventoryCard {
+  display: grid;
+  gap: 1rem;
+}
+
+.inventoryTotal {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.inventoryTotal span {
+  color: var(--taupe);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.inventoryTotal strong {
+  color: var(--soft-black);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 0.95;
+}
+
+.inventoryStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.inventoryStats span {
+  border: 1px solid rgba(216, 207, 193, 0.9);
+  color: var(--taupe);
+  font-size: 0.78rem;
+  font-weight: 850;
+  padding: 0.32rem 0.55rem;
 }
 
 .bestRow {
