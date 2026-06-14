@@ -930,10 +930,10 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
           <h4>On-Hand Inventory Styles</h4>
           {snapshot.topStyles.map((row) => (
             <div key={row.style}>
-              <p>
-                <strong>{row.brand} {row.style}</strong> {numberText(row.units)} units across{" "}
-                {countText(row.artworks, "artwork", "artworks")}.
-              </p>
+              <span>{row.brand}</span>
+              <strong>{row.style}</strong>
+              <em>{numberText(row.units)} units</em>
+              <small>{countText(row.artworks, "artwork", "artworks")}</small>
             </div>
           ))}
         </div>

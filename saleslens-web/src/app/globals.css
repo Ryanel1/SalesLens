@@ -1015,22 +1015,26 @@ select {
 }
 
 .inventoryTopStyles div {
-  justify-self: center;
-  max-width: 560px;
+  align-items: baseline;
+  display: grid;
+  gap: clamp(1rem, 3vw, 3rem);
+  grid-template-columns: minmax(110px, 0.8fr) minmax(110px, 0.8fr) minmax(140px, 1fr) minmax(140px, 1fr);
   width: 100%;
-}
-
-.inventoryTopStyles p {
-  color: var(--taupe);
-  font-size: 0.82rem;
-  font-weight: 800;
-  margin: 0;
 }
 
 .inventoryTopStyles strong {
   color: var(--soft-black);
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   font-weight: 900;
+}
+
+.inventoryTopStyles em,
+.inventoryTopStyles small {
+  color: var(--taupe);
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 850;
+  text-align: right;
 }
 
 .bestRow {
