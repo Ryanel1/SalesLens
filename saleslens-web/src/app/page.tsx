@@ -312,7 +312,7 @@ export default function Home() {
     const missingRows = topArt
       .filter((row) => !row.imageUrl && row.style !== "-" && row.artCode !== "-")
       .filter((row) => !imageFetchAttempts.current.has(imageAttemptKey(row)))
-      .slice(0, 25);
+      .slice(0, 30);
 
     if (!missingRows.length) return;
     missingRows.forEach((row) => imageFetchAttempts.current.add(imageAttemptKey(row)));
@@ -741,7 +741,7 @@ export default function Home() {
               <div>
                 <h3>Top Performing Arts</h3>
                 <p>
-                  {selectedPeriodTitle} Top 25 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
+                  {selectedPeriodTitle} Top 30 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
                   {currencyText(sum(topArt.map((row) => row.sales)))}
                 </p>
               </div>
@@ -1389,8 +1389,8 @@ function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: P
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
-    .sort(sortBySales)
-    .slice(0, 25)
+    .sort(sortByUnits)
+    .slice(0, 30)
     .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
@@ -1677,7 +1677,12 @@ function styleKey(record: SalesRecord) {
 }
 
 function artKey(record: SalesRecord) {
-  return [brandName(record), normalizedStyle(record), clean(record.art_code) || "-", colorName(record)].join("|");
+  return [
+    compactImagePart(brandName(record)),
+    normalizedStyle(record),
+    compactImagePart(clean(record.art_code) || "-"),
+    compactImagePart(colorName(record)),
+  ].join("|");
 }
 
 function imageKey(style: string, artCode: string, color: string) {
@@ -1786,6 +1791,10 @@ function sum(values: number[]) {
 
 function sortBySales(left: MetricSet, right: MetricSet) {
   return right.sales - left.sales || right.units - left.units;
+}
+
+function sortByUnits(left: MetricSet, right: MetricSet) {
+  return right.units - left.units || right.sales - left.sales;
 }
 
 function changeText(current: number, prior: number) {

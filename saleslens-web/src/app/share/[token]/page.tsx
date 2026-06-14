@@ -136,7 +136,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
         <ReportSection
           title="Top Performing Arts"
-          subtitle={`${payload.periodTitle} Top 25 Total: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
+          subtitle={`${payload.periodTitle} Top 30 Total: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
         >
           <div className="artGrid">
             {payload.topArt.map((row) => (

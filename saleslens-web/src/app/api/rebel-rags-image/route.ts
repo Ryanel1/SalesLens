@@ -28,7 +28,7 @@ type ProductImageMatch = {
 };
 
 const REBEL_RAGS_BASE_URL = "https://www.rebelrags.net";
-const MAX_LOOKUPS = 25;
+const MAX_LOOKUPS = 30;
 
 export async function POST(request: NextRequest) {
   const config = getSupabaseConfig();
