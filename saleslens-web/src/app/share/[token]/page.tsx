@@ -7,6 +7,7 @@ import {
   type ReportSnapshotRecord,
   type SnapshotInventory,
   type SnapshotMetricSet,
+  type SnapshotMonthlyDrivers,
   type SnapshotYtdInsights,
 } from "@/lib/reportSnapshot";
 import { StyleStudyTabs } from "./StyleStudyTabs";
@@ -110,35 +111,10 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
             <MetricCard label="Last Year Sales" value={currencyText(payload.priorMetrics.sales)} />
           </div>
 
-          <div className="insightGrid">
-            <article className="insightCard">
-              <h4>Sales Mix Units</h4>
-              <div className="mixStack">
-                {payload.salesMix.map((slice) => (
-                  <div className="mixRow" key={slice.name}>
-                    <div>
-                      <strong>{slice.name}</strong>
-                      <span>{numberText(slice.units)} units</span>
-                    </div>
-                    <div className="barTrack">
-                      <span style={{ width: `${Math.max(3, slice.percent)}%` }} />
-                    </div>
-                    <small>{slice.percent.toFixed(1)}%</small>
-                  </div>
-                ))}
-              </div>
-            </article>
-
-            <article className="insightCard">
-              <div className="cardHeading">
-                <h4>Sales Comparison</h4>
-                <strong className={changeClass(payload.currentMetrics.sales - payload.priorMetrics.sales)}>
-                  {changeText(payload.currentMetrics.sales, payload.priorMetrics.sales)}
-                </strong>
-              </div>
-              <MetricCompare current={payload.currentMetrics} prior={payload.priorMetrics} />
-            </article>
-
+          {payload.monthlyDrivers ? (
+            <SalesDriverGrid current={payload.currentMetrics} prior={payload.priorMetrics} drivers={payload.monthlyDrivers} />
+          ) : null}
+          <div className="featureInsight">
             <article className="insightCard">
               <div className="cardHeading">
                 <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
@@ -340,6 +316,69 @@ function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
   );
 }
 
+function SalesDriverGrid({
+  current,
+  prior,
+  drivers,
+}: {
+  current: SnapshotMetricSet;
+  prior: SnapshotMetricSet;
+  drivers: SnapshotMonthlyDrivers;
+}) {
+  return (
+    <div className="salesDriverGrid">
+      <DriverTile
+        label="Sales Change"
+        value={changeText(current.sales, prior.sales)}
+        detail={`${currencyText(current.sales)} vs ${currencyText(prior.sales)} LY`}
+        tone={current.sales - prior.sales}
+      />
+      <DriverTile
+        label="Units Change"
+        value={changeText(current.units, prior.units)}
+        detail={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
+        tone={current.units - prior.units}
+      />
+      <DriverTile
+        label="Transactions Change"
+        value={changeText(current.transactions, prior.transactions)}
+        detail={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+        tone={current.transactions - prior.transactions}
+      />
+      <DriverTile
+        label="Avg Sale / Transaction"
+        value={currencyText(drivers.avgSalePerTransaction)}
+        detail={`${currencyText(drivers.priorAvgSalePerTransaction)} LY`}
+        tone={drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction}
+      />
+      <article className="driverTile productBreadthDriver">
+        <p>Product Breadth</p>
+        <div>
+          <span><strong>{numberText(drivers.stylesSold)}</strong> Styles <em>{numberText(drivers.priorStylesSold)} LY</em></span>
+          <span><strong>{numberText(drivers.colorsSold)}</strong> Colors <em>{numberText(drivers.priorColorsSold)} LY</em></span>
+          <span><strong>{numberText(drivers.artworksSold)}</strong> Artworks <em>{numberText(drivers.priorArtworksSold)} LY</em></span>
+        </div>
+      </article>
+      <DriverTile
+        label="Top Style Dependence"
+        value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
+        detail={`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`}
+        tone={0}
+      />
+    </div>
+  );
+}
+
+function DriverTile({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {
+  return (
+    <article className={`driverTile ${changeClass(tone)}`}>
+      <p>{label}</p>
+      <strong>{value}</strong>
+      <span>{detail}</span>
+    </article>
+  );
+}
+
 function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
   if (!snapshot) return null;
   return (
@@ -391,28 +430,6 @@ function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
         </div>
       ) : null}
     </article>
-  );
-}
-
-function MetricCompare({ current, prior }: { current: SnapshotMetricSet; prior: SnapshotMetricSet }) {
-  const maxSales = Math.max(current.sales, prior.sales, 1);
-  return (
-    <>
-      <CompareBar label="Current" value={current.sales} max={maxSales} />
-      <CompareBar label="Prior" value={prior.sales} max={maxSales} secondary />
-    </>
-  );
-}
-
-function CompareBar({ label, value, max, secondary = false }: { label: string; value: number; max: number; secondary?: boolean }) {
-  return (
-    <div className="compareRow">
-      <span>{label}</span>
-      <div className={`barTrack ${secondary ? "secondary" : ""}`}>
-        <span style={{ width: `${Math.max(4, (value / max) * 100)}%` }} />
-      </div>
-      <strong>{currencyText(value)}</strong>
-    </div>
   );
 }
 

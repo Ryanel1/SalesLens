@@ -270,7 +270,7 @@ select {
 
 .accountThemeVolshop {
   --steel: #ff8200;
-  --steel-dark: #c95f00;
+  --steel-dark: #ff8200;
   --clay: #2f2d2a;
   --oat: #8ecae6;
   --account-glow: rgba(255, 130, 0, 0.22);
@@ -936,6 +936,88 @@ select {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+.salesDriverGrid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 1px;
+}
+
+.driverTile {
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  backdrop-filter: blur(16px) saturate(1.04);
+  display: grid;
+  min-height: 150px;
+  padding: 1.15rem;
+}
+
+.driverTile p {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.65rem;
+  text-transform: uppercase;
+}
+
+.driverTile > strong {
+  align-self: center;
+  color: var(--soft-black);
+  display: block;
+  font-size: clamp(1.55rem, 2.5vw, 2.2rem);
+  line-height: 1;
+}
+
+.driverTile > span {
+  align-self: end;
+  color: var(--taupe);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.driverTile.positive {
+  border-left: 4px solid var(--steel);
+}
+
+.driverTile.negative {
+  border-left: 4px solid var(--clay);
+}
+
+.productBreadthDriver > div {
+  align-self: stretch;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.productBreadthDriver span {
+  color: var(--taupe);
+  display: grid;
+  font-size: 0.72rem;
+  font-weight: 850;
+  gap: 0.15rem;
+  text-transform: uppercase;
+}
+
+.productBreadthDriver span strong {
+  color: var(--soft-black);
+  font-size: clamp(1.2rem, 2vw, 1.75rem);
+  line-height: 1;
+}
+
+.productBreadthDriver em {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 850;
+  text-transform: none;
+}
+
+.featureInsight {
+  display: grid;
+}
+
 .insightCard {
   min-height: 190px;
   padding: 1.2rem;
@@ -1534,6 +1616,7 @@ tbody tr:nth-child(even) {
   .metricGrid.three,
   .metricGrid.four,
   .insightGrid,
+  .salesDriverGrid,
   .ytdInsightGrid,
   .ytdTrackerLayout,
   .ytdTrackerTiles,
@@ -1579,6 +1662,10 @@ tbody tr:nth-child(even) {
   }
 
   .productBreadthCard > div {
+    grid-template-columns: 1fr;
+  }
+
+  .productBreadthDriver > div {
     grid-template-columns: 1fr;
   }
 

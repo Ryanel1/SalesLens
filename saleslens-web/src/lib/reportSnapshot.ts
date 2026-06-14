@@ -73,6 +73,19 @@ export type SnapshotYtdInsights = {
   priorArtworksSold: number;
 };
 
+export type SnapshotMonthlyDrivers = {
+  avgSalePerTransaction: number;
+  priorAvgSalePerTransaction: number;
+  stylesSold: number;
+  priorStylesSold: number;
+  colorsSold: number;
+  priorColorsSold: number;
+  artworksSold: number;
+  priorArtworksSold: number;
+  topFiveStyleSales: number;
+  topFiveStyleShare: number;
+};
+
 export type SnapshotInventory = {
   date: string;
   totalUnits: number;
@@ -98,6 +111,7 @@ export type ReportSnapshotPayload = {
   priorMetrics: SnapshotMetricSet;
   ytdLine: SnapshotYtdLine;
   ytdInsights?: SnapshotYtdInsights;
+  monthlyDrivers?: SnapshotMonthlyDrivers;
   inventorySnapshot?: SnapshotInventory;
   salesMix: SnapshotSalesMixSlice[];
   bestDay: SnapshotBestDay;

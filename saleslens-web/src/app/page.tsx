@@ -260,6 +260,7 @@ export default function Home() {
 
   const currentMetrics = useMemo(() => metricSet(periodRecords), [periodRecords]);
   const priorMetrics = useMemo(() => metricSet(priorPeriodRecords), [priorPeriodRecords]);
+  const monthlyDrivers = useMemo(() => monthlyDriverMetrics(periodRecords, priorPeriodRecords), [periodRecords, priorPeriodRecords]);
   const totalRecordsMetrics = useMemo(() => metricSet(recordsForCustomer), [recordsForCustomer]);
   const ytdCurrentRecords = useMemo(
     () => currentYearRecords(recordsForCustomer, periodEndMonth),
@@ -336,6 +337,7 @@ export default function Home() {
       priorMetrics,
       ytdLine,
       ytdInsights,
+      monthlyDrivers,
       inventorySnapshot,
       salesMix,
       bestDay: {
@@ -617,9 +619,8 @@ export default function Home() {
               <MetricCard label="Last Year Sales" value={currencyText(priorMetrics.sales)} />
             </div>
 
-            <div className="insightGrid">
-              <SalesMixCard slices={salesMix} totalUnits={currentMetrics.units} />
-              <ComparisonCard current={currentMetrics} prior={priorMetrics} selectedPeriod={selectedPeriodTitle} priorPeriod={priorPeriodTitle} />
+            <SalesDriverGrid current={currentMetrics} prior={priorMetrics} drivers={monthlyDrivers} />
+            <div className="featureInsight">
               <BestDayCard bestDay={bestDay} periodTitle={selectedPeriodTitle} />
             </div>
           </section>
@@ -841,49 +842,65 @@ function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsig
   );
 }
 
-function SalesMixCard({ slices, totalUnits }: { slices: SalesMixSlice[]; totalUnits: number }) {
-  return (
-    <article className="insightCard">
-      <h4>Sales Mix Units</h4>
-      <div className="mixStack">
-        {slices.map((slice) => (
-          <div className="mixRow" key={slice.name}>
-            <div>
-              <strong>{slice.name}</strong>
-              <span>{numberText(slice.units)} units</span>
-            </div>
-            <div className="barTrack">
-              <span style={{ width: `${Math.max(3, slice.percent)}%` }} />
-            </div>
-            <small>{slice.percent.toFixed(1)}%</small>
-          </div>
-        ))}
-        {totalUnits === 0 ? <p className="muted">No unit data for this period.</p> : null}
-      </div>
-    </article>
-  );
-}
-
-function ComparisonCard({
+function SalesDriverGrid({
   current,
   prior,
-  selectedPeriod,
-  priorPeriod,
+  drivers,
 }: {
   current: MetricSet;
   prior: MetricSet;
-  selectedPeriod: string;
-  priorPeriod: string;
+  drivers: ReturnType<typeof monthlyDriverMetrics>;
 }) {
-  const maxSales = Math.max(current.sales, prior.sales, 1);
   return (
-    <article className="insightCard">
-      <div className="cardHeading">
-        <h4>Sales Comparison</h4>
-        <strong className={changeClass(current.sales - prior.sales)}>{changeText(current.sales, prior.sales)}</strong>
-      </div>
-      <CompareBar label={selectedPeriod} value={current.sales} max={maxSales} />
-      <CompareBar label={priorPeriod} value={prior.sales} max={maxSales} secondary />
+    <div className="salesDriverGrid">
+      <DriverTile
+        label="Sales Change"
+        value={changeText(current.sales, prior.sales)}
+        detail={`${currencyText(current.sales)} vs ${currencyText(prior.sales)} LY`}
+        tone={current.sales - prior.sales}
+      />
+      <DriverTile
+        label="Units Change"
+        value={changeText(current.units, prior.units)}
+        detail={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
+        tone={current.units - prior.units}
+      />
+      <DriverTile
+        label="Transactions Change"
+        value={changeText(current.transactions, prior.transactions)}
+        detail={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+        tone={current.transactions - prior.transactions}
+      />
+      <DriverTile
+        label="Avg Sale / Transaction"
+        value={currencyText(drivers.avgSalePerTransaction)}
+        detail={`${currencyText(drivers.priorAvgSalePerTransaction)} LY`}
+        tone={drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction}
+      />
+      <article className="driverTile productBreadthDriver">
+        <p>Product Breadth</p>
+        <div>
+          <span><strong>{numberText(drivers.stylesSold)}</strong> Styles <em>{numberText(drivers.priorStylesSold)} LY</em></span>
+          <span><strong>{numberText(drivers.colorsSold)}</strong> Colors <em>{numberText(drivers.priorColorsSold)} LY</em></span>
+          <span><strong>{numberText(drivers.artworksSold)}</strong> Artworks <em>{numberText(drivers.priorArtworksSold)} LY</em></span>
+        </div>
+      </article>
+      <DriverTile
+        label="Top Style Dependence"
+        value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
+        detail={`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`}
+        tone={0}
+      />
+    </div>
+  );
+}
+
+function DriverTile({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {
+  return (
+    <article className={`driverTile ${changeClass(tone)}`}>
+      <p>{label}</p>
+      <strong>{value}</strong>
+      <span>{detail}</span>
     </article>
   );
 }
@@ -968,18 +985,6 @@ function BestDayCard({ bestDay, periodTitle }: { bestDay: ReturnType<typeof best
         </div>
       ))}
     </article>
-  );
-}
-
-function CompareBar({ label, value, max, secondary = false }: { label: string; value: number; max: number; secondary?: boolean }) {
-  return (
-    <div className="compareRow">
-      <span>{label}</span>
-      <div className={`barTrack ${secondary ? "secondary" : ""}`}>
-        <span style={{ width: `${Math.max(4, (value / max) * 100)}%` }} />
-      </div>
-      <strong>{currencyText(value)}</strong>
-    </div>
   );
 }
 
@@ -1458,6 +1463,27 @@ function ytdInsightMetrics(currentRecords: SalesRecord[], priorRecords: SalesRec
     priorColorsSold: priorBreadth.colors,
     artworksSold: currentBreadth.artworks,
     priorArtworksSold: priorBreadth.artworks,
+  };
+}
+
+function monthlyDriverMetrics(currentRecords: SalesRecord[], priorRecords: SalesRecord[]) {
+  const current = metricSet(currentRecords);
+  const prior = metricSet(priorRecords);
+  const currentBreadth = breadthMetrics(currentRecords);
+  const priorBreadth = breadthMetrics(priorRecords);
+  const topFiveStyleSales = sum([...allStyleRows(currentRecords)].sort((left, right) => right.sales - left.sales).slice(0, 5).map((row) => row.sales));
+
+  return {
+    avgSalePerTransaction: current.transactions ? current.sales / current.transactions : 0,
+    priorAvgSalePerTransaction: prior.transactions ? prior.sales / prior.transactions : 0,
+    stylesSold: currentBreadth.styles,
+    priorStylesSold: priorBreadth.styles,
+    colorsSold: currentBreadth.colors,
+    priorColorsSold: priorBreadth.colors,
+    artworksSold: currentBreadth.artworks,
+    priorArtworksSold: priorBreadth.artworks,
+    topFiveStyleSales,
+    topFiveStyleShare: current.sales ? (topFiveStyleSales / current.sales) * 100 : 0,
   };
 }
 
