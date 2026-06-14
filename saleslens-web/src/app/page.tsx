@@ -747,17 +747,21 @@ export default function Home() {
 
   return (
     <main className="loginShell">
-      <div className="loginCircuit loginCircuitLeft" aria-hidden="true" />
-      <div className="loginCircuit loginCircuitRight" aria-hidden="true" />
       <section className="loginPanel">
         <div className="loginMark" aria-hidden="true">
           <span>SL</span>
         </div>
         <p className="eyebrow">SalesLens by Lester Sales</p>
         <h1>Welcome back</h1>
-        <p className="intro">Sign in to review account performance, compare trends, and share sales snapshots.</p>
+        <p className="intro">Sign in to review sports merchandise sales, compare trends, and share account snapshots.</p>
 
-        <div className="loginFields">
+        <form
+          className="loginFields"
+          onSubmit={(event) => {
+            event.preventDefault();
+            signIn();
+          }}
+        >
           <label htmlFor="email">Email address</label>
           <input
             autoComplete="email"
@@ -777,10 +781,10 @@ export default function Home() {
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Enter your password"
           />
-          <button className="loginButton" onClick={signIn} disabled={!email || !password}>
+          <button className="loginButton" type="submit" disabled={!email || !password}>
             Sign In
           </button>
-        </div>
+        </form>
         {status ? <p className="status">{status}</p> : null}
       </section>
     </main>
