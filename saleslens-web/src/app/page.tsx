@@ -1085,6 +1085,11 @@ function padMonths(values: number[]) {
   return Array.from({ length: 12 }, (_, index) => values[index] ?? 0);
 }
 
+function compactNumber(value: number) {
+  if (Math.abs(value) >= 1000) return `${Math.round(value / 1000)}K`;
+  return numberText(Math.round(value));
+}
+
 async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   const records: SalesRecord[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
