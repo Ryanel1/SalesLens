@@ -555,7 +555,7 @@ select {
 .overviewStrip {
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   margin-bottom: 1.2rem;
 }
 
@@ -1279,6 +1279,16 @@ tbody tr:nth-child(even) {
   margin-bottom: 1rem;
 }
 
+.publicShareBrand {
+  margin-bottom: 1.1rem;
+}
+
+.publicDashboardHeader .publicShareBrand h1 {
+  color: var(--soft-black);
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  margin-bottom: 0.15rem;
+}
+
 .publicControlDock {
   align-content: end;
 }
@@ -1304,30 +1314,6 @@ tbody tr:nth-child(even) {
   color: var(--charcoal);
   font-size: 0.95rem;
   line-height: 1.2;
-}
-
-.printButton {
-  background: var(--steel-dark);
-  border: 1px solid transparent;
-  color: var(--paper);
-  font-size: 0.82rem;
-  font-weight: 900;
-  margin-top: 0.65rem;
-  padding: 0.8rem 1rem;
-  text-transform: uppercase;
-  width: min(190px, 100%);
-}
-
-.printButton:hover {
-  background: var(--charcoal);
-}
-
-.pdfCaptureMode .printButton {
-  visibility: hidden;
-}
-
-.pdfCaptureMode .publicShell {
-  background-attachment: scroll;
 }
 
 .publicEmpty {
@@ -1460,10 +1446,6 @@ tbody tr:nth-child(even) {
 
   .publicReport {
     max-width: none;
-  }
-
-  .printButton {
-    display: none;
   }
 
   .publicDashboardHeader,

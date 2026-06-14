@@ -556,14 +556,6 @@ export default function Home() {
 
           <section className="overviewStrip" aria-label="Current dashboard context">
             <article>
-              <span>Selected Period</span>
-              <strong>{selectedPeriodTitle}</strong>
-            </article>
-            <article>
-              <span>Brand/Class</span>
-              <strong>{brandFilter}</strong>
-            </article>
-            <article>
               <span>Imported Transactions</span>
               <strong>{numberText(currentMetrics.transactions)}</strong>
             </article>

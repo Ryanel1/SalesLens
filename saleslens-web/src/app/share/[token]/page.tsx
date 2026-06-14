@@ -8,7 +8,6 @@ import {
   type SnapshotInventory,
   type SnapshotMetricSet,
 } from "@/lib/reportSnapshot";
-import { PrintButton } from "./PrintButton";
 import { StyleStudyTabs } from "./StyleStudyTabs";
 
 export const dynamic = "force-dynamic";
@@ -31,14 +30,16 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
   const payload = snapshot.payload;
   const hasDailySales = (payload.bestDay.dayCount ?? 1) > 1;
-  const reportFileName = `${payload.accountName}-${payload.periodTitle}-SalesLens`.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
 
   return (
     <main className={`publicShell ${accountThemeClass(payload.accountName)}`}>
       <section className="publicReport" id="saleslens-report-capture">
         <header className="dashboardHeader publicDashboardHeader">
           <div>
-            <p className="eyebrow">Sales Snapshot</p>
+            <div className="navBrand publicShareBrand">
+              <h1>SalesLens</h1>
+              <p>by Lester Sales</p>
+            </div>
             <h1>{payload.accountName}</h1>
             <p className="muted">Track current sales, prior-year movement, product breadth, and top sellers.</p>
           </div>
@@ -52,30 +53,13 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
               <span>Period</span>
               <strong>{payload.periodTitle}</strong>
             </article>
-            <article className="readonlyControl">
-              <span>Last Date Uploaded</span>
-              <strong>{dateText(payload.lastUploaded)}</strong>
-            </article>
-            <PrintButton fileName={reportFileName} />
           </div>
         </header>
 
         <section className="overviewStrip publicOverview">
           <article>
-            <span>Selected Period</span>
-            <strong>{payload.periodTitle}</strong>
-          </article>
-          <article>
-            <span>Brand/Class</span>
-            <strong>{payload.brandFilter}</strong>
-          </article>
-          <article>
             <span>Imported Transactions</span>
             <strong>{numberText(payload.currentMetrics.transactions)}</strong>
-          </article>
-          <article>
-            <span>Last Date Uploaded</span>
-            <strong>{dateText(payload.lastUploaded)}</strong>
           </article>
         </section>
 
