@@ -489,7 +489,7 @@ export default function Home() {
             <div>
               <p className="eyebrow">Sales Snapshot</p>
               <h2>{selectedCustomer?.name ?? "Account"}</h2>
-              <p className="muted">Track current sales, prior-year movement, product breadth, and top sellers.</p>
+              <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and top-performing styles and art.</p>
             </div>
 
             <div className="controlDock">
@@ -607,9 +607,6 @@ export default function Home() {
                 <h3>{selectedPeriodKind === "year" ? "Selected Year Summary" : "Monthly Sales Tracker"}</h3>
                 <p>{selectedPeriodTitle} compared with {priorPeriodTitle}.</p>
               </div>
-              <strong className={`changeBadge ${changeClass(currentMetrics.sales - priorMetrics.sales)}`}>
-                {changeText(currentMetrics.sales, priorMetrics.sales)}
-              </strong>
             </div>
 
             <SalesDriverGrid
@@ -851,10 +848,24 @@ function SalesDriverGrid({
   drivers: ReturnType<typeof monthlyDriverMetrics>;
   periodTitle: string;
 }) {
+  const salesDelta = current.sales - prior.sales;
+
   return (
     <div className="salesDriverGrid">
       <article className="driverTile monthlySalesCard">
-        <p>Sales</p>
+        <div className="monthlySalesHeader">
+          <p>Sales</p>
+        </div>
+        <div className="monthlySalesStory">
+          <span>
+            <em>Sales Change</em>
+            <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
+          </span>
+          <span>
+            <em>Dollar Gap</em>
+            <strong className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)}</strong>
+          </span>
+        </div>
         <div className="monthlySalesPair">
           <span>
             <em>{periodTitle}</em>
@@ -1653,6 +1664,11 @@ function changeText(current: number, prior: number) {
   if (!prior) return current ? "New" : "-";
   const percent = ((current - prior) / prior) * 100;
   return `${percent >= 0 ? "Up" : "Down"} ${Math.abs(percent).toFixed(1)}%`;
+}
+
+function signedCurrencyText(value: number) {
+  if (!value) return currencyText(0);
+  return `${value > 0 ? "+" : "-"}${currencyText(Math.abs(value))}`;
 }
 
 function changeClass(value: number) {

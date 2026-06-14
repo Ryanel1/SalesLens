@@ -43,7 +43,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
               <p>by Lester Sales</p>
             </div>
             <h1>{payload.accountName}</h1>
-            <p className="muted">Track current sales, prior-year movement, product breadth, and top sellers.</p>
+            <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and top-performing styles and art.</p>
           </div>
 
           <aside className="publicHeaderAside">
@@ -101,8 +101,6 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         <ReportSection
           title={payload.periodMode === "ytd" ? "Selected Year Summary" : "Monthly Sales Tracker"}
           subtitle={`${payload.periodTitle} compared with ${payload.priorPeriodTitle}.`}
-          aside={changeText(payload.currentMetrics.sales, payload.priorMetrics.sales)}
-          asideTone={payload.currentMetrics.sales - payload.priorMetrics.sales}
         >
           {payload.monthlyDrivers ? (
             <SalesDriverGrid
@@ -309,11 +307,24 @@ function SalesDriverGrid({
 }) {
   const avgSalePerUnit = drivers.avgSalePerUnit ?? (current.units ? current.sales / current.units : 0);
   const priorAvgSalePerUnit = drivers.priorAvgSalePerUnit ?? (prior.units ? prior.sales / prior.units : 0);
+  const salesDelta = current.sales - prior.sales;
 
   return (
     <div className="salesDriverGrid">
       <article className="driverTile monthlySalesCard">
-        <p>Sales</p>
+        <div className="monthlySalesHeader">
+          <p>Sales</p>
+        </div>
+        <div className="monthlySalesStory">
+          <span>
+            <em>Sales Change</em>
+            <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
+          </span>
+          <span>
+            <em>Dollar Gap</em>
+            <strong className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)}</strong>
+          </span>
+        </div>
         <div className="monthlySalesPair">
           <span>
             <em>{periodTitle}</em>
@@ -543,6 +554,11 @@ function changeText(current: number, prior: number) {
   if (!prior) return current ? "New" : "-";
   const percent = ((current - prior) / prior) * 100;
   return `${percent >= 0 ? "Up" : "Down"} ${Math.abs(percent).toFixed(1)}%`;
+}
+
+function signedCurrencyText(value: number) {
+  if (!value) return currencyText(0);
+  return `${value > 0 ? "+" : "-"}${currencyText(Math.abs(value))}`;
 }
 
 function changeClass(value: number) {

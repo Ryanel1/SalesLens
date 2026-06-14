@@ -990,17 +990,35 @@ select {
 }
 
 .monthlySalesCard {
+  align-content: start;
+  gap: 1rem;
   grid-column: span 2;
 }
 
-.monthlySalesPair {
-  align-self: stretch;
+.monthlySalesHeader {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.monthlySalesHeader p {
+  margin-bottom: 0;
+}
+
+.monthlySalesStory {
   display: grid;
   gap: 1px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 0.4rem;
 }
 
+.monthlySalesPair {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.monthlySalesStory span,
 .monthlySalesPair span {
   border: 1px solid rgba(231, 222, 209, 0.72);
   display: grid;
@@ -1008,6 +1026,7 @@ select {
   padding: 1rem;
 }
 
+.monthlySalesStory em,
 .monthlySalesPair em {
   color: var(--taupe);
   font-size: 0.72rem;
@@ -1017,10 +1036,19 @@ select {
   text-transform: uppercase;
 }
 
+.monthlySalesStory strong,
 .monthlySalesPair strong {
   color: var(--soft-black);
-  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  display: block;
   line-height: 1;
+}
+
+.monthlySalesStory strong {
+  font-size: clamp(1.2rem, 2vw, 1.7rem);
+}
+
+.monthlySalesPair strong {
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
 }
 
 .topSalesItemsCard {
@@ -1682,6 +1710,7 @@ tbody tr:nth-child(even) {
     grid-column: span 1;
   }
 
+  .monthlySalesStory,
   .monthlySalesPair {
     grid-template-columns: 1fr;
   }
