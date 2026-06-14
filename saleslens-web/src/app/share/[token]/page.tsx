@@ -70,44 +70,49 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           aside={changeText(payload.ytdLine.currentTotal, payload.ytdLine.priorTotal)}
           asideTone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
         >
-          <div className="metricGrid three">
-            <MetricCard label="Current YTD" value={currencyText(payload.ytdLine.currentTotal)} />
-            <MetricCard label="Prior YTD" value={currencyText(payload.ytdLine.priorTotal)} />
-            <MetricCard
-              label="Total Change"
-              value={currencyText(payload.ytdLine.currentTotal - payload.ytdLine.priorTotal)}
-              tone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
-            />
-          </div>
-          <StaticLineChart payload={payload} />
-          {payload.ytdInsights ? (
-            <div className="ytdInsightGrid">
-              <YtdInsightCard
-                label="Avg Monthly Sales"
-                value={currencyText(payload.ytdInsights.averageMonthlySales)}
-                detail={`${currencyText(payload.ytdInsights.priorAverageMonthlySales)} LY`}
-                tone={payload.ytdInsights.averageMonthlySales - payload.ytdInsights.priorAverageMonthlySales}
-              />
-              <YtdInsightCard
-                label="Styles Sold"
-                value={numberText(payload.ytdInsights.stylesSold)}
-                detail={`${numberText(payload.ytdInsights.priorStylesSold)} LY`}
-                tone={payload.ytdInsights.stylesSold - payload.ytdInsights.priorStylesSold}
-              />
-              <YtdInsightCard
-                label="Colors Sold"
-                value={numberText(payload.ytdInsights.colorsSold)}
-                detail={`${numberText(payload.ytdInsights.priorColorsSold)} LY`}
-                tone={payload.ytdInsights.colorsSold - payload.ytdInsights.priorColorsSold}
-              />
-              <YtdInsightCard
-                label="Artworks Sold"
-                value={numberText(payload.ytdInsights.artworksSold)}
-                detail={`${numberText(payload.ytdInsights.priorArtworksSold)} LY`}
-                tone={payload.ytdInsights.artworksSold - payload.ytdInsights.priorArtworksSold}
-              />
+          <div className="ytdTrackerLayout">
+            <StaticLineChart payload={payload} />
+
+            <div className="ytdTrackerTiles">
+              <div className="metricGrid three">
+                <MetricCard label="Current YTD" value={currencyText(payload.ytdLine.currentTotal)} />
+                <MetricCard label="Prior YTD" value={currencyText(payload.ytdLine.priorTotal)} />
+                <MetricCard
+                  label="Total Change"
+                  value={currencyText(payload.ytdLine.currentTotal - payload.ytdLine.priorTotal)}
+                  tone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
+                />
+              </div>
+              {payload.ytdInsights ? (
+                <div className="ytdInsightGrid">
+                  <YtdInsightCard
+                    label="Avg Monthly Sales"
+                    value={currencyText(payload.ytdInsights.averageMonthlySales)}
+                    detail={`${currencyText(payload.ytdInsights.priorAverageMonthlySales)} LY`}
+                    tone={payload.ytdInsights.averageMonthlySales - payload.ytdInsights.priorAverageMonthlySales}
+                  />
+                  <YtdInsightCard
+                    label="Styles Sold"
+                    value={numberText(payload.ytdInsights.stylesSold)}
+                    detail={`${numberText(payload.ytdInsights.priorStylesSold)} LY`}
+                    tone={payload.ytdInsights.stylesSold - payload.ytdInsights.priorStylesSold}
+                  />
+                  <YtdInsightCard
+                    label="Colors Sold"
+                    value={numberText(payload.ytdInsights.colorsSold)}
+                    detail={`${numberText(payload.ytdInsights.priorColorsSold)} LY`}
+                    tone={payload.ytdInsights.colorsSold - payload.ytdInsights.priorColorsSold}
+                  />
+                  <YtdInsightCard
+                    label="Artworks Sold"
+                    value={numberText(payload.ytdInsights.artworksSold)}
+                    detail={`${numberText(payload.ytdInsights.priorArtworksSold)} LY`}
+                    tone={payload.ytdInsights.artworksSold - payload.ytdInsights.priorArtworksSold}
+                  />
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          </div>
         </ReportSection>
 
         <ReportSection

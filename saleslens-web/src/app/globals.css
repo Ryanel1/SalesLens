@@ -680,14 +680,42 @@ select {
 }
 
 .lineCard {
-  height: 330px;
+  height: 460px;
   margin-bottom: 1px;
   padding: 1rem;
   position: relative;
 }
 
 .comparativeChart {
+  min-width: 0;
   padding: 2.5rem 1rem 1rem;
+}
+
+.ytdTrackerLayout {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: minmax(420px, 1fr) minmax(280px, 0.42fr);
+}
+
+.ytdTrackerTiles {
+  display: grid;
+  gap: 1px;
+}
+
+.ytdTrackerTiles .metricGrid,
+.ytdTrackerTiles .ytdInsightGrid {
+  margin-bottom: 0;
+}
+
+.ytdTrackerTiles .metricGrid.three,
+.ytdTrackerTiles .ytdInsightGrid {
+  grid-template-columns: 1fr;
+}
+
+.ytdTrackerTiles .metric,
+.ytdTrackerTiles .ytdInsightCard {
+  min-height: 0;
+  padding: 1rem;
 }
 
 .lineLegend {
@@ -727,7 +755,7 @@ select {
   display: block;
   height: 100%;
   margin: 0 auto;
-  max-width: 980px;
+  max-width: 720px;
   overflow: visible;
   width: 100%;
 }
@@ -1445,6 +1473,7 @@ tbody tr:nth-child(even) {
   .metricGrid.four,
   .insightGrid,
   .ytdInsightGrid,
+  .ytdTrackerLayout,
   .styleComparisonGrid,
   .inventoryCard,
   .inventorySummaryGrid,
@@ -1479,6 +1508,10 @@ tbody tr:nth-child(even) {
 
   .artGrid {
     grid-template-columns: 1fr;
+  }
+
+  .lineCard {
+    height: 360px;
   }
 
   .topNav {

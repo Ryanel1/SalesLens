@@ -581,39 +581,43 @@ export default function Home() {
               </strong>
             </div>
 
-            <div className="metricGrid three">
-              <MetricCard label={selectedYear ? `${selectedYear} YTD` : "Current YTD"} value={currencyText(ytdLine.currentTotal)} />
-              <MetricCard label={selectedYear ? `${selectedYear - 1} YTD` : "Prior YTD"} value={currencyText(ytdLine.priorTotal)} />
-              <MetricCard label="Total Change" value={currencyText(ytdLine.currentTotal - ytdLine.priorTotal)} tone={ytdLine.currentTotal - ytdLine.priorTotal} />
-            </div>
+            <div className="ytdTrackerLayout">
+              <MiniLineChart current={ytdLine.current} prior={ytdLine.prior} currentYear={selectedYear} />
 
-            <MiniLineChart current={ytdLine.current} prior={ytdLine.prior} currentYear={selectedYear} />
+              <div className="ytdTrackerTiles">
+                <div className="metricGrid three">
+                  <MetricCard label={selectedYear ? `${selectedYear} YTD` : "Current YTD"} value={currencyText(ytdLine.currentTotal)} />
+                  <MetricCard label={selectedYear ? `${selectedYear - 1} YTD` : "Prior YTD"} value={currencyText(ytdLine.priorTotal)} />
+                  <MetricCard label="Total Change" value={currencyText(ytdLine.currentTotal - ytdLine.priorTotal)} tone={ytdLine.currentTotal - ytdLine.priorTotal} />
+                </div>
 
-            <div className="ytdInsightGrid">
-              <YtdInsightCard
-                label="Avg Monthly Sales"
-                value={currencyText(ytdInsights.averageMonthlySales)}
-                detail={`${currencyText(ytdInsights.priorAverageMonthlySales)} LY`}
-                tone={ytdInsights.averageMonthlySales - ytdInsights.priorAverageMonthlySales}
-              />
-              <YtdInsightCard
-                label="Styles Sold"
-                value={numberText(ytdInsights.stylesSold)}
-                detail={`${numberText(ytdInsights.priorStylesSold)} LY`}
-                tone={ytdInsights.stylesSold - ytdInsights.priorStylesSold}
-              />
-              <YtdInsightCard
-                label="Colors Sold"
-                value={numberText(ytdInsights.colorsSold)}
-                detail={`${numberText(ytdInsights.priorColorsSold)} LY`}
-                tone={ytdInsights.colorsSold - ytdInsights.priorColorsSold}
-              />
-              <YtdInsightCard
-                label="Artworks Sold"
-                value={numberText(ytdInsights.artworksSold)}
-                detail={`${numberText(ytdInsights.priorArtworksSold)} LY`}
-                tone={ytdInsights.artworksSold - ytdInsights.priorArtworksSold}
-              />
+                <div className="ytdInsightGrid">
+                  <YtdInsightCard
+                    label="Avg Monthly Sales"
+                    value={currencyText(ytdInsights.averageMonthlySales)}
+                    detail={`${currencyText(ytdInsights.priorAverageMonthlySales)} LY`}
+                    tone={ytdInsights.averageMonthlySales - ytdInsights.priorAverageMonthlySales}
+                  />
+                  <YtdInsightCard
+                    label="Styles Sold"
+                    value={numberText(ytdInsights.stylesSold)}
+                    detail={`${numberText(ytdInsights.priorStylesSold)} LY`}
+                    tone={ytdInsights.stylesSold - ytdInsights.priorStylesSold}
+                  />
+                  <YtdInsightCard
+                    label="Colors Sold"
+                    value={numberText(ytdInsights.colorsSold)}
+                    detail={`${numberText(ytdInsights.priorColorsSold)} LY`}
+                    tone={ytdInsights.colorsSold - ytdInsights.priorColorsSold}
+                  />
+                  <YtdInsightCard
+                    label="Artworks Sold"
+                    value={numberText(ytdInsights.artworksSold)}
+                    detail={`${numberText(ytdInsights.priorArtworksSold)} LY`}
+                    tone={ytdInsights.artworksSold - ytdInsights.priorArtworksSold}
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
