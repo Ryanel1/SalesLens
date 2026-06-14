@@ -417,7 +417,7 @@ export default function Home() {
 
   if (user) {
     return (
-      <main className="appShell">
+      <main className={`appShell ${accountThemeClass(selectedCustomer?.name)}`}>
         <nav className={navCompact ? "topNav compact" : "topNav"} aria-label="SalesLens controls">
           <div className="navBrand">
             <h1>SalesLens</h1>
@@ -798,6 +798,13 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
       <strong>{value}</strong>
     </article>
   );
+}
+
+function accountThemeClass(name?: string | null) {
+  const normalized = (name ?? "").toLowerCase();
+  if (normalized.includes("rebel")) return "accountThemeRebelRags";
+  if (normalized.includes("volshop") || normalized.includes("vol shop")) return "accountThemeVolshop";
+  return "accountThemeDefault";
 }
 
 function YtdInsightCard({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {

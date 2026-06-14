@@ -254,16 +254,41 @@ select {
 }
 
 .appShell {
+  background:
+    radial-gradient(circle at 52% 8%, rgba(255, 253, 248, 0.24), transparent 0.35rem),
+    radial-gradient(circle at 80% 12%, var(--account-glow, rgba(111, 135, 149, 0.18)), transparent 34rem),
+    linear-gradient(120deg, rgba(17, 16, 14, 0.26), rgba(36, 35, 33, 0.1) 46%, rgba(17, 16, 14, 0.34)),
+    url("/images/campus-stadium-night-blur.jpg") center / cover fixed;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
 }
 
+.accountThemeDefault {
+  --account-glow: rgba(111, 135, 149, 0.18);
+}
+
+.accountThemeVolshop {
+  --steel: #ff8200;
+  --steel-dark: #c95f00;
+  --clay: #2f2d2a;
+  --oat: #d8b88b;
+  --account-glow: rgba(255, 130, 0, 0.22);
+}
+
+.accountThemeRebelRags {
+  --steel: #0067a0;
+  --steel-dark: #005782;
+  --clay: #b71f2d;
+  --oat: #9ed4ee;
+  --account-glow: rgba(0, 103, 160, 0.22);
+}
+
 .topNav {
   align-items: center;
-  background: rgba(255, 253, 248, 0.92);
-  border-bottom: var(--hairline);
-  backdrop-filter: blur(18px);
+  background: rgba(255, 253, 248, 0.86);
+  border-bottom: 1px solid rgba(231, 222, 209, 0.68);
+  backdrop-filter: blur(24px) saturate(1.08);
   display: grid;
   gap: clamp(1.2rem, 2.4vw, 2.4rem);
   grid-template-columns: minmax(230px, 0.42fr) minmax(520px, 1fr) auto;
@@ -276,7 +301,8 @@ select {
 }
 
 .topNav.compact {
-  box-shadow: 0 18px 40px rgba(39, 36, 31, 0.08);
+  background: rgba(255, 253, 248, 0.9);
+  box-shadow: 0 18px 40px rgba(39, 36, 31, 0.12);
   min-height: 96px;
   padding-bottom: 0.85rem;
   padding-top: 0.85rem;
@@ -307,9 +333,12 @@ select {
 }
 
 .navField,
-.navUploadField {
+.navUploadField,
+.navSignOutField {
+  align-self: end;
   display: grid;
   gap: 0.45rem;
+  grid-template-rows: 1rem 44px;
   min-width: 0;
 }
 
@@ -344,14 +373,6 @@ select {
   white-space: nowrap;
 }
 
-.navSignOutField {
-  align-self: end;
-  display: grid;
-  gap: 0.45rem;
-  justify-self: end;
-  width: max-content;
-}
-
 .navSignOutField > span {
   color: var(--taupe);
   font-size: 0.72rem;
@@ -363,6 +384,11 @@ select {
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.navSignOutField {
+  justify-self: end;
+  width: max-content;
 }
 
 .navSignOut {
@@ -395,9 +421,10 @@ select {
 
 .dashboardHeader {
   align-items: stretch;
-  background: var(--paper);
-  border: var(--hairline);
-  box-shadow: var(--shadow);
+  background: rgba(255, 253, 248, 0.9);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  box-shadow: 0 24px 70px rgba(36, 35, 33, 0.14);
+  backdrop-filter: blur(22px) saturate(1.05);
   display: grid;
   gap: clamp(1.5rem, 4vw, 4rem);
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
@@ -406,7 +433,7 @@ select {
 }
 
 .dashboardHeader h2 {
-  color: var(--soft-black);
+  color: var(--steel);
   font-size: clamp(3.3rem, 7vw, 7.5rem);
   margin-bottom: 1rem;
 }
@@ -428,7 +455,7 @@ select {
 }
 
 .shareButton {
-  background: var(--charcoal);
+  background: var(--steel-dark);
   color: var(--paper);
   font-weight: 900;
   grid-column: span 2;
@@ -581,7 +608,7 @@ select {
 
 .sectionTitle h2::after,
 .sectionTitle h3::after {
-  background: var(--charcoal);
+  background: var(--steel);
   content: "";
   display: block;
   height: 1px;
@@ -613,8 +640,9 @@ select {
 .insightCard,
 .styleCompareCard,
 .artCard {
-  background: var(--paper-soft);
-  border: var(--hairline);
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  backdrop-filter: blur(16px) saturate(1.04);
 }
 
 .metric {
@@ -723,8 +751,9 @@ select {
 }
 
 .ytdInsightCard {
-  background: var(--paper-soft);
-  border: var(--hairline);
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  backdrop-filter: blur(16px) saturate(1.04);
   padding: 1rem;
 }
 
@@ -880,7 +909,7 @@ select {
 }
 
 .studyTabs button.active {
-  background: var(--charcoal);
+  background: var(--steel-dark);
   color: var(--paper);
 }
 
