@@ -29,6 +29,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   }
 
   const payload = snapshot.payload;
+  const hasDailySales = (payload.bestDay.dayCount ?? 1) > 1;
   const reportFileName = `${payload.accountName}-${payload.periodTitle}-SalesLens`.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
 
   return (
@@ -150,12 +151,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
             <article className="insightCard">
               <div className="cardHeading">
-                <h4>Best Sales Day</h4>
-                <strong>{dateText(payload.bestDay.date)}</strong>
+                <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
+                <strong>{hasDailySales ? dateText(payload.bestDay.date) : payload.periodTitle}</strong>
               </div>
               <p className="compactLine">
-                {currencyText(payload.bestDay.sales)} | {numberText(payload.bestDay.units)} units |{" "}
-                {numberText(payload.bestDay.transactions)} transactions
+                {currencyText(payload.bestDay.sales)} | {numberText(payload.bestDay.units)} units
+                {hasDailySales ? ` | ${numberText(payload.bestDay.transactions)} transactions` : ""}
               </p>
               {payload.bestDay.items.map((item) => (
                 <div className="bestRow" key={`${item.rank}-${item.style}-${item.artCode}`}>
@@ -170,7 +171,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </div>
         </ReportSection>
 
-        <ReportSection title="Style Study" subtitle="Style-level units, sales, colors, and artwork breadth.">
+        <ReportSection title="Top Performing Styles" subtitle="Style-level units, sales, colors, and artwork breadth.">
           <StyleStudyTabs
             monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
             ytdStyles={payload.styleStudyYtd ?? payload.topStyles}
@@ -181,7 +182,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
         </ReportSection>
 
         <ReportSection
-          title="Top 25 by Art"
+          title="Top Performing Arts"
           subtitle={`${payload.periodTitle} Top 25 Total: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
         >
           <div className="artGrid">

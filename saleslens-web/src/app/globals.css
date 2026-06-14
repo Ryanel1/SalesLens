@@ -886,7 +886,7 @@ select {
   align-items: stretch;
   display: grid;
   gap: 1px;
-  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.2fr) minmax(220px, 0.9fr);
+  grid-template-columns: minmax(240px, 0.8fr) minmax(150px, 0.55fr) minmax(150px, 0.55fr) minmax(260px, 1fr);
 }
 
 .inventoryTotal {
@@ -896,6 +896,7 @@ select {
   gap: 0.35rem;
   place-content: center;
   padding: clamp(1.25rem, 3vw, 2rem);
+  grid-row: span 2;
   text-align: center;
 }
 
@@ -916,11 +917,13 @@ select {
 .inventorySummaryGrid {
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-column: 2 / span 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .inventorySummaryGrid div,
 .inventoryBreakout div,
+.inventoryCoverage,
 .inventoryTopStyles {
   background: rgba(255, 253, 248, 0.88);
   border: 1px solid rgba(231, 222, 209, 0.72);
@@ -929,11 +932,14 @@ select {
 .inventorySummaryGrid div {
   display: grid;
   gap: 0.35rem;
+  min-height: 100%;
+  place-content: center;
   padding: 1rem;
 }
 
 .inventorySummaryGrid span,
 .inventoryBreakout span,
+.inventoryCoverage span,
 .inventoryTopStyles span {
   color: var(--taupe);
   font-size: 0.7rem;
@@ -951,7 +957,8 @@ select {
 .inventoryBreakout {
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: 4;
+  grid-template-columns: 1fr;
 }
 
 .inventoryBreakout div {
@@ -966,9 +973,30 @@ select {
   line-height: 1;
 }
 
+.inventoryCoverage {
+  display: grid;
+  gap: 0.45rem;
+  grid-column: 2;
+  padding: 1rem;
+}
+
+.inventoryCoverage strong {
+  color: var(--soft-black);
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  line-height: 0.95;
+}
+
+.inventoryCoverage p {
+  color: var(--taupe);
+  font-size: 0.88rem;
+  font-weight: 750;
+  margin: 0;
+}
+
 .inventoryTopStyles {
   display: grid;
   gap: 0.65rem;
+  grid-column: 3 / span 2;
   padding: 1rem;
 }
 
@@ -1354,6 +1382,15 @@ tbody tr:nth-child(even) {
 
   .shareButton {
     grid-column: span 1;
+  }
+
+  .inventoryTotal,
+  .inventorySummaryGrid,
+  .inventoryBreakout,
+  .inventoryCoverage,
+  .inventoryTopStyles {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .artGrid {

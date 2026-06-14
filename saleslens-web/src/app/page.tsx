@@ -342,6 +342,7 @@ export default function Home() {
         sales: bestDay.sales,
         units: bestDay.units,
         transactions: bestDay.transactions,
+        dayCount: bestDay.dayCount,
         items: bestDay.items,
       },
       topStyles: ytdStyleStudy,
@@ -644,7 +645,7 @@ export default function Home() {
             <div className="insightGrid">
               <SalesMixCard slices={salesMix} totalUnits={currentMetrics.units} />
               <ComparisonCard current={currentMetrics} prior={priorMetrics} selectedPeriod={selectedPeriodTitle} priorPeriod={priorPeriodTitle} />
-              <BestDayCard bestDay={bestDay} />
+              <BestDayCard bestDay={bestDay} periodTitle={selectedPeriodTitle} />
             </div>
           </section>
 
@@ -664,7 +665,7 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Style Study</h3>
+                <h3>Top Performing Styles</h3>
                 <p>
                   {styleStudyMode === "month"
                     ? `Top 10 Styles: ${selectedPeriodTitle} vs ${priorPeriodTitle}`
@@ -690,7 +691,7 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Top 25 by Art</h3>
+                <h3>Top Performing Arts</h3>
                 <p>
                   {selectedPeriodTitle} Top 25 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
                   {currencyText(sum(topArt.map((row) => row.sales)))}
@@ -904,10 +905,6 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
           <span>Artworks In Stock</span>
           <strong>{numberText(snapshot.artworks)}</strong>
         </div>
-        <div>
-          <span>Inventory Coverage</span>
-          <strong>{snapshot.coverage == null ? "-" : `${snapshot.coverage.toFixed(1)}x`}</strong>
-        </div>
       </div>
       <div className="inventoryBreakout">
         {snapshot.byBrand.map((row) => (
@@ -916,6 +913,13 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
             <strong>{numberText(row.units)}</strong>
           </div>
         ))}
+      </div>
+      <div className="inventoryCoverage">
+        <span>Inventory Coverage</span>
+        <strong>{snapshot.coverage == null ? "-" : `${snapshot.coverage.toFixed(1)}x`}</strong>
+        <p>
+          Current inventory is {snapshot.coverage == null ? "not comparable to" : `${snapshot.coverage.toFixed(1)} times`} the selected period's unit sales pace.
+        </p>
       </div>
       {snapshot.topStyles.length ? (
         <div className="inventoryTopStyles">
@@ -933,16 +937,18 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
   );
 }
 
-function BestDayCard({ bestDay }: { bestDay: ReturnType<typeof bestSalesDay> }) {
+function BestDayCard({ bestDay, periodTitle }: { bestDay: ReturnType<typeof bestSalesDay>; periodTitle: string }) {
   const maxUnits = Math.max(...bestDay.items.map((item) => item.units), 1);
+  const hasDailySales = bestDay.dayCount > 1;
   return (
     <article className="insightCard">
       <div className="cardHeading">
-        <h4>Best Sales Day</h4>
-        <strong>{dateText(bestDay.date)}</strong>
+        <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
+        <strong>{hasDailySales ? dateText(bestDay.date) : periodTitle}</strong>
       </div>
       <p className="compactLine">
-        {currencyText(bestDay.sales)} | {numberText(bestDay.units)} units | {numberText(bestDay.transactions)} transactions
+        {currencyText(bestDay.sales)} | {numberText(bestDay.units)} units
+        {hasDailySales ? ` | ${numberText(bestDay.transactions)} transactions` : ""}
       </p>
       {bestDay.items.map((item) => (
         <div className="bestRow" key={`${item.style}-${item.artCode}-${item.color}`}>

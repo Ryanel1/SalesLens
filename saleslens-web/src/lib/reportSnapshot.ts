@@ -25,6 +25,7 @@ export type SnapshotBestDay = {
   sales: number;
   units: number;
   transactions: number;
+  dayCount?: number;
   items: SnapshotBestDayItem[];
 };
 
