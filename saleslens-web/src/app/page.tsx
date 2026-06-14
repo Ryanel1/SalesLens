@@ -612,17 +612,13 @@ export default function Home() {
               </strong>
             </div>
 
-            <div className="metricGrid four">
-              <MetricCard label="Sales" value={currencyText(currentMetrics.sales)} />
-              <MetricCard label="Transactions" value={numberText(currentMetrics.transactions)} />
-              <MetricCard label="Units" value={numberText(currentMetrics.units)} />
-              <MetricCard label="Last Year Sales" value={currencyText(priorMetrics.sales)} />
-            </div>
-
-            <SalesDriverGrid current={currentMetrics} prior={priorMetrics} drivers={monthlyDrivers} />
-            <div className="featureInsight">
-              <BestDayCard bestDay={bestDay} periodTitle={selectedPeriodTitle} />
-            </div>
+            <SalesDriverGrid
+              bestDay={bestDay}
+              current={currentMetrics}
+              drivers={monthlyDrivers}
+              periodTitle={selectedPeriodTitle}
+              prior={priorMetrics}
+            />
           </section>
 
           {inventorySnapshot ? (
@@ -843,64 +839,72 @@ function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsig
 }
 
 function SalesDriverGrid({
+  bestDay,
   current,
   prior,
   drivers,
+  periodTitle,
 }: {
+  bestDay: ReturnType<typeof bestSalesDay>;
   current: MetricSet;
   prior: MetricSet;
   drivers: ReturnType<typeof monthlyDriverMetrics>;
+  periodTitle: string;
 }) {
   return (
     <div className="salesDriverGrid">
+      <article className="driverTile monthlySalesCard">
+        <p>Sales</p>
+        <div className="monthlySalesPair">
+          <span>
+            <em>{periodTitle}</em>
+            <strong>{currencyText(current.sales)}</strong>
+          </span>
+          <span>
+            <em>Last Year</em>
+            <strong>{currencyText(prior.sales)}</strong>
+          </span>
+        </div>
+      </article>
+      <TopSalesItemsCard bestDay={bestDay} periodTitle={periodTitle} />
       <DriverTile
-        label="Sales Change"
-        value={changeText(current.sales, prior.sales)}
-        detail={`${currencyText(current.sales)} vs ${currencyText(prior.sales)} LY`}
-        tone={current.sales - prior.sales}
-      />
-      <DriverTile
-        label="Units Change"
-        value={changeText(current.units, prior.units)}
-        detail={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
-        tone={current.units - prior.units}
-      />
-      <DriverTile
-        label="Transactions Change"
-        value={changeText(current.transactions, prior.transactions)}
-        detail={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+        label="Transactions"
+        value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+        details={[
+          `Change: ${changeText(current.transactions, prior.transactions)}`,
+          `Avg sale: ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY`,
+        ]}
         tone={current.transactions - prior.transactions}
       />
       <DriverTile
-        label="Avg Sale / Transaction"
-        value={currencyText(drivers.avgSalePerTransaction)}
-        detail={`${currencyText(drivers.priorAvgSalePerTransaction)} LY`}
-        tone={drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction}
+        label="Units"
+        value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
+        details={[
+          `Change: ${changeText(current.units, prior.units)}`,
+          `Avg $ / unit: ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY`,
+        ]}
+        tone={current.units - prior.units}
       />
-      <article className="driverTile productBreadthDriver">
-        <p>Product Breadth</p>
-        <div>
-          <span><strong>{numberText(drivers.stylesSold)}</strong> Styles <em>{numberText(drivers.priorStylesSold)} LY</em></span>
-          <span><strong>{numberText(drivers.colorsSold)}</strong> Colors <em>{numberText(drivers.priorColorsSold)} LY</em></span>
-          <span><strong>{numberText(drivers.artworksSold)}</strong> Artworks <em>{numberText(drivers.priorArtworksSold)} LY</em></span>
-        </div>
-      </article>
       <DriverTile
         label="Top Style Dependence"
         value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
-        detail={`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`}
+        details={[`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`]}
         tone={0}
       />
     </div>
   );
 }
 
-function DriverTile({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {
+function DriverTile({ label, value, details, tone }: { label: string; value: string; details: string[]; tone: number }) {
   return (
     <article className={`driverTile ${changeClass(tone)}`}>
       <p>{label}</p>
       <strong>{value}</strong>
-      <span>{detail}</span>
+      <div className="driverMeta">
+        {details.map((detail) => (
+          <span key={detail}>{detail}</span>
+        ))}
+      </div>
     </article>
   );
 }
@@ -959,11 +963,11 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
   );
 }
 
-function BestDayCard({ bestDay, periodTitle }: { bestDay: ReturnType<typeof bestSalesDay>; periodTitle: string }) {
+function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: ReturnType<typeof bestSalesDay>; periodTitle: string }) {
   const maxUnits = Math.max(...bestDay.items.map((item) => item.units), 1);
   const hasDailySales = bestDay.dayCount > 1;
   return (
-    <article className="insightCard">
+    <article className="insightCard topSalesItemsCard">
       <div className="cardHeading">
         <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
         <strong>{hasDailySales ? dateText(bestDay.date) : periodTitle}</strong>
@@ -1476,6 +1480,8 @@ function monthlyDriverMetrics(currentRecords: SalesRecord[], priorRecords: Sales
   return {
     avgSalePerTransaction: current.transactions ? current.sales / current.transactions : 0,
     priorAvgSalePerTransaction: prior.transactions ? prior.sales / prior.transactions : 0,
+    avgSalePerUnit: current.units ? current.sales / current.units : 0,
+    priorAvgSalePerUnit: prior.units ? prior.sales / prior.units : 0,
     stylesSold: currentBreadth.styles,
     priorStylesSold: priorBreadth.styles,
     colorsSold: currentBreadth.colors,

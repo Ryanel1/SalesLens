@@ -5,6 +5,7 @@ import {
   isReportSnapshotPayload,
   type ReportSnapshotPayload,
   type ReportSnapshotRecord,
+  type SnapshotBestDay,
   type SnapshotInventory,
   type SnapshotMetricSet,
   type SnapshotMonthlyDrivers,
@@ -31,7 +32,6 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
   }
 
   const payload = snapshot.payload;
-  const hasDailySales = (payload.bestDay.dayCount ?? 1) > 1;
 
   return (
     <main className={`publicShell ${accountThemeClass(payload.accountName)}`}>
@@ -104,37 +104,15 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           aside={changeText(payload.currentMetrics.sales, payload.priorMetrics.sales)}
           asideTone={payload.currentMetrics.sales - payload.priorMetrics.sales}
         >
-          <div className="metricGrid four">
-            <MetricCard label="Sales" value={currencyText(payload.currentMetrics.sales)} />
-            <MetricCard label="Transactions" value={numberText(payload.currentMetrics.transactions)} />
-            <MetricCard label="Units" value={numberText(payload.currentMetrics.units)} />
-            <MetricCard label="Last Year Sales" value={currencyText(payload.priorMetrics.sales)} />
-          </div>
-
           {payload.monthlyDrivers ? (
-            <SalesDriverGrid current={payload.currentMetrics} prior={payload.priorMetrics} drivers={payload.monthlyDrivers} />
+            <SalesDriverGrid
+              bestDay={payload.bestDay}
+              current={payload.currentMetrics}
+              drivers={payload.monthlyDrivers}
+              periodTitle={payload.periodTitle}
+              prior={payload.priorMetrics}
+            />
           ) : null}
-          <div className="featureInsight">
-            <article className="insightCard">
-              <div className="cardHeading">
-                <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
-                <strong>{hasDailySales ? dateText(payload.bestDay.date) : payload.periodTitle}</strong>
-              </div>
-              <p className="compactLine">
-                {currencyText(payload.bestDay.sales)} | {numberText(payload.bestDay.units)} units
-                {hasDailySales ? ` | ${numberText(payload.bestDay.transactions)} transactions` : ""}
-              </p>
-              {payload.bestDay.items.map((item) => (
-                <div className="bestRow" key={`${item.rank}-${item.style}-${item.artCode}`}>
-                  <strong>#{item.rank} {item.style}</strong>
-                  <span className="barTrack">
-                    <span style={{ width: `${Math.max(3, item.units)}%` }} />
-                  </span>
-                  <small>{numberText(item.units)} | {currencyText(item.sales)}</small>
-                </div>
-              ))}
-            </article>
-          </div>
         </ReportSection>
 
         {payload.inventorySnapshot ? (
@@ -317,64 +295,104 @@ function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
 }
 
 function SalesDriverGrid({
+  bestDay,
   current,
   prior,
   drivers,
+  periodTitle,
 }: {
+  bestDay: SnapshotBestDay;
   current: SnapshotMetricSet;
   prior: SnapshotMetricSet;
   drivers: SnapshotMonthlyDrivers;
+  periodTitle: string;
 }) {
+  const avgSalePerUnit = drivers.avgSalePerUnit ?? (current.units ? current.sales / current.units : 0);
+  const priorAvgSalePerUnit = drivers.priorAvgSalePerUnit ?? (prior.units ? prior.sales / prior.units : 0);
+
   return (
     <div className="salesDriverGrid">
+      <article className="driverTile monthlySalesCard">
+        <p>Sales</p>
+        <div className="monthlySalesPair">
+          <span>
+            <em>{periodTitle}</em>
+            <strong>{currencyText(current.sales)}</strong>
+          </span>
+          <span>
+            <em>Last Year</em>
+            <strong>{currencyText(prior.sales)}</strong>
+          </span>
+        </div>
+      </article>
+      <TopSalesItemsCard bestDay={bestDay} periodTitle={periodTitle} />
       <DriverTile
-        label="Sales Change"
-        value={changeText(current.sales, prior.sales)}
-        detail={`${currencyText(current.sales)} vs ${currencyText(prior.sales)} LY`}
-        tone={current.sales - prior.sales}
-      />
-      <DriverTile
-        label="Units Change"
-        value={changeText(current.units, prior.units)}
-        detail={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
-        tone={current.units - prior.units}
-      />
-      <DriverTile
-        label="Transactions Change"
-        value={changeText(current.transactions, prior.transactions)}
-        detail={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+        label="Transactions"
+        value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+        details={[
+          `Change: ${changeText(current.transactions, prior.transactions)}`,
+          `Avg sale: ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY`,
+        ]}
         tone={current.transactions - prior.transactions}
       />
       <DriverTile
-        label="Avg Sale / Transaction"
-        value={currencyText(drivers.avgSalePerTransaction)}
-        detail={`${currencyText(drivers.priorAvgSalePerTransaction)} LY`}
-        tone={drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction}
+        label="Units"
+        value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
+        details={[
+          `Change: ${changeText(current.units, prior.units)}`,
+          `Avg $ / unit: ${currencyText(avgSalePerUnit)} vs ${currencyText(priorAvgSalePerUnit)} LY`,
+        ]}
+        tone={current.units - prior.units}
       />
-      <article className="driverTile productBreadthDriver">
-        <p>Product Breadth</p>
-        <div>
-          <span><strong>{numberText(drivers.stylesSold)}</strong> Styles <em>{numberText(drivers.priorStylesSold)} LY</em></span>
-          <span><strong>{numberText(drivers.colorsSold)}</strong> Colors <em>{numberText(drivers.priorColorsSold)} LY</em></span>
-          <span><strong>{numberText(drivers.artworksSold)}</strong> Artworks <em>{numberText(drivers.priorArtworksSold)} LY</em></span>
-        </div>
-      </article>
       <DriverTile
         label="Top Style Dependence"
         value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
-        detail={`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`}
+        details={[`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`]}
         tone={0}
       />
     </div>
   );
 }
 
-function DriverTile({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {
+function DriverTile({ label, value, details, tone }: { label: string; value: string; details: string[]; tone: number }) {
   return (
     <article className={`driverTile ${changeClass(tone)}`}>
       <p>{label}</p>
       <strong>{value}</strong>
-      <span>{detail}</span>
+      <div className="driverMeta">
+        {details.map((detail) => (
+          <span key={detail}>{detail}</span>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay; periodTitle: string }) {
+  const maxUnits = Math.max(...bestDay.items.map((item) => item.units), 1);
+  const hasDailySales = (bestDay.dayCount ?? 0) > 1;
+  return (
+    <article className="insightCard topSalesItemsCard">
+      <div className="cardHeading">
+        <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
+        <strong>{hasDailySales ? dateText(bestDay.date) : periodTitle}</strong>
+      </div>
+      <p className="compactLine">
+        {currencyText(bestDay.sales)} | {numberText(bestDay.units)} units
+        {hasDailySales ? ` | ${numberText(bestDay.transactions)} transactions` : ""}
+      </p>
+      {bestDay.items.map((item) => (
+        <div className="bestRow" key={`${item.rank}-${item.style}-${item.artCode}`}>
+          <strong className="bestItem">
+            <span>
+              #{item.rank} {item.style}
+              <small>{numberText(item.units)} | {currencyText(item.sales)}</small>
+            </span>
+            <small>{item.artCode} | {item.color}</small>
+          </strong>
+          <span className="barTrack"><span style={{ width: `${(item.units / maxUnits) * 100}%` }} /></span>
+        </div>
+      ))}
     </article>
   );
 }

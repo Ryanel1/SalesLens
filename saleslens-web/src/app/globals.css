@@ -948,7 +948,7 @@ select {
   border: 1px solid rgba(231, 222, 209, 0.72);
   backdrop-filter: blur(16px) saturate(1.04);
   display: grid;
-  min-height: 150px;
+  min-height: 176px;
   padding: 1.15rem;
 }
 
@@ -965,12 +965,17 @@ select {
   align-self: center;
   color: var(--soft-black);
   display: block;
-  font-size: clamp(1.55rem, 2.5vw, 2.2rem);
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
   line-height: 1;
 }
 
-.driverTile > span {
+.driverMeta {
   align-self: end;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.driverMeta span {
   color: var(--taupe);
   font-size: 0.82rem;
   font-weight: 800;
@@ -984,34 +989,42 @@ select {
   border-left: 4px solid var(--clay);
 }
 
-.productBreadthDriver > div {
+.monthlySalesCard {
+  grid-column: span 2;
+}
+
+.monthlySalesPair {
   align-self: stretch;
   display: grid;
-  gap: 0.65rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.4rem;
 }
 
-.productBreadthDriver span {
-  color: var(--taupe);
+.monthlySalesPair span {
+  border: 1px solid rgba(231, 222, 209, 0.72);
   display: grid;
-  font-size: 0.72rem;
-  font-weight: 850;
-  gap: 0.15rem;
-  text-transform: uppercase;
+  gap: 0.5rem;
+  padding: 1rem;
 }
 
-.productBreadthDriver span strong {
-  color: var(--soft-black);
-  font-size: clamp(1.2rem, 2vw, 1.75rem);
-  line-height: 1;
-}
-
-.productBreadthDriver em {
+.monthlySalesPair em {
   color: var(--taupe);
   font-size: 0.72rem;
   font-style: normal;
-  font-weight: 850;
-  text-transform: none;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.monthlySalesPair strong {
+  color: var(--soft-black);
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  line-height: 1;
+}
+
+.topSalesItemsCard {
+  min-height: 176px;
 }
 
 .featureInsight {
@@ -1665,7 +1678,11 @@ tbody tr:nth-child(even) {
     grid-template-columns: 1fr;
   }
 
-  .productBreadthDriver > div {
+  .monthlySalesCard {
+    grid-column: span 1;
+  }
+
+  .monthlySalesPair {
     grid-template-columns: 1fr;
   }
 
