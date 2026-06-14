@@ -680,14 +680,14 @@ select {
 }
 
 .lineCard {
-  height: 280px;
+  height: 330px;
   margin-bottom: 1px;
   padding: 1rem;
   position: relative;
 }
 
 .comparativeChart {
-  padding: 1.25rem 1rem 0.75rem;
+  padding: 2.5rem 1rem 1rem;
 }
 
 .lineLegend {
@@ -724,7 +724,10 @@ select {
 }
 
 .lineCard svg {
+  display: block;
   height: 100%;
+  margin: 0 auto;
+  max-width: 980px;
   overflow: visible;
   width: 100%;
 }
@@ -741,6 +744,12 @@ select {
 
 .chartGridLine.horizontal {
   stroke-dasharray: 2 2;
+}
+
+.axisLine {
+  stroke: rgba(36, 35, 33, 0.55);
+  stroke-width: 0.35;
+  vector-effect: non-scaling-stroke;
 }
 
 .lineCard polyline {
@@ -775,20 +784,25 @@ select {
 }
 
 .monthLabel,
-.pointLabel {
+.pointLabel,
+.axisLabel {
   fill: var(--taupe);
-  font-size: 2.4px;
+  font-size: 2.15px;
   font-weight: 900;
   text-anchor: middle;
 }
 
 .pointLabel {
   fill: var(--charcoal);
-  font-size: 2.35px;
+  font-size: 1.95px;
 }
 
 .priorLabel {
   fill: var(--taupe);
+}
+
+.axisLabel {
+  text-anchor: end;
 }
 
 .ytdInsightGrid {

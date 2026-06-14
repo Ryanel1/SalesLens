@@ -409,9 +409,13 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
   const currentValues = padMonths(payload.ytdLine.current);
   const priorValues = padMonths(payload.ytdLine.prior);
   const maxValue = Math.max(...currentValues, ...priorValues, 1);
-  const xFor = (index: number) => 7 + (index / 11) * 86;
+  const activeMonthCount = Math.max(1, lastActiveMonthIndex(currentValues, priorValues) + 1);
+  const displayedCurrent = currentValues.slice(0, activeMonthCount);
+  const displayedPrior = priorValues.slice(0, activeMonthCount);
+  const xFor = (index: number) => 14 + (index / 11) * 100;
   const yFor = (value: number) => 74 - (value / maxValue) * 58;
   const points = (values: number[]) => values.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
+  const ticks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
     <div className="lineCard comparativeChart">
@@ -419,26 +423,33 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
         <span><i className="dot current" />Current</span>
         <span><i className="dot prior" />Last Year</span>
       </div>
-      <svg viewBox="0 0 100 92" preserveAspectRatio="none" role="img" aria-label="Comparative sales by month">
-        {[0, 1, 2, 3, 4].map((tick) => {
-          const y = 74 - tick * 14.5;
-          return <line key={`h-${tick}`} className="chartGridLine horizontal" x1="7" x2="93" y1={y} y2={y} />;
+      <svg viewBox="0 0 120 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Comparative sales by month">
+        {ticks.map((tick) => {
+          const y = 74 - tick * 58;
+          return (
+            <g key={`h-${tick}`}>
+              <text className="axisLabel" x="10" y={y + 1}>{compactNumber(maxValue * tick)}</text>
+              <line className="chartGridLine horizontal" x1="14" x2="114" y1={y} y2={y} />
+            </g>
+          );
         })}
         {months.map((month, index) => (
           <g key={month}>
-            <line className="chartGridLine vertical" x1={xFor(index)} x2={xFor(index)} y1="10" y2="74" />
+            <line className="chartGridLine vertical" x1={xFor(index)} x2={xFor(index)} y1="16" y2="74" />
             <text className="monthLabel" x={xFor(index)} y="87">{month}</text>
           </g>
         ))}
-        <polyline points={points(priorValues)} className="priorLine" />
-        <polyline points={points(currentValues)} className="currentLine" />
-        {priorValues.map((value, index) => (
+        <line className="axisLine" x1="14" x2="114" y1="74" y2="74" />
+        <line className="axisLine" x1="14" x2="14" y1="16" y2="74" />
+        <polyline points={points(displayedPrior)} className="priorLine" />
+        <polyline points={points(displayedCurrent)} className="currentLine" />
+        {displayedPrior.map((value, index) => (
           <g key={`prior-${index}`}>
             <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
             {value ? <text className="pointLabel priorLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
           </g>
         ))}
-        {currentValues.map((value, index) => (
+        {displayedCurrent.map((value, index) => (
           <g key={`current-${index}`}>
             <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
             {value ? <text className="pointLabel currentLabel" x={xFor(index)} y={yFor(value) - 2.4}>{compactNumber(value)}</text> : null}
@@ -451,6 +462,13 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
 
 function padMonths(values: number[]) {
   return Array.from({ length: 12 }, (_, index) => values[index] ?? 0);
+}
+
+function lastActiveMonthIndex(current: number[], prior: number[]) {
+  for (let index = 11; index >= 0; index -= 1) {
+    if ((current[index] ?? 0) > 0 || (prior[index] ?? 0) > 0) return index;
+  }
+  return 0;
 }
 
 function compactNumber(value: number) {
