@@ -1448,7 +1448,7 @@ function isRebelRagsCustomer(name: string | null | undefined) {
 }
 
 function cachedImageUrlAllowedForColor(value: string, color: string) {
-  return imageUrlMatchesColor(value, color) || imageColorToken(value) === "DEFAULT";
+  return imageUrlMatchesColor(value, color) || (compactImagePart(color) === "WHITE" && imageColorToken(value) === "DEFAULT");
 }
 
 function imageUrlMatchesColor(value: string, color: string) {

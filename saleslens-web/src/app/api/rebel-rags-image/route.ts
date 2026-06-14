@@ -197,17 +197,12 @@ function productImageUrl(html: string, item: ImageRequestItem, productUrl: strin
   const colorMatch = urls.find((url) => imageUrlMatchesColor(url, clean(item.color)));
   if (colorMatch) return colorMatch;
 
-  return urls.find((url) => canUseDefaultImageUrl(url, item, urls)) ?? null;
+  return urls.find((url) => canUseDefaultImageUrl(url, item)) ?? null;
 }
 
-function canUseDefaultImageUrl(value: string, item: ImageRequestItem, allImageUrls: string[]) {
+function canUseDefaultImageUrl(value: string, item: ImageRequestItem) {
   if (imageColorToken(value) !== "DEFAULT") return false;
-  return allowsDefaultImage(item) || imageUrlsOnlyHaveDefaultColor(allImageUrls);
-}
-
-function imageUrlsOnlyHaveDefaultColor(imageUrls: string[]) {
-  const tokens = new Set(imageUrls.map(imageColorToken).filter(Boolean));
-  return tokens.size > 0 && [...tokens].every((token) => token === "DEFAULT");
+  return allowsDefaultImage(item);
 }
 
 function imageUrlMatchesColor(value: string, colorName: string) {
