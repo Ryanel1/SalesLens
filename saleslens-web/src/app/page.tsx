@@ -310,7 +310,7 @@ export default function Home() {
     const customerId = selectedCustomerId;
 
     const missingRows = topArt
-      .filter((row) => !row.imageUrl && row.style !== "-" && row.artCode !== "-")
+      .filter((row) => !row.imageUrl && row.style !== "-")
       .filter((row) => !imageFetchAttempts.current.has(imageAttemptKey(row)))
       .slice(0, 30);
 
@@ -1369,7 +1369,7 @@ function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: P
     .map(([key, group]) => {
       const first = group[0];
       const style = normalizedStyle(first);
-      const artCode = clean(first.art_code) || "-";
+      const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
       return {
@@ -1460,6 +1460,7 @@ function colorSearchTerms(color: string) {
   const normalizedColor = compactImagePart(color);
   const terms = [normalizedColor];
   if (normalizedColor === "LIGHTBLUE") terms.push("LTBLUE");
+  if (normalizedColor === "GRAYCAROLINABLUE") terms.push("LIGHTBLUE", "LTBLUE", "CAROLINABLUE");
   if (normalizedColor === "HEATHERGREY") terms.push("HEATHERGRAY");
   if (normalizedColor === "SILVERGREY") terms.push("SILVERGRAY");
   return terms;
@@ -1680,9 +1681,13 @@ function artKey(record: SalesRecord) {
   return [
     compactImagePart(brandName(record)),
     normalizedStyle(record),
-    compactImagePart(clean(record.art_code) || "-"),
+    compactImagePart(displayArtCode(record)),
     compactImagePart(colorName(record)),
   ].join("|");
+}
+
+function displayArtCode(record: SalesRecord) {
+  return clean(record.art_code) || normalizedStyle(record);
 }
 
 function imageKey(style: string, artCode: string, color: string) {
