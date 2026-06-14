@@ -1689,7 +1689,17 @@ function compactImagePart(value: string | null | undefined) {
 }
 
 function colorName(record: SalesRecord) {
-  return clean(record.catalog_color_name) || clean(record.color) || "-";
+  return displayColorName(clean(record.catalog_color_name) || clean(record.color)) || "-";
+}
+
+function displayColorName(value: string) {
+  const spaced = clean(value).replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!spaced) return "";
+  return spaced
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 function monthKey(value: string | null) {
