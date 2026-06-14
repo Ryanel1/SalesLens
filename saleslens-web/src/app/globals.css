@@ -36,18 +36,6 @@ body {
   min-height: 100vh;
 }
 
-body::before {
-  background:
-    linear-gradient(rgba(231, 222, 209, 0.42) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(231, 222, 209, 0.42) 1px, transparent 1px);
-  background-size: 96px 96px;
-  content: "";
-  inset: 0;
-  pointer-events: none;
-  position: fixed;
-  z-index: 0;
-}
-
 body > * {
   position: relative;
   z-index: 1;
@@ -95,25 +83,141 @@ h3 {
 }
 
 .loginShell {
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 253, 248, 0.18), transparent 0.3rem),
+    linear-gradient(rgba(17, 16, 14, 0.58), rgba(17, 16, 14, 0.7));
   display: grid;
+  grid-template-columns: 1fr minmax(280px, 360px) 1fr;
   min-height: 100vh;
   padding: clamp(1rem, 4vw, 4rem);
-  place-items: center;
+  position: relative;
+}
+
+.loginCircuit {
+  border-bottom: 1px solid rgba(231, 222, 209, 0.16);
+  border-top: 1px solid rgba(231, 222, 209, 0.12);
+  height: min(34vh, 260px);
+  opacity: 0.75;
+  position: relative;
+}
+
+.loginCircuit::before,
+.loginCircuit::after {
+  background: rgba(255, 253, 248, 0.78);
+  border: 3px solid rgba(111, 135, 149, 0.55);
+  box-shadow: 0 0 18px rgba(111, 135, 149, 0.35);
+  content: "";
+  height: 7px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+}
+
+.loginCircuit::after {
+  background:
+    linear-gradient(90deg, rgba(231, 222, 209, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(231, 222, 209, 0.08) 1px, transparent 1px),
+    rgba(36, 35, 33, 0.72);
+  background-size: 6px 6px;
+  border: 1px solid rgba(231, 222, 209, 0.18);
+  border-radius: 6px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  height: 42px;
+  width: 82px;
+}
+
+.loginCircuitLeft {
+  border-left: 1px solid rgba(231, 222, 209, 0.08);
+  border-radius: 0 42px 42px 0;
+  justify-self: stretch;
+  margin-right: -1px;
+}
+
+.loginCircuitLeft::before {
+  right: -5px;
+}
+
+.loginCircuitLeft::after {
+  left: clamp(1rem, 7vw, 5rem);
+}
+
+.loginCircuitRight {
+  border-radius: 42px 0 0 42px;
+  border-right: 1px solid rgba(231, 222, 209, 0.08);
+  justify-self: stretch;
+  margin-left: -1px;
+}
+
+.loginCircuitRight::before {
+  left: -5px;
+}
+
+.loginCircuitRight::after {
+  right: clamp(1rem, 7vw, 5rem);
 }
 
 .loginPanel {
-  background: rgba(255, 253, 248, 0.93);
-  border: var(--hairline);
-  box-shadow: var(--shadow);
-  max-width: 540px;
-  padding: clamp(2rem, 5vw, 4rem);
+  align-self: center;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.95), rgba(246, 242, 234, 0.92)),
+    var(--paper);
+  border: 1px solid rgba(231, 222, 209, 0.44);
+  border-radius: 10px;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+  justify-self: center;
+  max-width: 360px;
+  padding: 1.45rem;
+  position: relative;
+  text-align: center;
   width: 100%;
+}
+
+.loginPanel::before {
+  background: linear-gradient(90deg, transparent, rgba(111, 135, 149, 0.55), transparent);
+  content: "";
+  height: 1px;
+  left: 1.45rem;
+  position: absolute;
+  right: 1.45rem;
+  top: 4.6rem;
 }
 
 .loginPanel h1 {
   color: var(--soft-black);
-  font-size: clamp(3rem, 8vw, 5.6rem);
-  margin-bottom: 1rem;
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.45rem;
+}
+
+.loginMark {
+  align-items: center;
+  background: var(--charcoal);
+  border: 1px solid rgba(111, 135, 149, 0.58);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(36, 35, 33, 0.2);
+  color: var(--paper);
+  display: inline-flex;
+  font-size: 0.8rem;
+  font-weight: 900;
+  height: 44px;
+  justify-content: center;
+  letter-spacing: 0.03em;
+  margin-bottom: 1.05rem;
+  position: relative;
+  width: 44px;
+}
+
+.loginMark::after {
+  background: var(--steel);
+  border-radius: 999px;
+  bottom: 7px;
+  content: "";
+  height: 4px;
+  left: 9px;
+  position: absolute;
+  right: 9px;
 }
 
 .intro,
@@ -125,11 +229,17 @@ h3 {
 
 .eyebrow {
   color: var(--steel-dark);
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 900;
   letter-spacing: 0.08em;
-  margin: 0 0 0.7rem;
+  margin: 0 0 0.55rem;
   text-transform: uppercase;
+}
+
+.loginPanel .intro {
+  font-size: 0.82rem;
+  margin: 0 auto 1.35rem;
+  max-width: 26rem;
 }
 
 label {
@@ -142,13 +252,17 @@ label {
 }
 
 .loginPanel label {
-  margin: 1.5rem 0 0.5rem;
+  color: var(--taupe);
+  font-size: 0.64rem;
+  letter-spacing: 0.07em;
+  margin: 0 0 0.38rem;
+  text-align: left;
 }
 
-.loginRow {
+.loginFields {
   display: grid;
-  gap: 0.8rem;
-  grid-template-columns: 1fr auto;
+  gap: 0.68rem;
+  text-align: left;
 }
 
 input,
@@ -160,16 +274,46 @@ select {
   padding: 0.85rem 0.95rem;
 }
 
-.loginRow button,
+.loginPanel input {
+  background: rgba(255, 253, 248, 0.72);
+  border-color: rgba(216, 207, 193, 0.9);
+  border-radius: 7px;
+  font-size: 0.84rem;
+  padding: 0.78rem 0.85rem;
+}
+
+.loginPanel input:focus {
+  border-color: rgba(111, 135, 149, 0.95);
+  box-shadow: 0 0 0 3px rgba(111, 135, 149, 0.18);
+  outline: none;
+}
+
+.loginButton,
 .ghostButton {
   color: var(--charcoal);
   font-weight: 800;
   padding: 0.85rem 1rem;
 }
 
-.loginRow button {
-  background: var(--charcoal);
+.loginButton {
+  background: var(--steel-dark);
+  border-radius: 7px;
   color: var(--paper);
+  font-size: 0.84rem;
+  margin-top: 0.22rem;
+  transition: background 140ms ease, transform 140ms ease;
+  width: 100%;
+}
+
+.loginButton:not(:disabled):hover {
+  background: var(--charcoal);
+  transform: translateY(-1px);
+}
+
+.loginPanel .status {
+  font-size: 0.78rem;
+  margin: 1rem 0 0;
+  text-align: left;
 }
 
 .appShell {
@@ -1076,7 +1220,6 @@ tbody tr:nth-child(even) {
     padding: 1rem;
   }
 
-  .loginRow,
   .overviewStrip,
   .metricGrid.three,
   .metricGrid.four,
@@ -1086,6 +1229,14 @@ tbody tr:nth-child(even) {
   .navControls,
   .controlDock {
     grid-template-columns: 1fr;
+  }
+
+  .loginShell {
+    grid-template-columns: 1fr;
+  }
+
+  .loginCircuit {
+    display: none;
   }
 
   .controlDock label,

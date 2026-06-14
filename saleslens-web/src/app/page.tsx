@@ -747,23 +747,28 @@ export default function Home() {
 
   return (
     <main className="loginShell">
+      <div className="loginCircuit loginCircuitLeft" aria-hidden="true" />
+      <div className="loginCircuit loginCircuitRight" aria-hidden="true" />
       <section className="loginPanel">
-        <p className="eyebrow">Private Sales Dashboard</p>
-        <h1>SalesLens</h1>
-        <p className="intro">Sign in to view sales summaries, compare prior-year performance, and export reports.</p>
+        <div className="loginMark" aria-hidden="true">
+          <span>SL</span>
+        </div>
+        <p className="eyebrow">SalesLens by Lester Sales</p>
+        <h1>Welcome back</h1>
+        <p className="intro">Sign in to review account performance, compare trends, and share sales snapshots.</p>
 
-        <label htmlFor="email">Email</label>
-        <input
-          autoComplete="email"
-          id="email"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="ryanlestersells@gmail.com"
-        />
+        <div className="loginFields">
+          <label htmlFor="email">Email address</label>
+          <input
+            autoComplete="email"
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="ryanlestersells@gmail.com"
+          />
 
-        <label htmlFor="password">Password</label>
-        <div className="loginRow">
+          <label htmlFor="password">Password</label>
           <input
             autoComplete="current-password"
             id="password"
@@ -772,7 +777,7 @@ export default function Home() {
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Enter your password"
           />
-          <button onClick={signIn} disabled={!email || !password}>
+          <button className="loginButton" onClick={signIn} disabled={!email || !password}>
             Sign In
           </button>
         </div>
