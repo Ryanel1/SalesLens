@@ -935,6 +935,7 @@ select {
   min-height: 100%;
   place-content: center;
   padding: 1rem;
+  text-align: center;
 }
 
 .inventorySummaryGrid span,
@@ -965,6 +966,8 @@ select {
   display: grid;
   gap: 0.2rem;
   padding: 1rem;
+  place-content: center;
+  text-align: center;
 }
 
 .inventoryBreakout strong {
@@ -977,7 +980,9 @@ select {
   display: grid;
   gap: 0.45rem;
   grid-column: 2;
+  place-content: center;
   padding: 1rem;
+  text-align: center;
 }
 
 .inventoryCoverage strong {
@@ -995,7 +1000,8 @@ select {
 
 .inventoryTopStyles {
   display: grid;
-  gap: 0.65rem;
+  align-content: center;
+  gap: 0.45rem;
   grid-column: 3 / span 2;
   padding: 1rem;
 }
@@ -1004,13 +1010,17 @@ select {
   color: var(--soft-black);
   font-size: 1rem;
   margin-bottom: 0.1rem;
+  text-align: center;
 }
 
 .inventoryTopStyles div {
   align-items: baseline;
   display: grid;
-  gap: 0.45rem;
-  grid-template-columns: minmax(72px, 0.7fr) 1fr auto;
+  gap: 0.8rem;
+  grid-template-columns: minmax(82px, 0.6fr) 92px minmax(104px, auto);
+  justify-self: center;
+  max-width: 520px;
+  width: 100%;
 }
 
 .inventoryTopStyles strong {

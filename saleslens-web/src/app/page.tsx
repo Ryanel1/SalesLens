@@ -910,7 +910,7 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
         {snapshot.byBrand.map((row) => (
           <div key={row.brand}>
             <span>{row.brand}</span>
-            <strong>{numberText(row.units)}</strong>
+            <strong>{numberText(row.units)} Units</strong>
           </div>
         ))}
       </div>
@@ -918,7 +918,10 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
         <span>Inventory Coverage</span>
         <strong>{snapshot.coverage == null ? "-" : `${snapshot.coverage.toFixed(1)}x`}</strong>
         <p>
-          Current inventory is {snapshot.coverage == null ? "not comparable to" : `${snapshot.coverage.toFixed(1)} times`} the selected period's unit sales pace.
+          {snapshot.coverage == null
+            ? "Current inventory is not comparable to the selected period's selling pace."
+            : `Based on current selling trends, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
+          This helps show whether stock looks heavy, lean, or balanced against recent demand.
         </p>
       </div>
       {snapshot.topStyles.length ? (
