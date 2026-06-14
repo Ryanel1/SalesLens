@@ -680,7 +680,7 @@ select {
 }
 
 .lineCard {
-  height: 460px;
+  height: 430px;
   margin-bottom: 1px;
   padding: 1rem;
   position: relative;
@@ -688,13 +688,13 @@ select {
 
 .comparativeChart {
   min-width: 0;
-  padding: 2.5rem 1rem 1rem;
+  padding: 2rem 1rem 0.8rem;
 }
 
 .ytdTrackerLayout {
   display: grid;
   gap: 1px;
-  grid-template-columns: minmax(420px, 1fr) minmax(280px, 0.42fr);
+  grid-template-columns: minmax(520px, 1fr) minmax(380px, 0.52fr);
 }
 
 .ytdTrackerTiles {
@@ -708,14 +708,18 @@ select {
 }
 
 .ytdTrackerTiles .metricGrid.three,
-.ytdTrackerTiles .ytdInsightGrid {
+.ytdTrackerTiles .metricGrid.three {
   grid-template-columns: 1fr;
+}
+
+.ytdTrackerTiles .ytdInsightGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .ytdTrackerTiles .metric,
 .ytdTrackerTiles .ytdInsightCard {
   min-height: 0;
-  padding: 1rem;
+  padding: 0.85rem 1rem;
 }
 
 .lineLegend {
@@ -755,7 +759,7 @@ select {
   display: block;
   height: 100%;
   margin: 0 auto;
-  max-width: 720px;
+  max-width: 960px;
   overflow: visible;
   width: 100%;
 }
