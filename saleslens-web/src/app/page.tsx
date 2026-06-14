@@ -88,7 +88,7 @@ type InventorySnapshot = {
   artworks: number;
   coverage: number | null;
   byBrand: { brand: string; units: number }[];
-  topStyles: { style: string; brand: string; units: number }[];
+  topStyles: { style: string; brand: string; units: number; artworks: number }[];
 } | null;
 
 const PAGE_SIZE = 1000;
@@ -921,17 +921,19 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
           {snapshot.coverage == null
             ? "Current inventory is not comparable to the selected period's selling pace."
             : `Based on current selling trends, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
+          {" "}
           This helps show whether stock looks heavy, lean, or balanced against recent demand.
         </p>
       </div>
       {snapshot.topStyles.length ? (
         <div className="inventoryTopStyles">
-          <h4>Top Inventory Styles</h4>
+          <h4>On-Hand Inventory Styles</h4>
           {snapshot.topStyles.map((row) => (
             <div key={row.style}>
-              <strong>{row.style}</strong>
-              <span>{row.brand}</span>
-              <em>{numberText(row.units)} units</em>
+              <p>
+                <strong>{row.brand} {row.style}</strong> {numberText(row.units)} units across{" "}
+                {countText(row.artworks, "artwork", "artworks")}.
+              </p>
             </div>
           ))}
         </div>
@@ -1519,6 +1521,7 @@ function topInventoryStyles(records: SalesRecord[]) {
       style,
       brand: brandName(group[0]),
       units: sum(group.map((record) => record.inventory_units ?? 0)),
+      artworks: uniqueCount(group.map((record) => clean(record.art_code))),
     }))
     .filter((row) => row.units > 0)
     .sort((left, right) => right.units - left.units || left.style.localeCompare(right.style))
