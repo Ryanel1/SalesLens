@@ -86,7 +86,9 @@ type InventorySnapshot = {
   totalUnits: number;
   styles: number;
   artworks: number;
+  coverage: number | null;
   byBrand: { brand: string; units: number }[];
+  topStyles: { style: string; brand: string; units: number }[];
 } | null;
 
 const PAGE_SIZE = 1000;
@@ -642,10 +644,22 @@ export default function Home() {
             <div className="insightGrid">
               <SalesMixCard slices={salesMix} totalUnits={currentMetrics.units} />
               <ComparisonCard current={currentMetrics} prior={priorMetrics} selectedPeriod={selectedPeriodTitle} priorPeriod={priorPeriodTitle} />
-              {inventorySnapshot ? <InventoryCard snapshot={inventorySnapshot} /> : null}
               <BestDayCard bestDay={bestDay} />
             </div>
           </section>
+
+          {inventorySnapshot ? (
+            <section className="sectionBlock inventorySection">
+              <div className="sectionTitle">
+                <div>
+                  <h3>Inventory Snapshot</h3>
+                  <p>Current on-hand inventory from the latest inventory data inside {selectedPeriodTitle}.</p>
+                </div>
+                <strong>{dateText(inventorySnapshot.date)}</strong>
+              </div>
+              <InventoryCard snapshot={inventorySnapshot} />
+            </section>
+          ) : null}
 
           <section className="sectionBlock">
             <div className="sectionTitle">
@@ -876,18 +890,24 @@ function ComparisonCard({
 function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
   if (!snapshot) return null;
   return (
-    <article className="insightCard inventoryCard">
-      <div className="cardHeading">
-        <h4>Inventory Snapshot</h4>
-        <strong>{dateText(snapshot.date)}</strong>
-      </div>
+    <article className="inventoryCard">
       <div className="inventoryTotal">
         <span>On Hand Units</span>
         <strong>{numberText(snapshot.totalUnits)}</strong>
       </div>
-      <div className="inventoryStats">
-        <span>{numberText(snapshot.styles)} styles</span>
-        <span>{numberText(snapshot.artworks)} artworks</span>
+      <div className="inventorySummaryGrid">
+        <div>
+          <span>Styles In Stock</span>
+          <strong>{numberText(snapshot.styles)}</strong>
+        </div>
+        <div>
+          <span>Artworks In Stock</span>
+          <strong>{numberText(snapshot.artworks)}</strong>
+        </div>
+        <div>
+          <span>Inventory Coverage</span>
+          <strong>{snapshot.coverage == null ? "-" : `${snapshot.coverage.toFixed(1)}x`}</strong>
+        </div>
       </div>
       <div className="inventoryBreakout">
         {snapshot.byBrand.map((row) => (
@@ -897,6 +917,18 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
           </div>
         ))}
       </div>
+      {snapshot.topStyles.length ? (
+        <div className="inventoryTopStyles">
+          <h4>Top Inventory Styles</h4>
+          {snapshot.topStyles.map((row) => (
+            <div key={row.style}>
+              <strong>{row.style}</strong>
+              <span>{row.brand}</span>
+              <em>{numberText(row.units)} units</em>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -1437,12 +1469,16 @@ function amountValue(record: SalesRecord) {
 function inventorySnapshotForRecords(records: SalesRecord[]): InventorySnapshot {
   const snapshotRecords = latestInventoryRecords(records);
   if (!snapshotRecords.length) return null;
+  const totalUnits = sum(snapshotRecords.map((record) => record.inventory_units ?? 0));
+  const soldUnits = sum(records.map((record) => record.units ?? 0));
   return {
     date: snapshotRecords[0].transaction_date,
-    totalUnits: sum(snapshotRecords.map((record) => record.inventory_units ?? 0)),
+    totalUnits,
     styles: uniqueCount(snapshotRecords.map(styleKey)),
     artworks: uniqueCount(snapshotRecords.map((record) => clean(record.art_code))),
+    coverage: soldUnits ? totalUnits / soldUnits : null,
     byBrand: inventoryByBrand(snapshotRecords),
+    topStyles: topInventoryStyles(snapshotRecords),
   };
 }
 
@@ -1466,6 +1502,18 @@ function inventoryByBrand(records: SalesRecord[]) {
       units: sum(group.map((record) => record.inventory_units ?? 0)),
     }))
     .sort((left, right) => right.units - left.units || left.brand.localeCompare(right.brand));
+}
+
+function topInventoryStyles(records: SalesRecord[]) {
+  return groupedRows(records, styleKey)
+    .map(([style, group]) => ({
+      style,
+      brand: brandName(group[0]),
+      units: sum(group.map((record) => record.inventory_units ?? 0)),
+    }))
+    .filter((row) => row.units > 0)
+    .sort((left, right) => right.units - left.units || left.style.localeCompare(right.style))
+    .slice(0, 5);
 }
 
 function latestDate(records: SalesRecord[]) {
