@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { parseSalesWorkbook, type ParsedSalesRecord } from "@/lib/importSalesData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -32,6 +32,16 @@ type ProductImage = {
   image_url: string | null;
   storage_path: string | null;
   resolved_url?: string | null;
+};
+
+type RebelRagsImageMatch = {
+  style: string;
+  artCode: string;
+  color: string;
+  productUrl: string;
+  imageUrl: string;
+  lookupArtCode: string;
+  isManualOverride: boolean;
 };
 
 type DashboardData = {
@@ -131,6 +141,7 @@ export default function Home() {
   const [importStatus, setImportStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
+  const imageFetchAttempts = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!supabase) {
@@ -292,6 +303,74 @@ export default function Home() {
     const options = [...new Set(dashboardData.records.map(brandName))].sort();
     return ["All", ...options];
   }, [dashboardData.records]);
+
+  useEffect(() => {
+    if (!supabase || !selectedCustomerId || !selectedCustomer || !isRebelRagsCustomer(selectedCustomer.name)) return;
+    const client = supabase;
+    const customerId = selectedCustomerId;
+
+    const missingRows = topArt
+      .filter((row) => !row.imageUrl && row.style !== "-" && row.artCode !== "-")
+      .filter((row) => !imageFetchAttempts.current.has(imageAttemptKey(row)))
+      .slice(0, 25);
+
+    if (!missingRows.length) return;
+    missingRows.forEach((row) => imageFetchAttempts.current.add(imageAttemptKey(row)));
+
+    let isCancelled = false;
+
+    async function fetchMissingImages() {
+      const { data } = await client.auth.getSession();
+      const response = await fetch("/api/rebel-rags-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          items: missingRows.map((row) => ({
+            style: row.style,
+            artCode: row.artCode,
+            color: row.color,
+            styleName: row.styleName,
+          })),
+        }),
+      });
+
+      if (!response.ok) return;
+      const payload = (await response.json()) as { matches?: RebelRagsImageMatch[] };
+      const matches = payload.matches?.filter((match) => match.imageUrl) ?? [];
+      if (!matches.length) return;
+
+      const rows = matches.map((match) => ({
+        customer_id: customerId,
+        style_number: match.style,
+        art_code: match.artCode,
+        color: match.color,
+        product_url: match.productUrl,
+        image_url: match.imageUrl,
+        is_manual_override: match.isManualOverride,
+        notes: `Matched from Rebel Rags website using ${match.lookupArtCode}`,
+      }));
+
+      const { error } = await client
+        .from("product_images")
+        .upsert(rows, { onConflict: "customer_id,style_number,art_code,color" });
+
+      if (error || isCancelled) return;
+
+      setDashboardData((current) => ({
+        ...current,
+        images: mergeProductImages(current.images, matches),
+      }));
+    }
+
+    fetchMissingImages().catch(() => undefined);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedCustomer, selectedCustomerId, supabase, topArt]);
 
   async function signIn() {
     if (!supabase) {
@@ -1322,18 +1401,14 @@ function storagePublicUrl(client: SupabaseClient, storagePath: string | null) {
 
 function imageLookupMaps(images: ProductImage[]) {
   const exact = new Map<string, string>();
-  const styleArt = new Map<string, Set<string>>();
-  const art = new Map<string, Set<string>>();
 
   images.forEach((image) => {
     const url = image.resolved_url ?? image.image_url;
     if (!url) return;
     exact.set(imageKey(image.style_number, image.art_code, image.color), url);
-    addToSetMap(styleArt, imageStyleArtKey(image.style_number, image.art_code), url);
-    addToSetMap(art, compactImagePart(image.art_code), url);
   });
 
-  return { exact, styleArt, art };
+  return { exact };
 }
 
 function findProductImageUrl(
@@ -1343,20 +1418,67 @@ function findProductImageUrl(
   color: string,
 ) {
   const exact = lookup.exact.get(imageKey(style, artCode, color));
-  if (exact) return exact;
-
-  const styleArt = oneUniqueValue(lookup.styleArt.get(imageStyleArtKey(style, artCode)));
-  if (styleArt) return styleArt;
-
-  return oneUniqueValue(lookup.art.get(compactImagePart(artCode)));
+  if (!exact) return null;
+  return cachedImageUrlAllowedForColor(exact, color) ? exact : null;
 }
 
-function addToSetMap(map: Map<string, Set<string>>, key: string, value: string) {
-  map.set(key, (map.get(key) ?? new Set()).add(value));
+function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color">) {
+  return imageKey(row.style, row.artCode, row.color);
 }
 
-function oneUniqueValue(values: Set<string> | undefined) {
-  return values?.size === 1 ? [...values][0] : null;
+function mergeProductImages(images: ProductImage[], matches: RebelRagsImageMatch[]) {
+  const byKey = new Map(images.map((image) => [imageKey(image.style_number, image.art_code, image.color), image]));
+
+  matches.forEach((match) => {
+    byKey.set(imageKey(match.style, match.artCode, match.color), {
+      style_number: match.style,
+      art_code: match.artCode,
+      color: match.color,
+      image_url: match.imageUrl,
+      storage_path: null,
+      resolved_url: match.imageUrl,
+    });
+  });
+
+  return [...byKey.values()];
+}
+
+function isRebelRagsCustomer(name: string | null | undefined) {
+  return (name ?? "").toLowerCase().includes("rebel");
+}
+
+function cachedImageUrlAllowedForColor(value: string, color: string) {
+  return imageUrlMatchesColor(value, color) || imageColorToken(value) === "DEFAULT";
+}
+
+function imageUrlMatchesColor(value: string, color: string) {
+  const filename = compactImagePart(imageFilename(value));
+  return colorSearchTerms(color).some((term) => filename.includes(term));
+}
+
+function colorSearchTerms(color: string) {
+  const normalizedColor = compactImagePart(color);
+  const terms = [normalizedColor];
+  if (normalizedColor === "LIGHTBLUE") terms.push("LTBLUE");
+  if (normalizedColor === "HEATHERGREY") terms.push("HEATHERGRAY");
+  if (normalizedColor === "SILVERGREY") terms.push("SILVERGRAY");
+  return terms;
+}
+
+function imageColorToken(value: string) {
+  const parts = imageFilename(value).split("-");
+  if (parts.length < 2) return "";
+  return compactImagePart(parts[parts.length - 2]);
+}
+
+function imageFilename(value: string) {
+  const decoded = value.replace(/&amp;/g, "&");
+  try {
+    const url = new URL(decoded, "https://www.rebelrags.net");
+    return (url.pathname.split("/").pop() ?? "").replace(/\.[a-z0-9]+$/i, "");
+  } catch {
+    return decoded.split("?")[0].split("/").pop()?.replace(/\.[a-z0-9]+$/i, "") ?? "";
+  }
 }
 
 function topStyleRows(records: SalesRecord[], priorRecords: SalesRecord[]) {
@@ -1560,10 +1682,6 @@ function artKey(record: SalesRecord) {
 
 function imageKey(style: string, artCode: string, color: string) {
   return [compactImagePart(style), compactImagePart(artCode), compactImagePart(color)].join("|");
-}
-
-function imageStyleArtKey(style: string, artCode: string) {
-  return [compactImagePart(style), compactImagePart(artCode)].join("|");
 }
 
 function compactImagePart(value: string | null | undefined) {
