@@ -927,7 +927,7 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
       </div>
       {snapshot.topStyles.length ? (
         <div className="inventoryTopStyles">
-          <h4>On-Hand Inventory Styles</h4>
+          <h4>ON-HAND INVENTORY STYLES</h4>
           {snapshot.topStyles.map((row) => (
             <div key={row.style}>
               <span>{row.brand}</span>

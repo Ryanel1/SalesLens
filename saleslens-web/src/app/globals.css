@@ -1000,18 +1000,23 @@ select {
 }
 
 .inventoryTopStyles {
+  align-content: start;
+  align-self: stretch;
   display: grid;
-  align-content: center;
   gap: 0.45rem;
+  grid-auto-rows: max-content;
   grid-column: 3 / span 2;
   padding: 1rem;
 }
 
 .inventoryTopStyles h4 {
-  color: var(--soft-black);
-  font-size: 1rem;
-  margin-bottom: 0.1rem;
-  text-align: center;
+  color: var(--taupe);
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
 }
 
 .inventoryTopStyles div {
@@ -1031,7 +1036,7 @@ select {
 .inventoryTopStyles em,
 .inventoryTopStyles small {
   color: var(--taupe);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-style: normal;
   font-weight: 850;
   text-align: right;
