@@ -417,8 +417,8 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
   const activeMonthCount = Math.max(1, lastActiveMonthIndex(currentValues, priorValues) + 1);
   const displayedCurrent = currentValues.slice(0, activeMonthCount);
   const displayedPrior = priorValues.slice(0, activeMonthCount);
-  const xFor = (index: number) => 20 + (index / 11) * 150;
-  const yFor = (value: number) => 74 - (value / maxValue) * 58;
+  const xFor = (index: number) => 12 + (index / 11) * 164;
+  const yFor = (value: number) => 78 - (value / maxValue) * 66;
   const points = (values: number[]) => values.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
   const ticks = [0, 0.25, 0.5, 0.75, 1];
 
@@ -430,22 +430,22 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
       </div>
       <svg viewBox="0 0 180 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Comparative sales by month">
         {ticks.map((tick) => {
-          const y = 74 - tick * 58;
+          const y = 78 - tick * 66;
           return (
             <g key={`h-${tick}`}>
-              <text className="axisLabel" x="16" y={y + 1}>{compactNumber(maxValue * tick)}</text>
-              <line className="chartGridLine horizontal" x1="20" x2="170" y1={y} y2={y} />
+              <text className="axisLabel" x="8" y={y + 1}>{compactNumber(maxValue * tick)}</text>
+              <line className="chartGridLine horizontal" x1="12" x2="176" y1={y} y2={y} />
             </g>
           );
         })}
         {months.map((month, index) => (
           <g key={month}>
-            <line className="chartGridLine vertical" x1={xFor(index)} x2={xFor(index)} y1="16" y2="74" />
+            <line className="chartGridLine vertical" x1={xFor(index)} x2={xFor(index)} y1="12" y2="78" />
             <text className="monthLabel" x={xFor(index)} y="87">{month}</text>
           </g>
         ))}
-        <line className="axisLine" x1="20" x2="170" y1="74" y2="74" />
-        <line className="axisLine" x1="20" x2="20" y1="16" y2="74" />
+        <line className="axisLine" x1="12" x2="176" y1="78" y2="78" />
+        <line className="axisLine" x1="12" x2="12" y1="12" y2="78" />
         <polyline points={points(displayedPrior)} className="priorLine" />
         <polyline points={points(displayedCurrent)} className="currentLine" />
         {displayedPrior.map((value, index) => (
