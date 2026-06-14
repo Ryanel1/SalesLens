@@ -22,6 +22,7 @@ type SalesRecord = {
   style_number: string | null;
   raw_style_identifier: string | null;
   art_code: string | null;
+  inventory_units: number | null;
 };
 
 type ProductImage = {
@@ -54,6 +55,7 @@ type TopArt = MetricSet & {
   artCode: string;
   cySales: number;
   cyUnits: number;
+  inventoryUnits: number | null;
   imageUrl: string | null;
 };
 
@@ -691,6 +693,9 @@ export default function Home() {
                     {selectedPeriodKind === "month" ? (
                       <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
                     ) : null}
+                    {row.inventoryUnits != null ? (
+                      <span>Inv: {numberText(row.inventoryUnits)}</span>
+                    ) : null}
                   </div>
                 </article>
               ))}
@@ -878,11 +883,13 @@ function BestDayCard({ bestDay }: { bestDay: ReturnType<typeof bestSalesDay> }) 
       {bestDay.items.map((item) => (
         <div className="bestRow" key={`${item.style}-${item.artCode}-${item.color}`}>
           <strong className="bestItem">
-            <span>#{item.rank} {item.style}</span>
+            <span>
+              #{item.rank} {item.style}
+              <small>{numberText(item.units)} | {currencyText(item.sales)}</small>
+            </span>
             <small>{item.artCode} | {item.color}</small>
           </strong>
           <span className="barTrack"><span style={{ width: `${(item.units / maxUnits) * 100}%` }} /></span>
-          <small>{numberText(item.units)} | {currencyText(item.sales)}</small>
         </div>
       ))}
     </article>
@@ -987,7 +994,7 @@ async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await client
       .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code")
+      .select("id,customer_id,transaction_date,amount,units,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units")
       .eq("customer_id", customerId)
       .order("transaction_date", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -1137,6 +1144,7 @@ function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: P
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
+        inventoryUnits: inventoryTotal(group),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
@@ -1394,6 +1402,12 @@ function addMonths(month: string, offset: number) {
 
 function amountValue(record: SalesRecord) {
   return Number(record.amount ?? 0);
+}
+
+function inventoryTotal(records: SalesRecord[]) {
+  const inventoryRecords = records.filter((record) => record.inventory_units != null);
+  if (!inventoryRecords.length) return null;
+  return sum(inventoryRecords.map((record) => record.inventory_units ?? 0));
 }
 
 function latestDate(records: SalesRecord[]) {

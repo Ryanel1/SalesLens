@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { currencyText, dateText, monthText, numberText } from "@/lib/formatters";
+import { currencyText, dateText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import {
   isReportSnapshotPayload,
@@ -194,9 +194,12 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
                 <div className="artMeta">
                   <strong>{row.artCode}</strong>
                   <span>{row.style} | {row.color}</span>
-                  <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.units)} Units | {currencyText(row.sales)}</span>
+                  <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
                   {payload.periodMode === "monthly" ? (
-                    <span>YTD: {numberText(row.cyUnits)} Units | {currencyText(row.cySales)}</span>
+                    <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
+                  ) : null}
+                  {row.inventoryUnits != null ? (
+                    <span>Inv: {numberText(row.inventoryUnits)}</span>
                   ) : null}
                 </div>
               </article>

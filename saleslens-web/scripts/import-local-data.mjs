@@ -164,7 +164,6 @@ const salesRecords = localRecords.map((record) => {
     year_to_date_amount: numberOrNull(record.yearToDateAmount),
     year_to_date_units: numberOrNull(record.yearToDateUnits),
     inventory_units: numberOrNull(record.inventoryUnits),
-    inventory_retail_value: numberOrNull(record.inventoryRetailValue),
   };
 });
 

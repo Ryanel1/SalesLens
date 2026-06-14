@@ -20,7 +20,6 @@ export type ParsedSalesRecord = {
   year_to_date_amount: number | null;
   year_to_date_units: number | null;
   inventory_units: number | null;
-  inventory_retail_value: number | null;
 };
 
 export type ParsedUpload = {
@@ -112,7 +111,6 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
   const ytdUnitsIndex = findColumn(header, ["ytdu"]);
   const ytdAmountIndex = findColumn(header, ["ytd"]);
   const inventoryUnitsIndex = findColumn(header, ["invu", "inventoryu", "inventoryunits"]);
-  const inventoryValueIndex = findColumn(header, ["invretail", "invretailvalue", "inventoryretailvalue"]);
 
   if (mtdAmountIndex == null || mtdUnitsIndex == null) {
     throw new Error("Missing required Volshop columns: MTD ($) and MTD (U).");
@@ -159,7 +157,6 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
       year_to_date_amount: parseNumber(valueAt(row, ytdAmountIndex)),
       year_to_date_units: parseInteger(valueAt(row, ytdUnitsIndex)),
       inventory_units: parseInteger(valueAt(row, inventoryUnitsIndex)),
-      inventory_retail_value: parseNumber(valueAt(row, inventoryValueIndex)),
     });
   }
 
@@ -225,7 +222,6 @@ function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
       year_to_date_amount: null,
       year_to_date_units: null,
       inventory_units: null,
-      inventory_retail_value: null,
     });
   }
 
