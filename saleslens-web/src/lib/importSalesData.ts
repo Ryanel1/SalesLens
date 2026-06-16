@@ -305,6 +305,7 @@ function parseInventoryRows(
   const retailIndex = findColumn(header, ["retail", "currentretail", "price"]);
   const inventoryUnitsIndex = findColumn(header, [
     "onhand",
+    "oh",
     "qtyonhand",
     "quantityonhand",
     "inventory",
