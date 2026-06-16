@@ -159,15 +159,19 @@ export function isReportSnapshotPayload(value: unknown): value is ReportSnapshot
 }
 
 export function isReportSnapshotBundlePayload(value: unknown): value is ReportSnapshotBundlePayload {
-  return Boolean(
-    value &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      "version" in value &&
-      "reportKind" in value &&
-      (value as { reportKind?: unknown }).reportKind === "account_bundle" &&
-      Array.isArray((value as { reports?: unknown }).reports) &&
-      (value as { reports: unknown[] }).reports.every(isReportSnapshotPayload),
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+
+  const payload = value as {
+    reportKind?: unknown;
+    reports?: unknown;
+    version?: unknown;
+  };
+
+  return (
+    payload.version === 1 &&
+    payload.reportKind === "account_bundle" &&
+    Array.isArray(payload.reports) &&
+    payload.reports.every(isReportSnapshotPayload)
   );
 }
 
