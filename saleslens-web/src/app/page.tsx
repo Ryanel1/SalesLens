@@ -653,6 +653,21 @@ export default function Home() {
                   }}
                 />
               </label>
+              {(customerStatus || importStatus) ? (
+                <div className="navMessage">
+                  <span>{importStatus || customerStatus}</span>
+                  <button
+                    aria-label="Dismiss message"
+                    onClick={() => {
+                      setImportStatus("");
+                      setCustomerStatus("");
+                    }}
+                    type="button"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -662,21 +677,6 @@ export default function Home() {
               Sign Out
             </button>
           </div>
-          {(customerStatus || importStatus) ? (
-            <div className="navMessage">
-              <span>{importStatus || customerStatus}</span>
-              <button
-                aria-label="Dismiss message"
-                onClick={() => {
-                  setImportStatus("");
-                  setCustomerStatus("");
-                }}
-                type="button"
-              >
-                ×
-              </button>
-            </div>
-          ) : null}
         </nav>
 
         {pendingImportFile ? (

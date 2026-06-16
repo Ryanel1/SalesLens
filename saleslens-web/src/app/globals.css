@@ -337,8 +337,15 @@ select {
 .navUploadField {
   display: grid;
   gap: 0.45rem;
-  grid-template-rows: 1rem 44px;
   min-width: 0;
+}
+
+.navField {
+  grid-template-rows: 1rem 44px;
+}
+
+.navUploadField {
+  grid-template-rows: 1rem 44px auto;
 }
 
 .navField select {
@@ -411,8 +418,11 @@ select {
   font-size: 0.78rem;
   font-weight: 750;
   gap: 0.65rem;
-  grid-column: 2 / span 1;
-  margin: -0.75rem 0 0;
+  justify-content: center;
+  line-height: 1.25;
+  margin: 0;
+  text-align: center;
+  width: 100%;
 }
 
 .navMessage button {
