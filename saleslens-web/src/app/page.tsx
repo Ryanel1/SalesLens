@@ -258,7 +258,7 @@ export default function Home() {
       const records = recordsResult.records;
       setDashboardData({ records, inventoryRecords: inventoryResult.records, images: imagesResult.images });
       setSelectedPeriod((current) => current ?? defaultPeriodValue(records));
-      setDashboardStatus("");
+      setDashboardStatus(inventoryErrorMessage(inventoryResult.error));
     }
 
     loadDashboard();
@@ -603,7 +603,8 @@ export default function Home() {
       );
       setReloadKey((key) => key + 1);
     } catch (error) {
-      setImportStatus(error instanceof Error ? error.message : "Inventory import failed.");
+      const message = error instanceof Error ? error.message : "Inventory import failed.";
+      setImportStatus(inventoryErrorMessage(message) || message);
     }
   }
 
@@ -2060,6 +2061,14 @@ function latestStandaloneInventoryRecords(records: InventoryRecord[], periodEndM
   const latestInventoryDate = inventoryRecords.map((record) => record.inventory_date).sort().at(-1);
   if (!latestInventoryDate) return [];
   return inventoryRecords.filter((record) => record.inventory_date === latestInventoryDate);
+}
+
+function inventoryErrorMessage(error: string | null | undefined) {
+  if (!error) return "";
+  if (error.includes("inventory_records") || error.includes("PGRST205") || error.includes("schema cache")) {
+    return "Inventory reports are not active yet. Run the updated Supabase schema so SalesLens can save Rebel Rags inventory uploads.";
+  }
+  return "";
 }
 
 function inventoryRecordDate(record: SalesRecord | InventoryRecord) {
