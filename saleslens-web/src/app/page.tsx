@@ -1733,16 +1733,19 @@ function knownProductImageUrl(style: string, artCode: string, color: string) {
   const normalizedArt = compactImagePart(artCode);
   const normalizedColor = compactImagePart(color);
 
-  if (normalizedStyle === "CT1000" && normalizedArt === "03456518" && normalizedColor === "NAVY") {
-    return "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg";
-  }
-
-  if (normalizedStyle === "CT1000" && normalizedArt === "03503350" && normalizedColor === "LIGHTBLUE") {
-    return "https://www.rebelrags.net/prodimages/23149-DEFAULT-l.jpg";
-  }
-
-  return null;
+  return knownRebelRagsImages[imageKey(normalizedStyle, normalizedArt, normalizedColor)] ?? null;
 }
+
+const knownRebelRagsImages: Record<string, string> = {
+  [imageKey("CT1000", "03456518", "NAVY")]: "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg",
+  [imageKey("CT1000", "03503350", "LIGHTBLUE")]: "https://www.rebelrags.net/prodimages/23149-DEFAULT-l.jpg",
+  [imageKey("CT1000", "03687236", "WHITE")]: "https://www.rebelrags.net/prodimages/25026-WHITE-l.jpg",
+  [imageKey("CT1000", "03751915", "WHITE")]: "https://www.rebelrags.net/prodimages/26212-DEFAULT-l.jpg",
+  [imageKey("CT1000", "03751916", "WHITE")]: "https://www.rebelrags.net/prodimages/26213-DEFAULT-l.jpg",
+  [imageKey("GDH100", "003862801", "PORCHBLUE")]: "https://www.rebelrags.net/prodimages/27361-PORCH_BLUE-l.jpg",
+  [imageKey("GDH100", "003862801", "COTTONCANDY")]: "https://www.rebelrags.net/prodimages/27361-COTTON_CANDY-l.jpg",
+  [imageKey("GDH100", "004116676", "COTTONCANDY")]: "https://www.rebelrags.net/prodimages/30756-COTTON_CANDY-l.jpg",
+};
 
 function imageUrlMatchesColor(value: string, color: string) {
   const filename = compactImagePart(imageFilename(value));

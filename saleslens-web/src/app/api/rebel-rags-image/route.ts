@@ -267,21 +267,28 @@ function knownProductImageUrl(item: ImageRequestItem) {
   const artCode = normalized(item.artCode);
   const color = normalized(item.color);
 
-  if (style === "CT1000" && artCode === "03456518" && color === "NAVY") {
-    return `${REBEL_RAGS_BASE_URL}/prodimages/16228-MIDNIGHT_NAVY-l.jpg`;
-  }
-
-  if (isKnownDefaultImageMatch(item)) {
-    return `${REBEL_RAGS_BASE_URL}/prodimages/23149-DEFAULT-l.jpg`;
-  }
-
-  return null;
+  return knownRebelRagsImages[imageKey(style, artCode, color)] ?? null;
 }
+
+const knownRebelRagsImages: Record<string, string> = {
+  [imageKey("CT1000", "03456518", "NAVY")]: `${REBEL_RAGS_BASE_URL}/prodimages/16228-MIDNIGHT_NAVY-l.jpg`,
+  [imageKey("CT1000", "03503350", "LIGHTBLUE")]: `${REBEL_RAGS_BASE_URL}/prodimages/23149-DEFAULT-l.jpg`,
+  [imageKey("CT1000", "03687236", "WHITE")]: `${REBEL_RAGS_BASE_URL}/prodimages/25026-WHITE-l.jpg`,
+  [imageKey("CT1000", "03751915", "WHITE")]: `${REBEL_RAGS_BASE_URL}/prodimages/26212-DEFAULT-l.jpg`,
+  [imageKey("CT1000", "03751916", "WHITE")]: `${REBEL_RAGS_BASE_URL}/prodimages/26213-DEFAULT-l.jpg`,
+  [imageKey("GDH100", "003862801", "PORCHBLUE")]: `${REBEL_RAGS_BASE_URL}/prodimages/27361-PORCH_BLUE-l.jpg`,
+  [imageKey("GDH100", "003862801", "COTTONCANDY")]: `${REBEL_RAGS_BASE_URL}/prodimages/27361-COTTON_CANDY-l.jpg`,
+  [imageKey("GDH100", "004116676", "COTTONCANDY")]: `${REBEL_RAGS_BASE_URL}/prodimages/30756-COTTON_CANDY-l.jpg`,
+};
 
 function isKnownDefaultImageMatch(item: ImageRequestItem) {
   return normalized(item.style) === "CT1000"
     && normalized(item.artCode) === "03503350"
     && normalized(item.color) === "LIGHTBLUE";
+}
+
+function imageKey(style: string, artCode: string, color: string) {
+  return [normalized(style), normalized(artCode), normalized(color)].join("|");
 }
 
 function imageColorToken(value: string) {
