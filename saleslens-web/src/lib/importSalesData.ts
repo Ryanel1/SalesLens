@@ -372,7 +372,7 @@ function findInventoryHeaderIndex(rows: unknown[][]) {
   return rows.findIndex((row) => {
     const header = row.map(normalize);
     return hasExactHeader(header, ["product", "sku", "item", "itemnumber", "style", "stylenumber"]) &&
-      hasExactHeader(header, ["onhand", "qtyonhand", "quantityonhand", "inventory", "inventoryunits", "invu", "qty", "quantity", "units"]);
+      hasExactHeader(header, ["onhand", "oh", "qtyonhand", "quantityonhand", "inventory", "inventoryunits", "invu", "qty", "quantity", "units"]);
   });
 }
 
