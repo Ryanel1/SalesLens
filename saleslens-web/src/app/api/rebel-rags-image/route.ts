@@ -65,7 +65,6 @@ async function matchingImage(item: ImageRequestItem): Promise<ProductImageMatch 
   const color = clean(item.color);
 
   if (!style || !artCode || !color) return null;
-  if (isBlockedProductImageMatch(style, artCode, color)) return null;
 
   const lookup = imageLookup(item);
   const productUrls = lookup.productUrl ? [lookup.productUrl] : await productDetailUrlsForItem(item, lookup.searchArtCode);
@@ -154,6 +153,22 @@ function imageLookup(item: ImageRequestItem): ProductImageLookup {
     return { searchArtCode: "03479022", isManualOverride: true, productUrl: null };
   }
 
+  if (style === "CT1000" && artCode === "03456518") {
+    return {
+      searchArtCode: clean(item.artCode),
+      isManualOverride: true,
+      productUrl: `${REBEL_RAGS_BASE_URL}/champion/script-ole-miss-basic-short-sleeve-tee-2744`,
+    };
+  }
+
+  if (style === "CT1000" && artCode === "03503350") {
+    return {
+      searchArtCode: clean(item.artCode),
+      isManualOverride: true,
+      productUrl: `${REBEL_RAGS_BASE_URL}/champion/script-ole-miss-softball-basic-tee-22276`,
+    };
+  }
+
   if (style === "GDH100" && artCode === "004116649") {
     return {
       searchArtCode: clean(item.artCode),
@@ -202,6 +217,9 @@ function detailMatches(html: string, item: ImageRequestItem, lookupArtCode: stri
 }
 
 function productImageUrl(html: string, item: ImageRequestItem, productUrl: string) {
+  const knownUrl = knownProductImageUrl(item);
+  if (knownUrl) return knownUrl;
+
   const pattern = /(https?:\/\/www\.rebelrags\.net\/prodimages\/[^"']+-(?:l|m|s)\.(?:jpg|jpeg|png)|\/prodimages\/[^"']+-(?:l|m|s)\.(?:jpg|jpeg|png))/gi;
   const urls = captures(pattern, html)
     .map((value) => absoluteUrl(decodeHtml(value), productUrl))
@@ -230,19 +248,40 @@ function colorSearchTerms(colorName: string) {
   if (color === "GRAYCAROLINABLUE") terms.push("LIGHTBLUE", "LTBLUE", "CAROLINABLUE");
   if (color === "HEATHERGREY") terms.push("HEATHERGRAY");
   if (color === "SILVERGREY") terms.push("SILVERGRAY");
+  if (color === "NAVY") terms.push("MIDNIGHTNAVY");
   return terms;
 }
 
 function allowsDefaultImage(item: ImageRequestItem) {
-  return normalized(item.color) === "WHITE" || normalized(item.style) === "CBRZU0Z";
+  return normalized(item.color) === "WHITE"
+    || normalized(item.style) === "CBRZU0Z"
+    || isKnownDefaultImageMatch(item);
 }
 
 function preferLargeImageUrl(value: string) {
   return value.replace(/-(?:s|m)\.(jpg|jpeg|png)(\?.*)?$/i, "-l.$1$2");
 }
 
-function isBlockedProductImageMatch(style: string, artCode: string, color: string) {
-  return normalized(style) === "CT1000" && normalized(artCode) === "03456518" && normalized(color) === "NAVY";
+function knownProductImageUrl(item: ImageRequestItem) {
+  const style = normalized(item.style);
+  const artCode = normalized(item.artCode);
+  const color = normalized(item.color);
+
+  if (style === "CT1000" && artCode === "03456518" && color === "NAVY") {
+    return `${REBEL_RAGS_BASE_URL}/prodimages/16228-MIDNIGHT_NAVY-l.jpg`;
+  }
+
+  if (isKnownDefaultImageMatch(item)) {
+    return `${REBEL_RAGS_BASE_URL}/prodimages/23149-DEFAULT-l.jpg`;
+  }
+
+  return null;
+}
+
+function isKnownDefaultImageMatch(item: ImageRequestItem) {
+  return normalized(item.style) === "CT1000"
+    && normalized(item.artCode) === "03503350"
+    && normalized(item.color) === "LIGHTBLUE";
 }
 
 function imageColorToken(value: string) {

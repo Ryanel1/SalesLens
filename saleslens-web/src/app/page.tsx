@@ -1530,10 +1530,12 @@ function findProductImageUrl(
   artCode: string,
   color: string,
 ) {
-  if (isBlockedProductImageMatch(style, artCode, color)) return null;
+  const knownUrl = knownProductImageUrl(style, artCode, color);
+  if (knownUrl) return knownUrl;
+
   const exact = lookup.exact.get(imageKey(style, artCode, color));
   if (!exact) return null;
-  return cachedImageUrlAllowedForColor(exact, color, style) ? exact : null;
+  return cachedImageUrlAllowedForColor(exact, color, style, artCode) ? exact : null;
 }
 
 function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color">) {
@@ -1561,14 +1563,27 @@ function isRebelRagsCustomer(name: string | null | undefined) {
   return (name ?? "").toLowerCase().includes("rebel");
 }
 
-function isBlockedProductImageMatch(style: string, artCode: string, color: string) {
-  const key = imageKey(style, artCode, color);
-  return key === imageKey("CT1000", "03456518", "Navy");
+function cachedImageUrlAllowedForColor(value: string, color: string, style: string, artCode: string) {
+  const isAllowedDefault = compactImagePart(color) === "WHITE"
+    || compactImagePart(style) === "CBRZU0Z"
+    || Boolean(knownProductImageUrl(style, artCode, color));
+  return imageUrlMatchesColor(value, color) || (isAllowedDefault && imageColorToken(value) === "DEFAULT");
 }
 
-function cachedImageUrlAllowedForColor(value: string, color: string, style: string) {
-  const isAllowedDefault = compactImagePart(color) === "WHITE" || compactImagePart(style) === "CBRZU0Z";
-  return imageUrlMatchesColor(value, color) || (isAllowedDefault && imageColorToken(value) === "DEFAULT");
+function knownProductImageUrl(style: string, artCode: string, color: string) {
+  const normalizedStyle = compactImagePart(style);
+  const normalizedArt = compactImagePart(artCode);
+  const normalizedColor = compactImagePart(color);
+
+  if (normalizedStyle === "CT1000" && normalizedArt === "03456518" && normalizedColor === "NAVY") {
+    return "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg";
+  }
+
+  if (normalizedStyle === "CT1000" && normalizedArt === "03503350" && normalizedColor === "LIGHTBLUE") {
+    return "https://www.rebelrags.net/prodimages/23149-DEFAULT-l.jpg";
+  }
+
+  return null;
 }
 
 function imageUrlMatchesColor(value: string, color: string) {
@@ -1583,6 +1598,7 @@ function colorSearchTerms(color: string) {
   if (normalizedColor === "GRAYCAROLINABLUE") terms.push("LIGHTBLUE", "LTBLUE", "CAROLINABLUE");
   if (normalizedColor === "HEATHERGREY") terms.push("HEATHERGRAY");
   if (normalizedColor === "SILVERGREY") terms.push("SILVERGRAY");
+  if (normalizedColor === "NAVY") terms.push("MIDNIGHTNAVY");
   return terms;
 }
 
