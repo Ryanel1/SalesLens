@@ -327,6 +327,7 @@ select {
 
 .navControls {
   align-items: end;
+  align-self: end;
   display: grid;
   gap: 0.9rem;
   grid-template-columns: minmax(0, 250px) 168px;
@@ -349,6 +350,7 @@ select {
 }
 
 .navField select {
+  box-sizing: border-box;
   min-height: 44px;
 }
 
@@ -393,7 +395,7 @@ select {
 }
 
 .navSignOutField {
-  align-self: center;
+  align-self: end;
   display: grid;
   gap: 0.45rem;
   grid-template-rows: 1rem 44px;
@@ -403,6 +405,7 @@ select {
 
 .navSignOut {
   align-items: center;
+  box-sizing: border-box;
   display: inline-grid;
   height: 44px;
   justify-content: center;
@@ -513,6 +516,7 @@ select {
 .fileButton {
   background: transparent;
   border: 1px solid var(--charcoal);
+  box-sizing: border-box;
   color: var(--charcoal);
   cursor: pointer;
   display: inline-grid;
