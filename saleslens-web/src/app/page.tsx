@@ -528,6 +528,34 @@ export default function Home() {
         return;
       }
 
+      if (isRebelRagsCustomer(selectedCustomer.name)) {
+        const totalSales = sum(parsed.records.map((record) => record.amount));
+        const totalUnits = sum(parsed.records.map((record) => record.units ?? 0));
+        const uploadId = await createUploadBatch(supabase, {
+          customerId: selectedCustomer.id,
+          fileName: file.name,
+          userId: user.id,
+          receivedDate: parsed.receivedDate,
+          salesPeriodStart: parsed.salesPeriodStart,
+          salesPeriodEnd: parsed.salesPeriodEnd,
+          rowCount: parsed.records.length,
+          skippedCount: parsed.skippedCount,
+          totalSales,
+          totalUnits,
+          status: "imported",
+        });
+
+        setImportStatus(`Replacing overlapping Rebel Rags sales records...`);
+        await replaceSalesRecordsForPeriodAndBrands(supabase, selectedCustomer.id, parsed.records, uploadId);
+
+        setImportStatus(
+          `Imported ${numberText(parsed.records.length)} records from ${file.name}. Replaced matching date and brand/class records for this upload range. Skipped ${numberText(parsed.skippedCount)} rows.`,
+        );
+        setSelectedPeriod(null);
+        setReloadKey((key) => key + 1);
+        return;
+      }
+
       setImportStatus(`Checking for duplicate records...`);
       const existingKeys = await loadExistingRecordKeys(
         supabase,
@@ -2348,6 +2376,33 @@ async function insertSalesRecords(
   }
 }
 
+async function replaceSalesRecordsForPeriodAndBrands(
+  client: SupabaseClient,
+  customerId: string,
+  records: ParsedSalesRecord[],
+  uploadId: string,
+) {
+  const dates = [...new Set(records.map((record) => record.transaction_date))].sort();
+  const classes = [...new Set(records.map((record) => record.product_class).filter(Boolean))].sort();
+  const startDate = dates[0];
+  const endDate = dates.at(-1);
+  if (!startDate || !endDate || classes.length === 0) {
+    await insertSalesRecords(client, customerId, uploadId, records);
+    return;
+  }
+
+  const { error } = await client
+    .from("sales_records")
+    .delete()
+    .eq("customer_id", customerId)
+    .gte("transaction_date", startDate)
+    .lte("transaction_date", endDate)
+    .in("product_class", classes);
+
+  if (error) throw new Error(error.message);
+  await insertSalesRecords(client, customerId, uploadId, records);
+}
+
 async function replaceInventoryRecordsForDates(
   client: SupabaseClient,
   customerId: string,
@@ -2422,5 +2477,5 @@ function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
 }
 
 function compactKey(value: string | null | undefined) {
-  return (value ?? "").trim().toUpperCase();
+  return (value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
