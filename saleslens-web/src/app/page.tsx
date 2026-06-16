@@ -2202,7 +2202,7 @@ function topInventoryStyles(records: Array<SalesRecord | InventoryRecord>) {
     }))
     .filter((row) => row.units > 0)
     .sort((left, right) => right.units - left.units || left.style.localeCompare(right.style))
-    .slice(0, 5);
+    .slice(0, 10);
 }
 
 function latestDate(records: SalesRecord[]) {
