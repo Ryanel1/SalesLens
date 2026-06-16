@@ -167,7 +167,7 @@ export default function Home() {
   const [brandFilter, setBrandFilter] = useState("All");
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
-  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
   const [dashboardStatus, setDashboardStatus] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareScope, setShareScope] = useState<"selected" | "all">("selected");
@@ -510,24 +510,49 @@ export default function Home() {
     await navigator.clipboard?.writeText(url).catch(() => undefined);
   }
 
-  function beginImportFile(file: File | null) {
-    if (!file || !selectedCustomer) return;
+  function beginImportFiles(files: File[]) {
+    if (files.length === 0 || !selectedCustomer) return;
     if (isRebelRagsCustomer(selectedCustomer.name)) {
-      setPendingImportFile(file);
+      setPendingImportFiles(files);
       return;
     }
-    void importSalesFile(file);
+    void importSalesFiles(files);
+  }
+
+  async function importSalesFiles(files: File[]) {
+    if (files.length === 0) return;
+    let imported = 0;
+    for (const [index, file] of files.entries()) {
+      setImportStatus(`Importing sales file ${index + 1} of ${files.length}: ${file.name}`);
+      const success = await importSalesFile(file);
+      if (success) imported += 1;
+    }
+    setImportStatus(`Finished sales import: ${numberText(imported)} of ${numberText(files.length)} files imported.`);
+    setSelectedPeriod(null);
+    setReloadKey((key) => key + 1);
+  }
+
+  async function importInventoryFiles(files: File[]) {
+    if (files.length === 0) return;
+    let imported = 0;
+    for (const [index, file] of files.entries()) {
+      setImportStatus(`Importing inventory file ${index + 1} of ${files.length}: ${file.name}`);
+      const success = await importInventoryFile(file);
+      if (success) imported += 1;
+    }
+    setImportStatus(`Finished inventory import: ${numberText(imported)} of ${numberText(files.length)} files imported.`);
+    setReloadKey((key) => key + 1);
   }
 
   async function importSalesFile(file: File | null) {
-    if (!file || !supabase || !selectedCustomer || !user) return;
+    if (!file || !supabase || !selectedCustomer || !user) return false;
 
     setImportStatus(`Reading ${file.name}...`);
     try {
       const parsed = await parseSalesWorkbook(file, selectedCustomer.name);
       if (parsed.records.length === 0) {
         setImportStatus(`No importable records found. Skipped ${parsed.skippedCount} rows.`);
-        return;
+        return false;
       }
 
       if (isRebelRagsCustomer(selectedCustomer.name)) {
@@ -553,9 +578,7 @@ export default function Home() {
         setImportStatus(
           `Imported ${numberText(parsed.records.length)} records from ${file.name}. Replaced matching date and brand/class records for this upload range. Skipped ${numberText(parsed.skippedCount)} rows.`,
         );
-        setSelectedPeriod(null);
-        setReloadKey((key) => key + 1);
-        return;
+        return true;
       }
 
       setImportStatus(`Checking for duplicate records...`);
@@ -592,22 +615,22 @@ export default function Home() {
       setImportStatus(
         `Imported ${numberText(newRecords.length)} records from ${file.name}. Skipped ${numberText(parsed.skippedCount)} rows and ${numberText(duplicateCount)} duplicates.`,
       );
-      setSelectedPeriod(null);
-      setReloadKey((key) => key + 1);
+      return true;
     } catch (error) {
       setImportStatus(error instanceof Error ? error.message : "Import failed.");
+      return false;
     }
   }
 
   async function importInventoryFile(file: File | null) {
-    if (!file || !supabase || !selectedCustomer || !user) return;
+    if (!file || !supabase || !selectedCustomer || !user) return false;
 
     setImportStatus(`Reading inventory from ${file.name}...`);
     try {
       const parsed = await parseInventoryWorkbook(file, selectedCustomer.name);
       if (parsed.records.length === 0) {
         setImportStatus(`No importable inventory records found. Skipped ${parsed.skippedCount} rows.`);
-        return;
+        return false;
       }
 
       const inventoryDates = [...new Set(parsed.records.map((record) => record.inventory_date))].sort();
@@ -632,10 +655,11 @@ export default function Home() {
       setImportStatus(
         `Imported ${numberText(parsed.records.length)} inventory records from ${file.name}. Skipped ${numberText(parsed.skippedCount)} rows.`,
       );
-      setReloadKey((key) => key + 1);
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Inventory import failed.";
       setImportStatus(inventoryErrorMessage(message) || message);
+      return false;
     }
   }
 
@@ -676,9 +700,10 @@ export default function Home() {
                 Upload / Import
                 <input
                   accept=".xls,.xlsx,.csv"
+                  multiple
                   type="file"
                   onChange={(event) => {
-                    beginImportFile(event.target.files?.[0] ?? null);
+                    beginImportFiles(Array.from(event.target.files ?? []));
                     event.currentTarget.value = "";
                   }}
                 />
@@ -709,25 +734,34 @@ export default function Home() {
           </div>
         </nav>
 
-        {pendingImportFile ? (
+        {pendingImportFiles.length > 0 ? (
           <div className="modalOverlay" role="presentation">
             <section className="shareModal importTypeModal" role="dialog" aria-modal="true" aria-labelledby="import-type-title">
               <button
                 aria-label="Close import type"
                 className="modalCloseButton"
-                onClick={() => setPendingImportFile(null)}
+                onClick={() => setPendingImportFiles([])}
               >
                 X
               </button>
               <p className="eyebrow">Rebel Rags Import</p>
               <h3 id="import-type-title">What are you uploading?</h3>
-              <p>{pendingImportFile.name}</p>
+              <p>
+                {pendingImportFiles.length === 1
+                  ? pendingImportFiles[0].name
+                  : `${numberText(pendingImportFiles.length)} files selected`}
+              </p>
+              {pendingImportFiles.length > 1 ? (
+                <p className="muted">
+                  Files will import one at a time in the order selected.
+                </p>
+              ) : null}
               <div className="shareScopeGrid">
                 <button
                   onClick={() => {
-                    const file = pendingImportFile;
-                    setPendingImportFile(null);
-                    void importSalesFile(file);
+                    const files = pendingImportFiles;
+                    setPendingImportFiles([]);
+                    void importSalesFiles(files);
                   }}
                   type="button"
                 >
@@ -736,9 +770,9 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => {
-                    const file = pendingImportFile;
-                    setPendingImportFile(null);
-                    void importInventoryFile(file);
+                    const files = pendingImportFiles;
+                    setPendingImportFiles([]);
+                    void importInventoryFiles(files);
                   }}
                   type="button"
                 >
