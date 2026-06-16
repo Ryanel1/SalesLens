@@ -1700,8 +1700,27 @@ function findProductImageUrl(
   if (knownUrl) return knownUrl;
 
   const exact = lookup.exact.get(imageKey(style, artCode, color));
-  if (!exact) return null;
-  return cachedImageUrlAllowedForColor(exact, color, style, artCode) ? exact : null;
+  const legacy = !exact ? legacyProductImageUrl(lookup, style, artCode, color) : null;
+  const imageUrl = exact ?? legacy;
+  if (!imageUrl) return null;
+  return cachedImageUrlAllowedForColor(imageUrl, color, style, artCode) ? imageUrl : null;
+}
+
+function legacyProductImageUrl(
+  lookup: ReturnType<typeof imageLookupMaps>,
+  style: string,
+  artCode: string,
+  color: string,
+) {
+  if (
+    compactImagePart(artCode) === "APC03479022" &&
+    compactImagePart(color) === "WHITE" &&
+    ["CT1000", "CS1220", "CS2071", "CT1730"].includes(compactImagePart(style))
+  ) {
+    return lookup.exact.get(imageKey(style, "03456518", color)) ?? null;
+  }
+
+  return null;
 }
 
 function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color">) {
@@ -1992,7 +2011,25 @@ function artKey(record: MerchandiseRecord) {
 }
 
 function displayArtCode(record: MerchandiseRecord) {
+  const canonical = canonicalRebelRagsArtCode(record);
+  if (canonical) return canonical;
   return clean(record.art_code) || normalizedStyle(record);
+}
+
+function canonicalRebelRagsArtCode(record: MerchandiseRecord) {
+  const style = normalizedStyle(record);
+  const artCode = compactImagePart(record.art_code);
+  const color = compactImagePart(colorName(record));
+
+  if (
+    artCode === "03456518" &&
+    color === "WHITE" &&
+    ["CT1000", "CS1220", "CS2071", "CT1730"].includes(style)
+  ) {
+    return "APC03479022";
+  }
+
+  return null;
 }
 
 function imageKey(style: string, artCode: string, color: string) {

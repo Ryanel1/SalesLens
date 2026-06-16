@@ -148,8 +148,11 @@ function imageLookup(item: ImageRequestItem): ProductImageLookup {
   const isWhiteScriptBasicTee = style === "CT1000"
     && color === "WHITE"
     && description.includes("SCRIPTOLEMISSBASICSHORTSLEEVETEE");
+  const isWhiteScriptArtOverride = color === "WHITE"
+    && ["CT1000", "CS1220", "CS2071", "CT1730"].includes(style)
+    && ["03456518", "0346518", "APC03479022", "03479022"].includes(artCode);
 
-  if (isWhiteScriptBasicTee || (style === "CT1000" && color === "WHITE" && ["03456518", "0346518"].includes(artCode))) {
+  if (isWhiteScriptBasicTee || isWhiteScriptArtOverride) {
     return { searchArtCode: "03479022", isManualOverride: true, productUrl: null };
   }
 
