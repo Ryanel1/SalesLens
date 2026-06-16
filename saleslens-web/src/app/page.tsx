@@ -663,7 +663,19 @@ export default function Home() {
             </button>
           </div>
           {(customerStatus || importStatus) ? (
-            <p className="navMessage">{importStatus || customerStatus}</p>
+            <div className="navMessage">
+              <span>{importStatus || customerStatus}</span>
+              <button
+                aria-label="Dismiss message"
+                onClick={() => {
+                  setImportStatus("");
+                  setCustomerStatus("");
+                }}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
           ) : null}
         </nav>
 
