@@ -1370,9 +1370,10 @@ function MiniLineChart({
   const currentValues = padMonths(current);
   const priorValues = padMonths(prior);
   const maxValue = Math.max(...currentValues, ...priorValues, 1);
-  const activeMonthCount = Math.max(1, lastActiveMonthIndex(currentValues, priorValues) + 1);
-  const displayedCurrent = currentValues.slice(0, activeMonthCount);
-  const displayedPrior = priorValues.slice(0, activeMonthCount);
+  const currentMonthCount = Math.max(1, lastActiveMonthIndex(currentValues) + 1);
+  const priorMonthCount = Math.max(1, lastActiveMonthIndex(priorValues) + 1);
+  const displayedCurrent = currentValues.slice(0, currentMonthCount);
+  const displayedPrior = priorValues.slice(0, priorMonthCount);
   const xFor = (index: number) => 12 + (index / 11) * 164;
   const yFor = (value: number) => 78 - (value / maxValue) * 66;
   const points = (values: number[]) => values.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
@@ -1441,9 +1442,9 @@ function padMonths(values: number[]) {
   return Array.from({ length: 12 }, (_, index) => values[index] ?? 0);
 }
 
-function lastActiveMonthIndex(current: number[], prior: number[]) {
+function lastActiveMonthIndex(values: number[]) {
   for (let index = 11; index >= 0; index -= 1) {
-    if ((current[index] ?? 0) > 0 || (prior[index] ?? 0) > 0) return index;
+    if ((values[index] ?? 0) > 0) return index;
   }
   return 0;
 }
@@ -1941,13 +1942,13 @@ function ytdPoints(records: SalesRecord[], month: string | null) {
   for (let index = 1; index <= 12; index += 1) {
     const suffix = String(index).padStart(2, "0");
     current.push(index <= lastMonth ? sum(recordsForPeriod(records, `${year}-${suffix}`, "monthly").map(amountValue)) : 0);
-    prior.push(index <= lastMonth ? sum(recordsForPeriod(records, `${year - 1}-${suffix}`, "monthly").map(amountValue)) : 0);
+    prior.push(sum(recordsForPeriod(records, `${year - 1}-${suffix}`, "monthly").map(amountValue)));
   }
   return {
     current,
     prior,
     currentTotal: sum(current),
-    priorTotal: sum(prior),
+    priorTotal: sum(prior.slice(0, lastMonth)),
   };
 }
 
