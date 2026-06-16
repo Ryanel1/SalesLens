@@ -2420,7 +2420,7 @@ async function replaceSalesRecordsForPeriodAndBrands(
   uploadId: string,
 ) {
   const dates = [...new Set(records.map((record) => record.transaction_date))].sort();
-  const classes = [...new Set(records.map((record) => record.product_class).filter(Boolean))].sort();
+  const classes = [...new Set(records.map((record) => clean(record.product_class)).filter(Boolean))].sort();
   const startDate = dates[0];
   const endDate = dates.at(-1);
   if (!startDate || !endDate || classes.length === 0) {
@@ -2428,13 +2428,14 @@ async function replaceSalesRecordsForPeriodAndBrands(
     return;
   }
 
+  const classFilter = classes.map((productClass) => `product_class.ilike.${escapePostgrestPattern(productClass)}`).join(",");
   const { error } = await client
     .from("sales_records")
     .delete()
     .eq("customer_id", customerId)
     .gte("transaction_date", startDate)
     .lte("transaction_date", endDate)
-    .in("product_class", classes);
+    .or(classFilter);
 
   if (error) throw new Error(error.message);
   await insertSalesRecords(client, customerId, uploadId, records);
@@ -2519,4 +2520,8 @@ function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
 
 function compactKey(value: string | null | undefined) {
   return (value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function escapePostgrestPattern(value: string) {
+  return value.replace(/[,%]/g, (match) => `\\${match}`);
 }
