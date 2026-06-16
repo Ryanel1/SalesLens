@@ -95,7 +95,7 @@ type TopArt = MetricSet & {
   cySales: number;
   cyUnits: number;
   inventoryUnits: number | null;
-  inventoryScope: "color" | "styleArt" | null;
+  inventoryScope: "color" | null;
   imageUrl: string | null;
 };
 
@@ -1636,7 +1636,6 @@ function topArtRows(
   const imageLookup = imageLookupMaps(images);
   const latestInventory = latestStandaloneInventoryRecords(inventoryRecords);
   const inventoryGroups = groupBy(latestInventory, artKey);
-  const inventoryGroupsByArtwork = groupBy(latestInventory, inventoryArtworkKey);
   return groupedRows(records, artKey)
     .map(([key, group]) => {
       const first = group[0];
@@ -1645,8 +1644,7 @@ function topArtRows(
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
       const exactStandaloneInventory = inventoryGroups.get(key);
-      const artworkStandaloneInventory = exactStandaloneInventory ? undefined : inventoryGroupsByArtwork.get(inventoryArtworkKey(first));
-      const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory, artworkStandaloneInventory);
+      const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory);
       return {
         rank: 0,
         key,
@@ -1677,7 +1675,6 @@ function storagePublicUrl(client: SupabaseClient, storagePath: string | null) {
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {
   if (row.inventoryUnits == null) return "";
-  if (row.inventoryScope === "styleArt") return `Style/Art Inv: ${numberText(row.inventoryUnits)} total`;
   return `Current Inv: ${numberText(row.inventoryUnits)}`;
 }
 
@@ -1994,14 +1991,6 @@ function artKey(record: MerchandiseRecord) {
   ].join("|");
 }
 
-function inventoryArtworkKey(record: MerchandiseRecord) {
-  return [
-    compactImagePart(brandName(record)),
-    normalizedStyle(record),
-    compactImagePart(displayArtCode(record)),
-  ].join("|");
-}
-
 function displayArtCode(record: MerchandiseRecord) {
   return clean(record.art_code) || normalizedStyle(record);
 }
@@ -2059,19 +2048,11 @@ function inventorySnapshotForRecords(
 function inventoryTotalForTopArt(
   records: SalesRecord[],
   exactStandaloneRecords: InventoryRecord[] | undefined,
-  artworkStandaloneRecords: InventoryRecord[] | undefined,
 ) {
   if (exactStandaloneRecords?.length) {
     return {
       units: sum(exactStandaloneRecords.map((record) => record.inventory_units ?? 0)),
       scope: "color" as const,
-    };
-  }
-
-  if (artworkStandaloneRecords?.length) {
-    return {
-      units: sum(artworkStandaloneRecords.map((record) => record.inventory_units ?? 0)),
-      scope: "styleArt" as const,
     };
   }
 
