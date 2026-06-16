@@ -669,13 +669,13 @@ export default function Home() {
                 </div>
               ) : null}
             </div>
-          </div>
 
-          <div className="navSignOutField">
-            <span>{user.email ?? "Signed in"}</span>
-            <button className="ghostButton navSignOut" onClick={signOut}>
-              Sign Out
-            </button>
+            <div className="navSignOutField">
+              <span>{user.email ?? "Signed in"}</span>
+              <button className="ghostButton navSignOut" onClick={signOut}>
+                Sign Out
+              </button>
+            </div>
           </div>
         </nav>
 

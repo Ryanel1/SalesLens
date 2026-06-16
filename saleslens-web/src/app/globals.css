@@ -292,7 +292,7 @@ select {
   backdrop-filter: blur(24px) saturate(1.08);
   display: grid;
   gap: clamp(1.2rem, 2.4vw, 2.4rem);
-  grid-template-columns: minmax(230px, 0.42fr) minmax(520px, 1fr) auto;
+  grid-template-columns: minmax(230px, 0.42fr) minmax(0, 1fr);
   min-height: 150px;
   padding: 1.4rem clamp(1.25rem, 4vw, 4rem);
   position: sticky;
@@ -330,7 +330,7 @@ select {
   align-self: end;
   display: grid;
   gap: 0.9rem;
-  grid-template-columns: minmax(0, 250px) 168px;
+  grid-template-columns: minmax(0, 250px) 168px minmax(185px, max-content);
   justify-content: end;
 }
 
@@ -346,12 +346,15 @@ select {
 }
 
 .navUploadField {
-  grid-template-rows: 1rem 44px auto;
+  grid-template-rows: 1rem 44px;
+  position: relative;
 }
 
 .navField select {
   box-sizing: border-box;
+  height: 44px;
   min-height: 44px;
+  width: 100%;
 }
 
 .navField span,
@@ -395,11 +398,9 @@ select {
 }
 
 .navSignOutField {
-  align-self: end;
   display: grid;
   gap: 0.45rem;
   grid-template-rows: 1rem 44px;
-  justify-self: end;
   width: max-content;
 }
 
@@ -424,7 +425,12 @@ select {
   justify-content: center;
   line-height: 1.25;
   margin: 0;
+  min-width: min(320px, 70vw);
+  position: absolute;
+  right: 50%;
   text-align: center;
+  top: calc(100% + 0.65rem);
+  transform: translateX(50%);
   width: 100%;
 }
 
@@ -520,12 +526,14 @@ select {
   color: var(--charcoal);
   cursor: pointer;
   display: inline-grid;
+  height: 44px;
   min-height: 44px;
   align-items: center;
   font-weight: 900;
   justify-content: start;
   padding: 0 1rem;
   text-align: left;
+  width: 100%;
 }
 
 .fileButton input {
@@ -1883,6 +1891,18 @@ tbody tr:nth-child(even) {
   .navSignOutField,
   .navSignOut {
     justify-self: stretch;
+  }
+
+  .navUploadField {
+    grid-template-rows: 1rem 44px auto;
+  }
+
+  .navMessage {
+    min-width: 0;
+    position: static;
+    right: auto;
+    top: auto;
+    transform: none;
   }
 
   .sectionTitle {
