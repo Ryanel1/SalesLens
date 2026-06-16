@@ -1533,7 +1533,7 @@ function findProductImageUrl(
   if (isBlockedProductImageMatch(style, artCode, color)) return null;
   const exact = lookup.exact.get(imageKey(style, artCode, color));
   if (!exact) return null;
-  return cachedImageUrlAllowedForColor(exact, color) ? exact : null;
+  return cachedImageUrlAllowedForColor(exact, color, style) ? exact : null;
 }
 
 function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color">) {
@@ -1566,8 +1566,9 @@ function isBlockedProductImageMatch(style: string, artCode: string, color: strin
   return key === imageKey("CT1000", "03456518", "Navy");
 }
 
-function cachedImageUrlAllowedForColor(value: string, color: string) {
-  return imageUrlMatchesColor(value, color) || (compactImagePart(color) === "WHITE" && imageColorToken(value) === "DEFAULT");
+function cachedImageUrlAllowedForColor(value: string, color: string, style: string) {
+  const isAllowedDefault = compactImagePart(color) === "WHITE" || compactImagePart(style) === "CBRZU0Z";
+  return imageUrlMatchesColor(value, color) || (isAllowedDefault && imageColorToken(value) === "DEFAULT");
 }
 
 function imageUrlMatchesColor(value: string, color: string) {

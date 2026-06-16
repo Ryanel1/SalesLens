@@ -98,6 +98,7 @@ async function matchingImage(item: ImageRequestItem): Promise<ProductImageMatch 
 async function productDetailUrlsForItem(item: ImageRequestItem, lookupArtCode: string) {
   const urls = [
     ...await productDetailUrlsForKeyword(lookupArtCode),
+    ...await productDetailUrlsForDecoratedArtCode(lookupArtCode),
     ...await productDetailUrlsForKeyword(clean(item.style)),
   ];
   const seen = new Set<string>();
@@ -106,6 +107,16 @@ async function productDetailUrlsForItem(item: ImageRequestItem, lookupArtCode: s
     seen.add(url);
     return true;
   });
+}
+
+async function productDetailUrlsForDecoratedArtCode(lookupArtCode: string) {
+  const artCode = clean(lookupArtCode);
+  if (!/^\d{6,}$/.test(artCode)) return [];
+
+  const results = await Promise.all(
+    ["APC", "AEC", "AP"].map((prefix) => productDetailUrlsForKeyword(`${prefix}${artCode}`)),
+  );
+  return results.flat();
 }
 
 async function productDetailUrlsForKeyword(keyword: string) {
@@ -191,9 +202,10 @@ function detailMatches(html: string, item: ImageRequestItem, lookupArtCode: stri
 }
 
 function productImageUrl(html: string, item: ImageRequestItem, productUrl: string) {
-  const pattern = /(https?:\/\/www\.rebelrags\.net\/prodimages\/[^"']+-l\.(?:jpg|jpeg|png)|\/prodimages\/[^"']+-l\.(?:jpg|jpeg|png))/gi;
+  const pattern = /(https?:\/\/www\.rebelrags\.net\/prodimages\/[^"']+-(?:l|m|s)\.(?:jpg|jpeg|png)|\/prodimages\/[^"']+-(?:l|m|s)\.(?:jpg|jpeg|png))/gi;
   const urls = captures(pattern, html)
     .map((value) => absoluteUrl(decodeHtml(value), productUrl))
+    .map(preferLargeImageUrl)
     .filter(Boolean);
   const colorMatch = urls.find((url) => imageUrlMatchesColor(url, clean(item.color)));
   if (colorMatch) return colorMatch;
@@ -222,7 +234,11 @@ function colorSearchTerms(colorName: string) {
 }
 
 function allowsDefaultImage(item: ImageRequestItem) {
-  return normalized(item.color) === "WHITE";
+  return normalized(item.color) === "WHITE" || normalized(item.style) === "CBRZU0Z";
+}
+
+function preferLargeImageUrl(value: string) {
+  return value.replace(/-(?:s|m)\.(jpg|jpeg|png)(\?.*)?$/i, "-l.$1$2");
 }
 
 function isBlockedProductImageMatch(style: string, artCode: string, color: string) {
