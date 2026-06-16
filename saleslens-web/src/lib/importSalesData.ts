@@ -6,6 +6,8 @@ export type ParsedSalesRecord = {
   amount: number;
   units: number | null;
   source_file: string;
+  transaction_number: string | null;
+  barcode: string | null;
   product_class: string | null;
   master_style: string | null;
   color: string | null;
@@ -193,6 +195,8 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
       amount,
       units: parseInteger(valueAt(row, mtdUnitsIndex)),
       source_file: fileName,
+      transaction_number: null,
+      barcode: null,
       product_class: clean(valueAt(row, classIndex)) ?? normalizedBrandClass(customerName),
       master_style: clean(valueAt(row, masterStyleIndex)),
       color: clean(valueAt(row, colorIndex)),
@@ -224,7 +228,9 @@ function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
   if (!firstRow) throw new Error("No header row found in this file.");
   const header = firstRow.map(normalize);
   const dateIndex = findColumn(header, ["date"]);
+  const transactionNumberIndex = findColumn(header, ["num", "number", "transactionnumber", "transactionnum", "receipt", "receiptnum"]);
   const descriptionIndex = findColumn(header, ["descr", "description"]);
+  const barcodeIndex = findColumn(header, ["barcode", "upc"]);
   const brandIndex = findColumn(header, ["brand"]);
   const productIndex = findColumn(header, ["product"]);
   const colorIndex = findColumn(header, ["color", "colour"]);
@@ -258,6 +264,8 @@ function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
       amount,
       units,
       source_file: fileName,
+      transaction_number: clean(valueAt(row, transactionNumberIndex)),
+      barcode: clean(valueAt(row, barcodeIndex)),
       product_class: normalizedBrandClass(valueAt(row, brandIndex)),
       master_style: clean(valueAt(row, descriptionIndex)),
       color,

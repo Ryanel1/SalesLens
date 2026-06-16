@@ -19,6 +19,8 @@ type SalesRecord = {
   transaction_date: string;
   amount: number | string | null;
   units: number | null;
+  transaction_number: string | null;
+  barcode: string | null;
   product_class: string | null;
   master_style: string | null;
   color: string | null;
@@ -1456,7 +1458,7 @@ async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await client
       .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units")
+      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units")
       .eq("customer_id", customerId)
       .order("transaction_date", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -2306,7 +2308,7 @@ async function loadExistingRecordKeys(
 ) {
   let query = client
     .from("sales_records")
-    .select("transaction_date,amount,units,master_style,color,catalog_color_name,style_number,art_code,size,raw_style_identifier")
+    .select("transaction_date,amount,units,transaction_number,barcode,master_style,color,catalog_color_name,style_number,art_code,size,raw_style_identifier")
     .eq("customer_id", customerId);
 
   if (startDate) query = query.gte("transaction_date", startDate);
@@ -2453,6 +2455,8 @@ type SalesRecordForDuplicateCheck = Pick<
   | "transaction_date"
   | "amount"
   | "units"
+  | "transaction_number"
+  | "barcode"
   | "master_style"
   | "color"
   | "catalog_color_name"
@@ -2463,8 +2467,10 @@ type SalesRecordForDuplicateCheck = Pick<
 >;
 
 function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
+  const transactionIdentity = compactKey(record.transaction_number) || compactKey(record.barcode);
   return [
     record.transaction_date,
+    transactionIdentity,
     Number(record.amount ?? 0).toFixed(2),
     record.units ?? "",
     compactKey(record.style_number),
