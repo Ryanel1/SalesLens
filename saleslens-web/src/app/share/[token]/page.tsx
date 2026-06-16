@@ -524,7 +524,7 @@ function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
         <p>
           {snapshot.coverage == null
             ? "Current inventory is not comparable to the selected period's selling pace."
-            : `Based on current selling trends, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
+            : `Based on the normalized monthly sales pace, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
           {" "}
           This helps show whether stock looks heavy, lean, or balanced against recent demand.
         </p>

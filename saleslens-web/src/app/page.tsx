@@ -1224,7 +1224,7 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
         <p>
           {snapshot.coverage == null
             ? "Current inventory is not comparable to the selected period's selling pace."
-            : `Based on current selling trends, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
+            : `Based on the normalized monthly sales pace, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
           {" "}
           This helps show whether stock looks heavy, lean, or balanced against recent demand.
         </p>
@@ -2082,16 +2082,46 @@ function inventorySnapshotForRecords(
   const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
   if (!snapshotRecords.length) return null;
   const totalUnits = sum(snapshotRecords.map((record) => record.inventory_units ?? 0));
-  const soldUnits = sum(records.map((record) => record.units ?? 0));
+  const monthlySalesPace = normalizedMonthlyUnitPace(records);
   return {
     date: inventoryRecordDate(snapshotRecords[0]),
     totalUnits,
     styles: uniqueCount(snapshotRecords.map(styleKey)),
     artworks: uniqueCount(snapshotRecords.map((record) => clean(record.art_code))),
-    coverage: soldUnits ? totalUnits / soldUnits : null,
+    coverage: monthlySalesPace ? totalUnits / monthlySalesPace : null,
     byBrand: inventoryByBrand(snapshotRecords),
     topStyles: topInventoryStyles(snapshotRecords),
   };
+}
+
+function normalizedMonthlyUnitPace(records: SalesRecord[]) {
+  if (!records.length) return null;
+
+  const monthGroups = groupBy(records, (record) => monthKey(record.transaction_date) ?? "");
+  const monthlyPaces = [...monthGroups.entries()]
+    .filter(([month]) => month)
+    .map(([month, monthRecords]) => {
+      const units = sum(monthRecords.map((record) => record.units ?? 0));
+      const transactionDays = [...new Set(monthRecords.map((record) => Number(record.transaction_date.slice(8, 10))).filter(Boolean))];
+      const latestDay = Math.max(...transactionDays, 0);
+      const daysInMonth = daysInCalendarMonth(month);
+
+      if (transactionDays.length > 1 && latestDay > 0 && latestDay < daysInMonth) {
+        return units / latestDay * daysInMonth;
+      }
+
+      return units;
+    })
+    .filter((pace) => Number.isFinite(pace) && pace > 0);
+
+  if (!monthlyPaces.length) return null;
+  return sum(monthlyPaces) / monthlyPaces.length;
+}
+
+function daysInCalendarMonth(month: string) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  if (!year || !monthNumber) return 30;
+  return new Date(year, monthNumber, 0).getDate();
 }
 
 function inventoryTotalForTopArt(
