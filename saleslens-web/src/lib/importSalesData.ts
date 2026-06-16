@@ -22,12 +22,33 @@ export type ParsedSalesRecord = {
   inventory_units: number | null;
 };
 
+export type ParsedInventoryRecord = {
+  inventory_date: string;
+  source_file: string;
+  product_class: string | null;
+  master_style: string | null;
+  color: string | null;
+  size: string | null;
+  raw_style_identifier: string | null;
+  style_number: string | null;
+  catalog_color_name: string | null;
+  art_code: string | null;
+  inventory_units: number;
+  current_retail: number | null;
+};
+
 export type ParsedUpload = {
   records: ParsedSalesRecord[];
   skippedCount: number;
   salesPeriodStart: string | null;
   salesPeriodEnd: string | null;
   receivedDate: string | null;
+};
+
+export type ParsedInventoryUpload = {
+  records: ParsedInventoryRecord[];
+  skippedCount: number;
+  inventoryDate: string | null;
 };
 
 const COLOR_NAMES_BY_CODE: Record<string, string> = {
@@ -37,6 +58,8 @@ const COLOR_NAMES_BY_CODE: Record<string, string> = {
   "940": "Heather Grey",
   "1616": "Light Blue",
 };
+
+const REBEL_RAGS_GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
 
 const MONTHS: Record<string, number> = {
   jan: 0,
@@ -93,6 +116,31 @@ export async function parseSalesWorkbook(file: File, customerName: string): Prom
   }
 
   return parseVolshopRows(usableRows, file.name, customerName);
+}
+
+export async function parseInventoryWorkbook(file: File, customerName: string): Promise<ParsedInventoryUpload> {
+  const workbook = XLSX.read(await file.arrayBuffer(), {
+    cellDates: true,
+    type: "array",
+  });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!sheet) throw new Error("No worksheet found in this inventory file.");
+
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    blankrows: false,
+    defval: "",
+    header: 1,
+    raw: false,
+  });
+
+  const headerIndex = rows.findIndex((row) => row.some((cell) => normalize(cell).length > 0));
+  if (headerIndex === -1) throw new Error("No header row found in this inventory file.");
+
+  const usableRows = rows.slice(headerIndex);
+  const firstRow = usableRows[0];
+  if (!firstRow) throw new Error("No header row found in this inventory file.");
+
+  return parseInventoryRows(usableRows, file.name, customerName);
 }
 
 function parseVolshopRows(rows: unknown[][], fileName: string, customerName: string): ParsedUpload {
@@ -235,6 +283,81 @@ function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
   };
 }
 
+function parseInventoryRows(rows: unknown[][], fileName: string, customerName: string): ParsedInventoryUpload {
+  const firstRow = rows[0];
+  if (!firstRow) throw new Error("No header row found in this inventory file.");
+  const header = firstRow.map(normalize);
+  const dateIndex = findColumn(header, ["date", "inventorydate", "asofdate"]);
+  const descriptionIndex = findColumn(header, ["descr", "description", "itemdescription", "productdescription"]);
+  const brandIndex = findColumn(header, ["brand", "class", "productclass"]);
+  const productIndex = findColumn(header, ["product", "sku", "item", "itemnumber", "style", "stylenumber"]);
+  const artIndex = findColumn(header, ["art", "artcode", "artwork", "artworkcode", "design", "designcode"]);
+  const colorIndex = findColumn(header, ["color", "colour"]);
+  const sizeIndex = findColumn(header, ["size"]);
+  const retailIndex = findColumn(header, ["retail", "currentretail", "price"]);
+  const inventoryUnitsIndex = findColumn(header, [
+    "onhand",
+    "qtyonhand",
+    "quantityonhand",
+    "inventory",
+    "inventoryunits",
+    "invu",
+    "qty",
+    "quantity",
+    "units",
+  ]);
+
+  if (productIndex == null || inventoryUnitsIndex == null) {
+    throw new Error("Missing required inventory columns: Product/SKU and On Hand/Quantity.");
+  }
+
+  const fallbackDate = reportDateFromFileName(fileName) ?? formatDate(
+    new Date().getFullYear(),
+    new Date().getMonth(),
+    new Date().getDate(),
+  );
+  let skippedCount = 0;
+  const records: ParsedInventoryRecord[] = [];
+
+  for (const row of rows.slice(1)) {
+    if (row.some((cell) => normalize(cell) === "total")) continue;
+
+    const rawProduct = valueAt(row, productIndex);
+    const inventoryUnits = parseInteger(valueAt(row, inventoryUnitsIndex));
+    if (!rawProduct || inventoryUnits == null) {
+      skippedCount += 1;
+      continue;
+    }
+
+    const productIdentifier = parseRebelRagsProductIdentifier(rawProduct);
+    const color = clean(valueAt(row, colorIndex));
+    const inventoryDate = dateOnly(valueAt(row, dateIndex)) ?? fallbackDate;
+    const artCode = productIdentifier.artCode ?? normalizedInventoryArtCode(valueAt(row, artIndex));
+
+    records.push({
+      inventory_date: inventoryDate,
+      source_file: fileName,
+      product_class: normalizedInventoryBrandClass(valueAt(row, brandIndex), productIdentifier.styleNumber, customerName),
+      master_style: clean(valueAt(row, descriptionIndex)),
+      color,
+      size: clean(valueAt(row, sizeIndex)),
+      raw_style_identifier: clean(rawProduct),
+      style_number: productIdentifier.styleNumber,
+      catalog_color_name: color,
+      art_code: artCode,
+      inventory_units: inventoryUnits,
+      current_retail: parseNumber(valueAt(row, retailIndex)),
+    });
+  }
+
+  const dates = records.map((record) => record.inventory_date).sort();
+  return {
+    records,
+    skippedCount,
+    inventoryDate: dates.at(-1) ?? null,
+  };
+}
+
 function isRebelRagsHeader(header: string[]) {
   return Boolean(
     findColumn(header, ["date"]) != null &&
@@ -298,6 +421,22 @@ function normalizedRebelRagsArtCode(token: string) {
     return token.replace(/^[A-Z]+/, "");
   }
   return token;
+}
+
+function normalizedInventoryArtCode(value: string | null) {
+  const token = clean(value)?.toUpperCase().replace(/[^A-Z0-9]/g, "") ?? "";
+  if (!token) return null;
+  return normalizedRebelRagsArtCode(token);
+}
+
+function normalizedInventoryBrandClass(value: string | null, styleNumber: string | null, customerName: string) {
+  const explicit = normalizedBrandClass(value);
+  if (explicit) return explicit;
+
+  const style = styleNumber?.toUpperCase() ?? "";
+  if (REBEL_RAGS_GEAR_STYLE_PREFIXES.some((prefix) => style.startsWith(prefix))) return "Gear";
+  if (/rebel\s*rags/i.test(customerName)) return null;
+  return normalizedBrandClass(customerName);
 }
 
 function reportDateFromFileName(fileName: string) {

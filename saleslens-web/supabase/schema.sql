@@ -68,6 +68,35 @@ create index if not exists sales_records_customer_style_idx
 create index if not exists sales_records_upload_idx
   on public.sales_records(upload_id);
 
+create table if not exists public.inventory_records (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references public.customers(id) on delete cascade,
+  upload_id uuid references public.uploads(id) on delete set null,
+  inventory_date date not null,
+  source_file text not null,
+  product_class text,
+  master_style text,
+  color text,
+  size text,
+  raw_style_identifier text,
+  style_number text,
+  catalog_color_name text,
+  art_code text,
+  inventory_units integer not null default 0,
+  current_retail numeric(14, 2),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists inventory_records_customer_date_idx
+  on public.inventory_records(customer_id, inventory_date);
+
+create index if not exists inventory_records_customer_style_idx
+  on public.inventory_records(customer_id, style_number, art_code, color);
+
+create index if not exists inventory_records_upload_idx
+  on public.inventory_records(upload_id);
+
 create table if not exists public.product_images (
   id uuid primary key default gen_random_uuid(),
   customer_id uuid references public.customers(id) on delete cascade,
@@ -141,6 +170,11 @@ create trigger product_images_set_updated_at
 before update on public.product_images
 for each row execute function public.set_updated_at();
 
+drop trigger if exists inventory_records_set_updated_at on public.inventory_records;
+create trigger inventory_records_set_updated_at
+before update on public.inventory_records
+for each row execute function public.set_updated_at();
+
 drop trigger if exists style_catalog_entries_set_updated_at on public.style_catalog_entries;
 create trigger style_catalog_entries_set_updated_at
 before update on public.style_catalog_entries
@@ -180,6 +214,7 @@ grant execute on function public.get_report_snapshot(text) to anon, authenticate
 alter table public.customers enable row level security;
 alter table public.uploads enable row level security;
 alter table public.sales_records enable row level security;
+alter table public.inventory_records enable row level security;
 alter table public.product_images enable row level security;
 alter table public.style_catalog_entries enable row level security;
 alter table public.report_snapshots enable row level security;
@@ -219,6 +254,19 @@ using (true);
 drop policy if exists "Authenticated users can manage sales records" on public.sales_records;
 create policy "Authenticated users can manage sales records"
 on public.sales_records for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Authenticated users can read inventory records" on public.inventory_records;
+create policy "Authenticated users can read inventory records"
+on public.inventory_records for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated users can manage inventory records" on public.inventory_records;
+create policy "Authenticated users can manage inventory records"
+on public.inventory_records for all
 to authenticated
 using (true)
 with check (true);

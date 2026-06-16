@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { parseSalesWorkbook, type ParsedSalesRecord } from "@/lib/importSalesData";
+import {
+  parseInventoryWorkbook,
+  parseSalesWorkbook,
+  type ParsedInventoryRecord,
+  type ParsedSalesRecord,
+} from "@/lib/importSalesData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
@@ -25,6 +30,29 @@ type SalesRecord = {
   inventory_units: number | null;
 };
 
+type InventoryRecord = {
+  id: string;
+  customer_id: string;
+  upload_id: string | null;
+  inventory_date: string;
+  source_file: string;
+  product_class: string | null;
+  master_style: string | null;
+  color: string | null;
+  size: string | null;
+  raw_style_identifier: string | null;
+  style_number: string | null;
+  catalog_color_name: string | null;
+  art_code: string | null;
+  inventory_units: number | null;
+  current_retail: number | string | null;
+};
+
+type MerchandiseRecord = Pick<
+  SalesRecord,
+  "product_class" | "master_style" | "style_number" | "raw_style_identifier" | "catalog_color_name" | "color" | "art_code"
+>;
+
 type ProductImage = {
   style_number: string;
   art_code: string;
@@ -46,6 +74,7 @@ type RebelRagsImageMatch = {
 
 type DashboardData = {
   records: SalesRecord[];
+  inventoryRecords: InventoryRecord[];
   images: ProductImage[];
 };
 
@@ -134,7 +163,8 @@ export default function Home() {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("All");
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
-  const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], images: [] });
+  const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [dashboardStatus, setDashboardStatus] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareScope, setShareScope] = useState<"selected" | "all">("selected");
@@ -201,7 +231,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!supabase || !selectedCustomerId) {
-      setDashboardData({ records: [], images: [] });
+      setDashboardData({ records: [], inventoryRecords: [], images: [] });
       return;
     }
 
@@ -211,8 +241,9 @@ export default function Home() {
     setDashboardStatus("Loading sales records...");
 
     async function loadDashboard() {
-      const [recordsResult, imagesResult] = await Promise.all([
+      const [recordsResult, inventoryResult, imagesResult] = await Promise.all([
         fetchAllRecords(client, customerId),
+        fetchInventoryRecords(client, customerId),
         fetchProductImages(client, customerId),
       ]);
 
@@ -220,12 +251,12 @@ export default function Home() {
 
       if (recordsResult.error) {
         setDashboardStatus(recordsResult.error);
-        setDashboardData({ records: [], images: [] });
+        setDashboardData({ records: [], inventoryRecords: [], images: [] });
         return;
       }
 
       const records = recordsResult.records;
-      setDashboardData({ records, images: imagesResult.images });
+      setDashboardData({ records, inventoryRecords: inventoryResult.records, images: imagesResult.images });
       setSelectedPeriod((current) => current ?? defaultPeriodValue(records));
       setDashboardStatus("");
     }
@@ -247,6 +278,9 @@ export default function Home() {
   const recordsForCustomer = useMemo(() => {
     return dashboardData.records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
   }, [brandFilter, dashboardData.records]);
+  const inventoryRecordsForCustomer = useMemo(() => {
+    return dashboardData.inventoryRecords.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
+  }, [brandFilter, dashboardData.inventoryRecords]);
 
   const periodEndMonth = useMemo(() => {
     if (!period) return null;
@@ -288,15 +322,18 @@ export default function Home() {
     [periodEndMonth, ytdCurrentRecords, ytdPriorRecords],
   );
   const topArt = useMemo(
-    () => topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images),
-    [dashboardData.images, periodRecords, ytdCurrentRecords],
+    () => topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images, inventoryRecordsForCustomer),
+    [dashboardData.images, inventoryRecordsForCustomer, periodRecords, ytdCurrentRecords],
   );
   const periodStyleStudy = useMemo(() => topStyleRows(periodRecords, comparisonRecords), [periodRecords, comparisonRecords]);
   const ytdStyleStudy = useMemo(() => topStyleRows(ytdCurrentRecords, ytdPriorRecords), [ytdCurrentRecords, ytdPriorRecords]);
   const allStyleRowsForPeriod = useMemo(() => allStyleRows(periodRecords), [periodRecords]);
   const allStyles = useMemo(() => allStyleRowsForPeriod.slice(0, 100), [allStyleRowsForPeriod]);
   const salesMix = useMemo(() => salesMixSlices(periodRecords), [periodRecords]);
-  const inventorySnapshot = useMemo(() => inventorySnapshotForRecords(periodRecords), [periodRecords]);
+  const inventorySnapshot = useMemo(
+    () => inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth),
+    [inventoryRecordsForCustomer, periodEndMonth, periodRecords],
+  );
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
   const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, periodEndMonth), [recordsForCustomer, periodEndMonth]);
   const lastUploaded = latestDate(recordsForCustomer);
@@ -410,6 +447,7 @@ export default function Home() {
       brandFilter,
       generatedAt,
       images: dashboardData.images,
+      inventoryRecords: dashboardData.inventoryRecords,
       period,
       records: dashboardData.records,
     });
@@ -418,8 +456,9 @@ export default function Home() {
       const reports = await Promise.all(
         customers.map(async (customer) => {
           if (customer.id === selectedCustomer.id) return payload as ReportSnapshotPayload;
-          const [recordsResult, imagesResult] = await Promise.all([
+          const [recordsResult, inventoryResult, imagesResult] = await Promise.all([
             fetchAllRecords(client, customer.id),
+            fetchInventoryRecords(client, customer.id),
             fetchProductImages(client, customer.id),
           ]);
           return buildReportPayload({
@@ -427,6 +466,7 @@ export default function Home() {
             brandFilter,
             generatedAt,
             images: imagesResult.images,
+            inventoryRecords: inventoryResult.records,
             period,
             records: recordsResult.records,
           });
@@ -467,7 +507,16 @@ export default function Home() {
     await navigator.clipboard?.writeText(url).catch(() => undefined);
   }
 
-  async function importFile(file: File | null) {
+  function beginImportFile(file: File | null) {
+    if (!file || !selectedCustomer) return;
+    if (isRebelRagsCustomer(selectedCustomer.name)) {
+      setPendingImportFile(file);
+      return;
+    }
+    void importSalesFile(file);
+  }
+
+  async function importSalesFile(file: File | null) {
     if (!file || !supabase || !selectedCustomer || !user) return;
 
     setImportStatus(`Reading ${file.name}...`);
@@ -519,6 +568,45 @@ export default function Home() {
     }
   }
 
+  async function importInventoryFile(file: File | null) {
+    if (!file || !supabase || !selectedCustomer || !user) return;
+
+    setImportStatus(`Reading inventory from ${file.name}...`);
+    try {
+      const parsed = await parseInventoryWorkbook(file, selectedCustomer.name);
+      if (parsed.records.length === 0) {
+        setImportStatus(`No importable inventory records found. Skipped ${parsed.skippedCount} rows.`);
+        return;
+      }
+
+      const inventoryDates = [...new Set(parsed.records.map((record) => record.inventory_date))].sort();
+      const totalUnits = sum(parsed.records.map((record) => record.inventory_units));
+      const uploadId = await createUploadBatch(supabase, {
+        customerId: selectedCustomer.id,
+        fileName: file.name,
+        userId: user.id,
+        receivedDate: parsed.inventoryDate,
+        salesPeriodStart: inventoryDates[0] ?? parsed.inventoryDate,
+        salesPeriodEnd: inventoryDates.at(-1) ?? parsed.inventoryDate,
+        rowCount: parsed.records.length,
+        skippedCount: parsed.skippedCount,
+        totalSales: 0,
+        totalUnits,
+        status: "imported",
+      });
+
+      setImportStatus(`Saving ${numberText(parsed.records.length)} inventory records...`);
+      await replaceInventoryRecordsForDates(supabase, selectedCustomer.id, inventoryDates, parsed.records, uploadId);
+
+      setImportStatus(
+        `Imported ${numberText(parsed.records.length)} inventory records from ${file.name}. Skipped ${numberText(parsed.skippedCount)} rows.`,
+      );
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      setImportStatus(error instanceof Error ? error.message : "Inventory import failed.");
+    }
+  }
+
   if (user) {
     return (
       <main className={`appShell ${accountThemeClass(selectedCustomer?.name)}`}>
@@ -558,7 +646,7 @@ export default function Home() {
                   accept=".xls,.xlsx,.csv"
                   type="file"
                   onChange={(event) => {
-                    void importFile(event.target.files?.[0] ?? null);
+                    beginImportFile(event.target.files?.[0] ?? null);
                     event.currentTarget.value = "";
                   }}
                 />
@@ -576,6 +664,47 @@ export default function Home() {
             <p className="navMessage">{importStatus || customerStatus}</p>
           ) : null}
         </nav>
+
+        {pendingImportFile ? (
+          <div className="modalOverlay" role="presentation">
+            <section className="shareModal importTypeModal" role="dialog" aria-modal="true" aria-labelledby="import-type-title">
+              <button
+                aria-label="Close import type"
+                className="modalCloseButton"
+                onClick={() => setPendingImportFile(null)}
+              >
+                X
+              </button>
+              <p className="eyebrow">Rebel Rags Import</p>
+              <h3 id="import-type-title">What are you uploading?</h3>
+              <p>{pendingImportFile.name}</p>
+              <div className="shareScopeGrid">
+                <button
+                  onClick={() => {
+                    const file = pendingImportFile;
+                    setPendingImportFile(null);
+                    void importSalesFile(file);
+                  }}
+                  type="button"
+                >
+                  <strong>Sales Data</strong>
+                  <span>Daily or date-range POS sales with transaction dates, units, and dollars.</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const file = pendingImportFile;
+                    setPendingImportFile(null);
+                    void importInventoryFile(file);
+                  }}
+                  type="button"
+                >
+                  <strong>Inventory Report</strong>
+                  <span>Standalone on-hand units by product/style/color/artwork.</span>
+                </button>
+              </div>
+            </section>
+          </div>
+        ) : null}
 
         <section className="dashboard">
           <header className="dashboardHeader">
@@ -1310,11 +1439,29 @@ async function fetchProductImages(client: SupabaseClient, customerId: string) {
   };
 }
 
+async function fetchInventoryRecords(client: SupabaseClient, customerId: string) {
+  const records: InventoryRecord[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await client
+      .from("inventory_records")
+      .select("id,customer_id,upload_id,inventory_date,source_file,product_class,master_style,color,size,raw_style_identifier,style_number,catalog_color_name,art_code,inventory_units,current_retail")
+      .eq("customer_id", customerId)
+      .order("inventory_date", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) return { records: [], error: error.message };
+    records.push(...((data ?? []) as InventoryRecord[]));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+  return { records, error: "" };
+}
+
 function buildReportPayload({
   accountName,
   brandFilter,
   generatedAt,
   images,
+  inventoryRecords,
   period,
   records,
 }: {
@@ -1322,10 +1469,12 @@ function buildReportPayload({
   brandFilter: string;
   generatedAt: string;
   images: ProductImage[];
+  inventoryRecords: InventoryRecord[];
   period: PeriodSelection;
   records: SalesRecord[];
 }): ReportSnapshotPayload {
   const filteredRecords = records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
+  const filteredInventoryRecords = inventoryRecords.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
   const periodEndMonth = period.kind === "month" ? period.value : latestMonthForYear(filteredRecords, period.year);
   const priorYearMonth = periodEndMonth ? `${period.year - 1}${periodEndMonth.slice(4)}` : null;
   const periodRecords = recordsForSelectedPeriod(filteredRecords, period);
@@ -1355,7 +1504,7 @@ function buildReportPayload({
     ytdLine: ytdPoints(filteredRecords, periodEndMonth),
     ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
-    inventorySnapshot: inventorySnapshotForRecords(periodRecords),
+    inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth),
     salesMix: salesMixSlices(periodRecords),
     bestDay: {
       date: bestDay.date,
@@ -1368,7 +1517,7 @@ function buildReportPayload({
     topStyles: ytdStyleStudy,
     styleStudyMonthly: topStyleRows(periodRecords, priorPeriodRecords),
     styleStudyYtd: ytdStyleStudy,
-    topArt: topArtRows(periodRecords, ytdCurrentRecords, images),
+    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords),
     allStyles: allStyleRows(periodRecords).slice(0, 100),
   };
 }
@@ -1475,9 +1624,15 @@ function metricSet(records: SalesRecord[]): MetricSet {
   };
 }
 
-function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: ProductImage[]): TopArt[] {
+function topArtRows(
+  records: SalesRecord[],
+  ytdRecords: SalesRecord[],
+  images: ProductImage[],
+  inventoryRecords: InventoryRecord[] = [],
+): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
   const imageLookup = imageLookupMaps(images);
+  const inventoryGroups = groupBy(latestStandaloneInventoryRecords(inventoryRecords), artKey);
   return groupedRows(records, artKey)
     .map(([key, group]) => {
       const first = group[0];
@@ -1498,7 +1653,7 @@ function topArtRows(records: SalesRecord[], ytdRecords: SalesRecord[], images: P
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
-        inventoryUnits: inventoryTotalForLatestSnapshot(group),
+        inventoryUnits: inventoryTotalForLatestSnapshot(group, inventoryGroups.get(key)),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
@@ -1784,7 +1939,7 @@ function groupBy<T>(items: T[], keyForItem: (item: T) => string) {
   return groups;
 }
 
-function brandName(record: SalesRecord) {
+function brandName(record: MerchandiseRecord) {
   const style = normalizedStyle(record);
   const classText = `${record.product_class ?? ""} ${record.master_style ?? ""}`.toUpperCase();
   if (classText.includes("GEAR") || classText.includes("COMFORT WASH")) return "Gear";
@@ -1792,7 +1947,7 @@ function brandName(record: SalesRecord) {
   return "Champion";
 }
 
-function audienceName(record: SalesRecord) {
+function audienceName(record: MerchandiseRecord) {
   const text = `${record.product_class ?? ""} ${record.master_style ?? ""}`.toUpperCase();
   if (text.includes("YOUTH") || text.includes("INFANT") || text.includes("TODDLER")) return "Youth";
   if (text.includes("WOMEN") || text.includes("WMNS") || text.includes("W-S") || text.includes("LADY") || text.includes("LADIES")) {
@@ -1801,7 +1956,7 @@ function audienceName(record: SalesRecord) {
   return "Unisex";
 }
 
-function normalizedStyle(record: SalesRecord) {
+function normalizedStyle(record: MerchandiseRecord) {
   const raw = clean(record.style_number) || clean(record.raw_style_identifier) || "-";
   const upper = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
   const knownPrefix = KNOWN_STYLE_PREFIXES.find((prefix) => upper.startsWith(prefix));
@@ -1809,11 +1964,11 @@ function normalizedStyle(record: SalesRecord) {
   return raw.toUpperCase().replace(/[-\s]+$/g, "") || "-";
 }
 
-function styleKey(record: SalesRecord) {
+function styleKey(record: MerchandiseRecord) {
   return normalizedStyle(record);
 }
 
-function artKey(record: SalesRecord) {
+function artKey(record: MerchandiseRecord) {
   return [
     compactImagePart(brandName(record)),
     normalizedStyle(record),
@@ -1822,7 +1977,7 @@ function artKey(record: SalesRecord) {
   ].join("|");
 }
 
-function displayArtCode(record: SalesRecord) {
+function displayArtCode(record: MerchandiseRecord) {
   return clean(record.art_code) || normalizedStyle(record);
 }
 
@@ -1834,7 +1989,7 @@ function compactImagePart(value: string | null | undefined) {
   return clean(value).toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
-function colorName(record: SalesRecord) {
+function colorName(record: MerchandiseRecord) {
   return displayColorName(clean(record.catalog_color_name) || clean(record.color)) || "-";
 }
 
@@ -1856,13 +2011,17 @@ function amountValue(record: SalesRecord) {
   return Number(record.amount ?? 0);
 }
 
-function inventorySnapshotForRecords(records: SalesRecord[]): InventorySnapshot {
-  const snapshotRecords = latestInventoryRecords(records);
+function inventorySnapshotForRecords(
+  records: SalesRecord[],
+  standaloneInventoryRecords: InventoryRecord[] = [],
+  periodEndMonth: string | null = null,
+): InventorySnapshot {
+  const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
   if (!snapshotRecords.length) return null;
   const totalUnits = sum(snapshotRecords.map((record) => record.inventory_units ?? 0));
   const soldUnits = sum(records.map((record) => record.units ?? 0));
   return {
-    date: snapshotRecords[0].transaction_date,
+    date: inventoryRecordDate(snapshotRecords[0]),
     totalUnits,
     styles: uniqueCount(snapshotRecords.map(styleKey)),
     artworks: uniqueCount(snapshotRecords.map((record) => clean(record.art_code))),
@@ -1872,20 +2031,42 @@ function inventorySnapshotForRecords(records: SalesRecord[]): InventorySnapshot 
   };
 }
 
-function inventoryTotalForLatestSnapshot(records: SalesRecord[]) {
-  const snapshotRecords = latestInventoryRecords(records);
-  if (!snapshotRecords.length) return null;
-  return sum(snapshotRecords.map((record) => record.inventory_units ?? 0));
+function inventoryTotalForLatestSnapshot(records: SalesRecord[], standaloneRecords: InventoryRecord[] | undefined = undefined) {
+  if (standaloneRecords?.length) return sum(standaloneRecords.map((record) => record.inventory_units ?? 0));
+  const snapshotRecords = latestEmbeddedInventoryRecords(records);
+  return snapshotRecords.length ? sum(snapshotRecords.map((record) => record.inventory_units ?? 0)) : null;
 }
 
-function latestInventoryRecords(records: SalesRecord[]) {
+function latestInventoryRecords(
+  records: SalesRecord[],
+  standaloneInventoryRecords: InventoryRecord[],
+  periodEndMonth: string | null,
+) {
+  const standaloneSnapshot = latestStandaloneInventoryRecords(standaloneInventoryRecords, periodEndMonth);
+  if (standaloneSnapshot.length) return standaloneSnapshot;
+  return latestEmbeddedInventoryRecords(records);
+}
+
+function latestEmbeddedInventoryRecords(records: SalesRecord[]) {
   const inventoryRecords = records.filter((record) => record.inventory_units != null);
   const latestInventoryDate = inventoryRecords.map((record) => record.transaction_date).sort().at(-1);
   if (!latestInventoryDate) return [];
   return inventoryRecords.filter((record) => record.transaction_date === latestInventoryDate);
 }
 
-function inventoryByBrand(records: SalesRecord[]) {
+function latestStandaloneInventoryRecords(records: InventoryRecord[], periodEndMonth: string | null = null) {
+  const maxDate = periodEndMonth ? `${periodEndMonth}-31` : null;
+  const inventoryRecords = records.filter((record) => record.inventory_units != null && (!maxDate || record.inventory_date <= maxDate));
+  const latestInventoryDate = inventoryRecords.map((record) => record.inventory_date).sort().at(-1);
+  if (!latestInventoryDate) return [];
+  return inventoryRecords.filter((record) => record.inventory_date === latestInventoryDate);
+}
+
+function inventoryRecordDate(record: SalesRecord | InventoryRecord) {
+  return "inventory_date" in record ? record.inventory_date : record.transaction_date;
+}
+
+function inventoryByBrand(records: Array<SalesRecord | InventoryRecord>) {
   return groupedRows(records, brandName)
     .map(([brand, group]) => ({
       brand,
@@ -1894,7 +2075,7 @@ function inventoryByBrand(records: SalesRecord[]) {
     .sort((left, right) => right.units - left.units || left.brand.localeCompare(right.brand));
 }
 
-function topInventoryStyles(records: SalesRecord[]) {
+function topInventoryStyles(records: Array<SalesRecord | InventoryRecord>) {
   return groupedRows(records, styleKey)
     .map(([style, group]) => ({
       style,
@@ -2039,6 +2220,36 @@ async function insertSalesRecords(
 ) {
   for (const chunk of chunks(records, 500)) {
     const { error } = await client.from("sales_records").insert(
+      chunk.map((record) => ({
+        ...record,
+        customer_id: customerId,
+        upload_id: uploadId,
+      })),
+    );
+
+    if (error) throw new Error(error.message);
+  }
+}
+
+async function replaceInventoryRecordsForDates(
+  client: SupabaseClient,
+  customerId: string,
+  inventoryDates: string[],
+  records: ParsedInventoryRecord[],
+  uploadId: string,
+) {
+  if (inventoryDates.length) {
+    const { error } = await client
+      .from("inventory_records")
+      .delete()
+      .eq("customer_id", customerId)
+      .in("inventory_date", inventoryDates);
+
+    if (error) throw new Error(error.message);
+  }
+
+  for (const chunk of chunks(records, 500)) {
+    const { error } = await client.from("inventory_records").insert(
       chunk.map((record) => ({
         ...record,
         customer_id: customerId,
