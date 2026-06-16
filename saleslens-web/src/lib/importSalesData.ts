@@ -133,14 +133,16 @@ export async function parseInventoryWorkbook(file: File, customerName: string): 
     raw: false,
   });
 
-  const headerIndex = rows.findIndex((row) => row.some((cell) => normalize(cell).length > 0));
+  const headerIndex = findInventoryHeaderIndex(rows);
   if (headerIndex === -1) throw new Error("No header row found in this inventory file.");
 
+  const reportDate = reportDateFromRows(rows.slice(0, headerIndex + 1));
+  const reportBrand = reportBrandFromRows(rows.slice(0, headerIndex + 1));
   const usableRows = rows.slice(headerIndex);
   const firstRow = usableRows[0];
   if (!firstRow) throw new Error("No header row found in this inventory file.");
 
-  return parseInventoryRows(usableRows, file.name, customerName);
+  return parseInventoryRows(usableRows, file.name, customerName, reportDate, reportBrand);
 }
 
 function parseVolshopRows(rows: unknown[][], fileName: string, customerName: string): ParsedUpload {
@@ -283,7 +285,13 @@ function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
   };
 }
 
-function parseInventoryRows(rows: unknown[][], fileName: string, customerName: string): ParsedInventoryUpload {
+function parseInventoryRows(
+  rows: unknown[][],
+  fileName: string,
+  customerName: string,
+  reportDate: string | null,
+  reportBrand: string | null,
+): ParsedInventoryUpload {
   const firstRow = rows[0];
   if (!firstRow) throw new Error("No header row found in this inventory file.");
   const header = firstRow.map(normalize);
@@ -311,7 +319,7 @@ function parseInventoryRows(rows: unknown[][], fileName: string, customerName: s
     throw new Error("Missing required inventory columns: Product/SKU and On Hand/Quantity.");
   }
 
-  const fallbackDate = reportDateFromFileName(fileName) ?? formatDate(
+  const fallbackDate = reportDate ?? reportDateFromFileName(fileName) ?? formatDate(
     new Date().getFullYear(),
     new Date().getMonth(),
     new Date().getDate(),
@@ -324,6 +332,7 @@ function parseInventoryRows(rows: unknown[][], fileName: string, customerName: s
 
     const rawProduct = valueAt(row, productIndex);
     const inventoryUnits = parseInteger(valueAt(row, inventoryUnitsIndex));
+    if (isTotalRow(rawProduct)) continue;
     if (!rawProduct || inventoryUnits == null) {
       skippedCount += 1;
       continue;
@@ -337,7 +346,7 @@ function parseInventoryRows(rows: unknown[][], fileName: string, customerName: s
     records.push({
       inventory_date: inventoryDate,
       source_file: fileName,
-      product_class: normalizedInventoryBrandClass(valueAt(row, brandIndex), productIdentifier.styleNumber, customerName),
+      product_class: normalizedInventoryBrandClass(valueAt(row, brandIndex) ?? reportBrand, productIdentifier.styleNumber, customerName),
       master_style: clean(valueAt(row, descriptionIndex)),
       color,
       size: clean(valueAt(row, sizeIndex)),
@@ -358,6 +367,18 @@ function parseInventoryRows(rows: unknown[][], fileName: string, customerName: s
   };
 }
 
+function findInventoryHeaderIndex(rows: unknown[][]) {
+  return rows.findIndex((row) => {
+    const header = row.map(normalize);
+    return hasExactHeader(header, ["product", "sku", "item", "itemnumber", "style", "stylenumber"]) &&
+      hasExactHeader(header, ["onhand", "qtyonhand", "quantityonhand", "inventory", "inventoryunits", "invu", "qty", "quantity", "units"]);
+  });
+}
+
+function hasExactHeader(header: string[], candidates: string[]) {
+  return header.some((column) => candidates.includes(column));
+}
+
 function isRebelRagsHeader(header: string[]) {
   return Boolean(
     findColumn(header, ["date"]) != null &&
@@ -367,6 +388,11 @@ function isRebelRagsHeader(header: string[]) {
       findColumn(header, ["quantity", "qty"]) != null &&
       findColumn(header, ["totalprice", "sales", "amount"]) != null,
   );
+}
+
+function isTotalRow(value: string | null) {
+  const normalized = normalize(value);
+  return normalized === "total" || normalized === "grandtotal";
 }
 
 function parseStyleIdentifier(rawValue: string | null) {
@@ -437,6 +463,30 @@ function normalizedInventoryBrandClass(value: string | null, styleNumber: string
   if (REBEL_RAGS_GEAR_STYLE_PREFIXES.some((prefix) => style.startsWith(prefix))) return "Gear";
   if (/rebel\s*rags/i.test(customerName)) return null;
   return normalizedBrandClass(customerName);
+}
+
+function reportDateFromRows(rows: unknown[][]) {
+  for (const row of rows) {
+    for (const cell of row) {
+      const text = String(cell ?? "");
+      const match = text.match(/Report Date:\s*([A-Za-z]+ \d{1,2}, \d{4})/i);
+      const date = dateOnly(match?.[1] ?? null);
+      if (date) return date;
+    }
+  }
+  return null;
+}
+
+function reportBrandFromRows(rows: unknown[][]) {
+  for (const row of rows) {
+    for (const cell of row) {
+      const text = String(cell ?? "");
+      const match = text.match(/BRAND\s*=\s*''?([A-Z0-9 &-]+)''?/i);
+      const brand = normalizedBrandClass(match?.[1] ?? null);
+      if (brand) return brand;
+    }
+  }
+  return null;
 }
 
 function reportDateFromFileName(fileName: string) {

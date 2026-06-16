@@ -882,7 +882,7 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h3>Inventory Snapshot</h3>
-                  <p>Current on-hand inventory from the latest inventory data inside {selectedPeriodTitle}.</p>
+                  <p>Current on-hand inventory from the latest available inventory data.</p>
                 </div>
                 <strong>{dateText(inventorySnapshot.date)}</strong>
               </div>
@@ -1634,6 +1634,7 @@ function topArtRows(
   const ytdGroups = groupBy(ytdRecords, artKey);
   const imageLookup = imageLookupMaps(images);
   const inventoryGroups = groupBy(latestStandaloneInventoryRecords(inventoryRecords), artKey);
+  const inventoryGroupsByArtwork = groupBy(latestStandaloneInventoryRecords(inventoryRecords), inventoryArtworkKey);
   return groupedRows(records, artKey)
     .map(([key, group]) => {
       const first = group[0];
@@ -1641,6 +1642,7 @@ function topArtRows(
       const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
+      const standaloneInventory = inventoryGroups.get(key) ?? inventoryGroupsByArtwork.get(inventoryArtworkKey(first));
       return {
         rank: 0,
         key,
@@ -1654,7 +1656,7 @@ function topArtRows(
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
-        inventoryUnits: inventoryTotalForLatestSnapshot(group, inventoryGroups.get(key)),
+        inventoryUnits: inventoryTotalForLatestSnapshot(group, standaloneInventory),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
@@ -1978,6 +1980,14 @@ function artKey(record: MerchandiseRecord) {
   ].join("|");
 }
 
+function inventoryArtworkKey(record: MerchandiseRecord) {
+  return [
+    compactImagePart(brandName(record)),
+    normalizedStyle(record),
+    compactImagePart(displayArtCode(record)),
+  ].join("|");
+}
+
 function displayArtCode(record: MerchandiseRecord) {
   return clean(record.art_code) || normalizedStyle(record);
 }
@@ -2041,9 +2051,9 @@ function inventoryTotalForLatestSnapshot(records: SalesRecord[], standaloneRecor
 function latestInventoryRecords(
   records: SalesRecord[],
   standaloneInventoryRecords: InventoryRecord[],
-  periodEndMonth: string | null,
+  _periodEndMonth: string | null,
 ) {
-  const standaloneSnapshot = latestStandaloneInventoryRecords(standaloneInventoryRecords, periodEndMonth);
+  const standaloneSnapshot = latestStandaloneInventoryRecords(standaloneInventoryRecords);
   if (standaloneSnapshot.length) return standaloneSnapshot;
   return latestEmbeddedInventoryRecords(records);
 }

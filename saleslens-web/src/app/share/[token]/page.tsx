@@ -193,7 +193,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         {payload.inventorySnapshot ? (
           <ReportSection
             title="Inventory Snapshot"
-            subtitle={`Current on-hand inventory from the latest inventory data inside ${payload.periodTitle}.`}
+            subtitle="Current on-hand inventory from the latest available inventory data."
             aside={dateText(payload.inventorySnapshot.date)}
           >
             <InventoryCard snapshot={payload.inventorySnapshot} />
