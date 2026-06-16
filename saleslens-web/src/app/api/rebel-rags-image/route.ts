@@ -65,6 +65,7 @@ async function matchingImage(item: ImageRequestItem): Promise<ProductImageMatch 
   const color = clean(item.color);
 
   if (!style || !artCode || !color) return null;
+  if (isBlockedProductImageMatch(style, artCode, color)) return null;
 
   const lookup = imageLookup(item);
   const productUrls = lookup.productUrl ? [lookup.productUrl] : await productDetailUrlsForItem(item, lookup.searchArtCode);
@@ -222,6 +223,10 @@ function colorSearchTerms(colorName: string) {
 
 function allowsDefaultImage(item: ImageRequestItem) {
   return normalized(item.color) === "WHITE";
+}
+
+function isBlockedProductImageMatch(style: string, artCode: string, color: string) {
+  return normalized(style) === "CT1000" && normalized(artCode) === "03456518" && normalized(color) === "NAVY";
 }
 
 function imageColorToken(value: string) {

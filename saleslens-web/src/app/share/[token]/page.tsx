@@ -2,7 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import { currencyText, dateText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import {
-  isReportSnapshotPayload,
+  isReportSnapshotBundlePayload,
+  isShareSnapshotPayload,
+  type ReportSnapshotBundlePayload,
   type ReportSnapshotPayload,
   type ReportSnapshotRecord,
   type SnapshotBestDay,
@@ -33,9 +35,84 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
 
   const payload = snapshot.payload;
 
+  if (isReportSnapshotBundlePayload(payload)) {
+    return <SharedReportBundle payload={payload} />;
+  }
+
+  return <SharedAccountReport payload={payload} />;
+}
+
+function SharedReportBundle({ payload }: { payload: ReportSnapshotBundlePayload }) {
   return (
-    <main className={`publicShell ${accountThemeClass(payload.accountName)}`}>
-      <section className="publicReport" id="saleslens-report-capture">
+    <main className="publicShell accountThemeDefault">
+      <section className="publicReport publicBundleReport" id="saleslens-report-capture">
+        <header className="dashboardHeader publicDashboardHeader bundleDashboardHeader">
+          <div>
+            <div className="navBrand publicShareBrand">
+              <h1>SalesLens</h1>
+              <p>by Lester Sales</p>
+            </div>
+            <h1>Account Review</h1>
+            <p className="muted">Toggle between accounts to review the same snapshot fields across the full SalesLens book.</p>
+          </div>
+
+          <aside className="publicHeaderAside">
+            <div className="publicContactCard">
+              <span>Sales Rep: Ryan Lester</span>
+              <span>Phone: (502) 689-7374</span>
+              <span>Email: ryanlestersells@gmail.com</span>
+              <span>Website: www.lestersales.net</span>
+            </div>
+            <div className="publicContextCard">
+              <div>
+                <span>Brand/Class</span>
+                <strong>{payload.brandFilter}</strong>
+              </div>
+              <div>
+                <span>Period</span>
+                <strong>{payload.periodTitle}</strong>
+              </div>
+            </div>
+          </aside>
+        </header>
+
+        <div className="accountReportSwitcher">
+          {payload.reports.map((report, index) => (
+            <input
+              aria-label={`Show ${report.accountName}`}
+              defaultChecked={index === 0}
+              id={`account-report-${index}`}
+              key={`input-${report.accountName}`}
+              name="account-report-switcher"
+              type="radio"
+            />
+          ))}
+          <div className="accountReportTabs" role="tablist" aria-label="Shared account reports">
+            {payload.reports.map((report, index) => (
+              <label htmlFor={`account-report-${index}`} key={report.accountName}>
+                {report.accountName}
+              </label>
+            ))}
+          </div>
+          <div className="accountReportPanels">
+            {payload.reports.map((report) => (
+              <div className={`accountReportPanel ${accountThemeClass(report.accountName)}`} key={report.accountName}>
+                <SharedAccountReport payload={report} embedded />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function SharedAccountReport({ payload, embedded = false }: { payload: ReportSnapshotPayload; embedded?: boolean }) {
+  const Shell = embedded ? "div" : "main";
+
+  return (
+    <Shell className={embedded ? "" : `publicShell ${accountThemeClass(payload.accountName)}`}>
+      <section className={embedded ? "publicAccountReport" : "publicReport"} id={embedded ? undefined : "saleslens-report-capture"}>
         <header className="dashboardHeader publicDashboardHeader">
           <div>
             <div className="navBrand publicShareBrand">
@@ -192,7 +269,7 @@ export default async function SharedReportPage({ params }: { params: Promise<{ t
           </div>
         </ReportSection>
       </section>
-    </main>
+    </Shell>
   );
 }
 
@@ -210,7 +287,7 @@ async function loadSnapshot(token: string): Promise<ReportSnapshotRecord | null>
     expires_at: string | null;
   } | null;
 
-  if (error || !row || !isReportSnapshotPayload(row.payload)) return null;
+  if (error || !row || !isShareSnapshotPayload(row.payload)) return null;
 
   return {
     token: row.token,

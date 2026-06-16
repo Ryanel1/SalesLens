@@ -124,10 +124,25 @@ export type ReportSnapshotPayload = {
   allStyles: SnapshotTopStyle[];
 };
 
+export type ReportSnapshotBundlePayload = {
+  version: 1;
+  reportKind: "account_bundle";
+  generatedAt: string;
+  accountName: string;
+  brandFilter: string;
+  periodMode?: "monthly" | "ytd";
+  selectedMonth: string | null;
+  periodTitle: string;
+  priorPeriodTitle: string;
+  reports: ReportSnapshotPayload[];
+};
+
+export type ShareSnapshotPayload = ReportSnapshotPayload | ReportSnapshotBundlePayload;
+
 export type ReportSnapshotRecord = {
   token: string;
   title: string;
-  payload: ReportSnapshotPayload;
+  payload: ShareSnapshotPayload;
   created_at: string;
   expires_at: string | null;
 };
@@ -141,4 +156,21 @@ export function isReportSnapshotPayload(value: unknown): value is ReportSnapshot
       "accountName" in value &&
       "currentMetrics" in value,
   );
+}
+
+export function isReportSnapshotBundlePayload(value: unknown): value is ReportSnapshotBundlePayload {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      "version" in value &&
+      "reportKind" in value &&
+      (value as { reportKind?: unknown }).reportKind === "account_bundle" &&
+      Array.isArray((value as { reports?: unknown }).reports) &&
+      (value as { reports: unknown[] }).reports.every(isReportSnapshotPayload),
+  );
+}
+
+export function isShareSnapshotPayload(value: unknown): value is ShareSnapshotPayload {
+  return isReportSnapshotPayload(value) || isReportSnapshotBundlePayload(value);
 }

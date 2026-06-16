@@ -5,7 +5,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { parseSalesWorkbook, type ParsedSalesRecord } from "@/lib/importSalesData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
-import type { ReportSnapshotPayload } from "@/lib/reportSnapshot";
+import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
 
 type SalesRecord = {
@@ -136,6 +136,8 @@ export default function Home() {
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], images: [] });
   const [dashboardStatus, setDashboardStatus] = useState("");
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareScope, setShareScope] = useState<"selected" | "all">("selected");
   const [shareStatus, setShareStatus] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [importStatus, setImportStatus] = useState("");
@@ -393,51 +395,63 @@ export default function Home() {
     setStatus("");
   }
 
-  async function createShareLink() {
-    if (!supabase || !selectedCustomer || !user) return;
+  async function createShareLink(scope: "selected" | "all" = shareScope) {
+    if (!supabase || !selectedCustomer || !user || !period) return;
+    const client = supabase;
 
-    setShareStatus("Generating share link...");
+    setShareStatus(scope === "all" ? "Generating all-account share link..." : "Generating share link...");
     setShareUrl("");
 
     const token = createReportToken();
-    const title = `${selectedCustomer.name} ${selectedPeriodTitle} Sales Snapshot`;
-    const payload: ReportSnapshotPayload = {
-      version: 1,
-      generatedAt: new Date().toISOString(),
+    const generatedAt = new Date().toISOString();
+    let title = `${selectedCustomer.name} ${selectedPeriodTitle} Sales Snapshot`;
+    let payload: ReportSnapshotPayload | ReportSnapshotBundlePayload = buildReportPayload({
       accountName: selectedCustomer.name,
       brandFilter,
-      periodMode: selectedPeriodKind === "month" ? "monthly" : "ytd",
-      selectedMonth: periodEndMonth,
-      periodTitle: selectedPeriodTitle,
-      priorPeriodTitle,
-      previousMonthTitle: priorPeriodTitle,
-      lastUploaded,
-      currentMetrics,
-      priorMetrics,
-      ytdLine,
-      ytdInsights,
-      monthlyDrivers,
-      inventorySnapshot,
-      salesMix,
-      bestDay: {
-        date: bestDay.date,
-        sales: bestDay.sales,
-        units: bestDay.units,
-        transactions: bestDay.transactions,
-        dayCount: bestDay.dayCount,
-        items: bestDay.items,
-      },
-      topStyles: ytdStyleStudy,
-      styleStudyMonthly: periodStyleStudy,
-      styleStudyYtd: ytdStyleStudy,
-      topArt,
-      allStyles,
-    };
+      generatedAt,
+      images: dashboardData.images,
+      period,
+      records: dashboardData.records,
+    });
 
-    const { error } = await supabase.from("report_snapshots").insert({
+    if (scope === "all" && customers.length > 1) {
+      const reports = await Promise.all(
+        customers.map(async (customer) => {
+          if (customer.id === selectedCustomer.id) return payload as ReportSnapshotPayload;
+          const [recordsResult, imagesResult] = await Promise.all([
+            fetchAllRecords(client, customer.id),
+            fetchProductImages(client, customer.id),
+          ]);
+          return buildReportPayload({
+            accountName: customer.name,
+            brandFilter,
+            generatedAt,
+            images: imagesResult.images,
+            period,
+            records: recordsResult.records,
+          });
+        }),
+      );
+
+      title = `All Accounts ${selectedPeriodTitle} Sales Snapshot`;
+      payload = {
+        version: 1,
+        reportKind: "account_bundle",
+        generatedAt,
+        accountName: "All Accounts",
+        brandFilter,
+        periodMode: selectedPeriodKind === "month" ? "monthly" : "ytd",
+        selectedMonth: periodEndMonth,
+        periodTitle: selectedPeriodTitle,
+        priorPeriodTitle,
+        reports,
+      };
+    }
+
+    const { error } = await client.from("report_snapshots").insert({
       token,
       title,
-      customer_id: selectedCustomer.id,
+      customer_id: scope === "all" ? null : selectedCustomer.id,
       created_by: user.id,
       payload,
     });
@@ -601,19 +615,29 @@ export default function Home() {
                 </select>
               </label>
 
-              <button className="shareButton" onClick={createShareLink} disabled={!periodRecords.length}>
+              <button
+                className="shareButton"
+                onClick={() => {
+                  setShareModalOpen(true);
+                  setShareScope("selected");
+                  setShareStatus("");
+                  setShareUrl("");
+                }}
+                disabled={!periodRecords.length}
+              >
                 Share Report
               </button>
             </div>
           </header>
 
-          {(shareStatus || shareUrl) ? (
+          {shareModalOpen ? (
             <div className="modalOverlay" role="presentation">
               <section className="shareModal" role="dialog" aria-modal="true" aria-labelledby="share-report-title">
                 <button
                   aria-label="Close share report"
                   className="modalCloseButton"
                   onClick={() => {
+                    setShareModalOpen(false);
                     setShareStatus("");
                     setShareUrl("");
                   }}
@@ -621,8 +645,34 @@ export default function Home() {
                   X
                 </button>
                 <p className="eyebrow">Share Snapshot</p>
-                <h3 id="share-report-title">Report link</h3>
-                <p>{shareStatus}</p>
+                <h3 id="share-report-title">Create report link</h3>
+                <p>Choose exactly who this share link should show.</p>
+
+                <div className="shareScopeGrid" role="radiogroup" aria-label="Share report scope">
+                  <button
+                    className={shareScope === "selected" ? "active" : ""}
+                    onClick={() => setShareScope("selected")}
+                    type="button"
+                  >
+                    <strong>{selectedCustomer?.name ?? "Selected Account"}</strong>
+                    <span>Single-account link for customers or account-specific follow-up.</span>
+                  </button>
+                  <button
+                    className={shareScope === "all" ? "active" : ""}
+                    disabled={customers.length < 2}
+                    onClick={() => setShareScope("all")}
+                    type="button"
+                  >
+                    <strong>All Accounts</strong>
+                    <span>{customers.map((customer) => customer.name).join(" + ")}</span>
+                  </button>
+                </div>
+
+                <button className="shareGenerateButton" onClick={() => createShareLink(shareScope)} disabled={shareStatus.includes("Generating")}>
+                  Generate {shareScope === "all" ? "All-Account" : "Single-Account"} Link
+                </button>
+
+                {shareStatus ? <p className="shareStatus">{shareStatus}</p> : null}
                 {shareUrl ? (
                   <div className="shareLinkBox">
                     <a href={shareUrl} target="_blank" rel="noreferrer">{shareUrl}</a>
@@ -1260,6 +1310,69 @@ async function fetchProductImages(client: SupabaseClient, customerId: string) {
   };
 }
 
+function buildReportPayload({
+  accountName,
+  brandFilter,
+  generatedAt,
+  images,
+  period,
+  records,
+}: {
+  accountName: string;
+  brandFilter: string;
+  generatedAt: string;
+  images: ProductImage[];
+  period: PeriodSelection;
+  records: SalesRecord[];
+}): ReportSnapshotPayload {
+  const filteredRecords = records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
+  const periodEndMonth = period.kind === "month" ? period.value : latestMonthForYear(filteredRecords, period.year);
+  const priorYearMonth = periodEndMonth ? `${period.year - 1}${periodEndMonth.slice(4)}` : null;
+  const periodRecords = recordsForSelectedPeriod(filteredRecords, period);
+  const priorPeriodRecords = recordsForPriorPeriod(filteredRecords, period);
+  const ytdCurrentRecords = currentYearRecords(filteredRecords, periodEndMonth);
+  const ytdPriorRecords = priorYearMonth ? currentYearRecords(filteredRecords, priorYearMonth) : [];
+  const currentMetrics = metricSet(periodRecords);
+  const priorMetrics = metricSet(priorPeriodRecords);
+  const selectedPeriodTitle = periodTitle(period, periodEndMonth);
+  const priorPeriodTitle = priorTitle(period, periodEndMonth);
+  const bestDay = bestSalesDay(periodRecords);
+  const ytdStyleStudy = topStyleRows(ytdCurrentRecords, ytdPriorRecords);
+
+  return {
+    version: 1,
+    generatedAt,
+    accountName,
+    brandFilter,
+    periodMode: period.kind === "month" ? "monthly" : "ytd",
+    selectedMonth: periodEndMonth,
+    periodTitle: selectedPeriodTitle,
+    priorPeriodTitle,
+    previousMonthTitle: priorPeriodTitle,
+    lastUploaded: latestDate(filteredRecords),
+    currentMetrics,
+    priorMetrics,
+    ytdLine: ytdPoints(filteredRecords, periodEndMonth),
+    ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
+    monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
+    inventorySnapshot: inventorySnapshotForRecords(periodRecords),
+    salesMix: salesMixSlices(periodRecords),
+    bestDay: {
+      date: bestDay.date,
+      sales: bestDay.sales,
+      units: bestDay.units,
+      transactions: bestDay.transactions,
+      dayCount: bestDay.dayCount,
+      items: bestDay.items,
+    },
+    topStyles: ytdStyleStudy,
+    styleStudyMonthly: topStyleRows(periodRecords, priorPeriodRecords),
+    styleStudyYtd: ytdStyleStudy,
+    topArt: topArtRows(periodRecords, ytdCurrentRecords, images),
+    allStyles: allStyleRows(periodRecords).slice(0, 100),
+  };
+}
+
 function availableMonths(records: SalesRecord[]) {
   return [...new Set(records.map((record) => monthKey(record.transaction_date)).filter((month): month is string => Boolean(month)))]
     .sort()
@@ -1417,6 +1530,7 @@ function findProductImageUrl(
   artCode: string,
   color: string,
 ) {
+  if (isBlockedProductImageMatch(style, artCode, color)) return null;
   const exact = lookup.exact.get(imageKey(style, artCode, color));
   if (!exact) return null;
   return cachedImageUrlAllowedForColor(exact, color) ? exact : null;
@@ -1445,6 +1559,11 @@ function mergeProductImages(images: ProductImage[], matches: RebelRagsImageMatch
 
 function isRebelRagsCustomer(name: string | null | undefined) {
   return (name ?? "").toLowerCase().includes("rebel");
+}
+
+function isBlockedProductImageMatch(style: string, artCode: string, color: string) {
+  const key = imageKey(style, artCode, color);
+  return key === imageKey("CT1000", "03456518", "Navy");
 }
 
 function cachedImageUrlAllowedForColor(value: string, color: string) {

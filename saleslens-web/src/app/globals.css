@@ -523,6 +523,64 @@ select {
   color: var(--taupe);
 }
 
+.shareScopeGrid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 1.4rem 0;
+}
+
+.shareScopeGrid button {
+  background: rgba(255, 253, 248, 0.72);
+  border: var(--hairline);
+  color: var(--charcoal);
+  cursor: pointer;
+  display: grid;
+  gap: 0.45rem;
+  min-height: 126px;
+  padding: 1rem;
+  text-align: left;
+}
+
+.shareScopeGrid button.active {
+  border-color: var(--steel);
+  box-shadow: inset 4px 0 0 var(--steel);
+}
+
+.shareScopeGrid button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.shareScopeGrid strong {
+  color: var(--soft-black);
+  font-size: 1.1rem;
+  line-height: 1.1;
+}
+
+.shareScopeGrid span,
+.shareStatus {
+  color: var(--taupe);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.shareGenerateButton {
+  background: var(--charcoal);
+  border: 1px solid var(--charcoal);
+  color: #fffdfa;
+  font-size: 0.86rem;
+  font-weight: 900;
+  min-height: 3rem;
+  text-transform: uppercase;
+  width: 100%;
+}
+
+.shareGenerateButton:disabled {
+  opacity: 0.55;
+}
+
 .modalCloseButton {
   align-items: center;
   background: transparent;
@@ -1615,6 +1673,68 @@ tbody tr:nth-child(even) {
   margin: 16vh auto 0;
   max-width: 640px;
   padding: 2.5rem;
+}
+
+.publicBundleReport {
+  padding-top: clamp(1.25rem, 3vw, 3rem);
+}
+
+.bundleDashboardHeader {
+  margin-bottom: 0;
+}
+
+.accountReportSwitcher > input {
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.accountReportTabs {
+  border: var(--hairline);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 1.25rem 0 0;
+}
+
+.accountReportTabs label {
+  background: rgba(255, 253, 248, 0.78);
+  color: var(--taupe);
+  cursor: pointer;
+  font-size: clamp(1.2rem, 2vw, 2rem);
+  font-weight: 950;
+  line-height: 1;
+  padding: 1.2rem 1.4rem;
+  text-align: center;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.accountReportTabs label + label {
+  border-left: var(--hairline);
+}
+
+.accountReportPanel {
+  display: none;
+}
+
+.publicAccountReport {
+  min-width: 0;
+}
+
+#account-report-0:checked ~ .accountReportTabs label:nth-child(1),
+#account-report-1:checked ~ .accountReportTabs label:nth-child(2),
+#account-report-2:checked ~ .accountReportTabs label:nth-child(3),
+#account-report-3:checked ~ .accountReportTabs label:nth-child(4) {
+  background: var(--steel);
+  color: #fffdfa;
+}
+
+#account-report-0:checked ~ .accountReportPanels .accountReportPanel:nth-child(1),
+#account-report-1:checked ~ .accountReportPanels .accountReportPanel:nth-child(2),
+#account-report-2:checked ~ .accountReportPanels .accountReportPanel:nth-child(3),
+#account-report-3:checked ~ .accountReportPanels .accountReportPanel:nth-child(4) {
+  display: block;
 }
 
 @media (max-width: 1180px) {
