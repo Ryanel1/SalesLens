@@ -95,6 +95,7 @@ type TopArt = MetricSet & {
   cySales: number;
   cyUnits: number;
   inventoryUnits: number | null;
+  inventoryScope: "color" | "styleArt" | null;
   imageUrl: string | null;
 };
 
@@ -941,7 +942,7 @@ export default function Home() {
                       <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
                     ) : null}
                     {row.inventoryUnits != null ? (
-                      <span>Current Inv: {numberText(row.inventoryUnits)}</span>
+                      <span>{inventoryLabel(row)}</span>
                     ) : null}
                   </div>
                 </article>
@@ -1633,8 +1634,9 @@ function topArtRows(
 ): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
   const imageLookup = imageLookupMaps(images);
-  const inventoryGroups = groupBy(latestStandaloneInventoryRecords(inventoryRecords), artKey);
-  const inventoryGroupsByArtwork = groupBy(latestStandaloneInventoryRecords(inventoryRecords), inventoryArtworkKey);
+  const latestInventory = latestStandaloneInventoryRecords(inventoryRecords);
+  const inventoryGroups = groupBy(latestInventory, artKey);
+  const inventoryGroupsByArtwork = groupBy(latestInventory, inventoryArtworkKey);
   return groupedRows(records, artKey)
     .map(([key, group]) => {
       const first = group[0];
@@ -1642,7 +1644,9 @@ function topArtRows(
       const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
-      const standaloneInventory = inventoryGroups.get(key) ?? inventoryGroupsByArtwork.get(inventoryArtworkKey(first));
+      const exactStandaloneInventory = inventoryGroups.get(key);
+      const artworkStandaloneInventory = exactStandaloneInventory ? undefined : inventoryGroupsByArtwork.get(inventoryArtworkKey(first));
+      const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory, artworkStandaloneInventory);
       return {
         rank: 0,
         key,
@@ -1656,7 +1660,8 @@ function topArtRows(
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
-        inventoryUnits: inventoryTotalForLatestSnapshot(group, standaloneInventory),
+        inventoryUnits: inventoryResult.units,
+        inventoryScope: inventoryResult.scope,
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
@@ -1668,6 +1673,12 @@ function topArtRows(
 function storagePublicUrl(client: SupabaseClient, storagePath: string | null) {
   if (!storagePath) return null;
   return client.storage.from("product-images").getPublicUrl(storagePath).data.publicUrl;
+}
+
+function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {
+  if (row.inventoryUnits == null) return "";
+  if (row.inventoryScope === "styleArt") return `Style/Art Inv: ${numberText(row.inventoryUnits)} total`;
+  return `Current Inv: ${numberText(row.inventoryUnits)}`;
 }
 
 function imageLookupMaps(images: ProductImage[]) {
@@ -2045,10 +2056,34 @@ function inventorySnapshotForRecords(
   };
 }
 
-function inventoryTotalForLatestSnapshot(records: SalesRecord[], standaloneRecords: InventoryRecord[] | undefined = undefined) {
-  if (standaloneRecords?.length) return sum(standaloneRecords.map((record) => record.inventory_units ?? 0));
+function inventoryTotalForTopArt(
+  records: SalesRecord[],
+  exactStandaloneRecords: InventoryRecord[] | undefined,
+  artworkStandaloneRecords: InventoryRecord[] | undefined,
+) {
+  if (exactStandaloneRecords?.length) {
+    return {
+      units: sum(exactStandaloneRecords.map((record) => record.inventory_units ?? 0)),
+      scope: "color" as const,
+    };
+  }
+
+  if (artworkStandaloneRecords?.length) {
+    return {
+      units: sum(artworkStandaloneRecords.map((record) => record.inventory_units ?? 0)),
+      scope: "styleArt" as const,
+    };
+  }
+
   const snapshotRecords = latestEmbeddedInventoryRecords(records);
-  return snapshotRecords.length ? sum(snapshotRecords.map((record) => record.inventory_units ?? 0)) : null;
+  if (snapshotRecords.length) {
+    return {
+      units: sum(snapshotRecords.map((record) => record.inventory_units ?? 0)),
+      scope: "color" as const,
+    };
+  }
+
+  return { units: null, scope: null };
 }
 
 function latestInventoryRecords(

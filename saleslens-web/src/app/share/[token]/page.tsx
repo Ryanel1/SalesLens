@@ -11,6 +11,7 @@ import {
   type SnapshotInventory,
   type SnapshotMetricSet,
   type SnapshotMonthlyDrivers,
+  type SnapshotTopArt,
   type SnapshotYtdInsights,
 } from "@/lib/reportSnapshot";
 import { StyleStudyTabs } from "./StyleStudyTabs";
@@ -230,7 +231,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                     <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
                   ) : null}
                   {row.inventoryUnits != null ? (
-                    <span>Current Inv: {numberText(row.inventoryUnits)}</span>
+                    <span>{inventoryLabel(row)}</span>
                   ) : null}
                 </div>
               </article>
@@ -483,6 +484,12 @@ function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay;
       ))}
     </article>
   );
+}
+
+function inventoryLabel(row: Pick<SnapshotTopArt, "inventoryScope" | "inventoryUnits">) {
+  if (row.inventoryUnits == null) return "";
+  if (row.inventoryScope === "styleArt") return `Style/Art Inv: ${numberText(row.inventoryUnits)} total`;
+  return `Current Inv: ${numberText(row.inventoryUnits)}`;
 }
 
 function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
