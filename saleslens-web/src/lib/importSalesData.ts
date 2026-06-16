@@ -295,7 +295,7 @@ function parseInventoryRows(
   const firstRow = rows[0];
   if (!firstRow) throw new Error("No header row found in this inventory file.");
   const header = firstRow.map(normalize);
-  const dateIndex = findColumn(header, ["date", "inventorydate", "asofdate"]);
+  const dateIndex = findExactColumn(header, ["date", "inventorydate", "asofdate"]);
   const descriptionIndex = findColumn(header, ["descr", "description", "itemdescription", "productdescription"]);
   const brandIndex = findColumn(header, ["brand", "class", "productclass"]);
   const productIndex = findColumn(header, ["product", "sku", "item", "itemnumber", "style", "stylenumber"]);
@@ -561,6 +561,11 @@ function findColumn(header: string[], candidates: string[]) {
   if (exact !== -1) return exact;
   const partial = header.findIndex((column) => candidates.some((candidate) => column.includes(candidate)));
   return partial === -1 ? null : partial;
+}
+
+function findExactColumn(header: string[], candidates: string[]) {
+  const exact = header.findIndex((column) => candidates.includes(column));
+  return exact === -1 ? null : exact;
 }
 
 function valueAt(row: unknown[], index: number | null) {

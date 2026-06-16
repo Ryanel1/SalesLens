@@ -2276,13 +2276,20 @@ async function replaceInventoryRecordsForDates(
   records: ParsedInventoryRecord[],
   uploadId: string,
 ) {
-  if (inventoryDates.length) {
-    const { error } = await client
+  const productClasses = [...new Set(records.map((record) => clean(record.product_class)).filter(Boolean))];
+  if (productClasses.length || inventoryDates.length) {
+    let deleteQuery = client
       .from("inventory_records")
       .delete()
-      .eq("customer_id", customerId)
-      .in("inventory_date", inventoryDates);
+      .eq("customer_id", customerId);
 
+    if (productClasses.length) {
+      deleteQuery = deleteQuery.in("product_class", productClasses);
+    } else {
+      deleteQuery = deleteQuery.in("inventory_date", inventoryDates);
+    }
+
+    const { error } = await deleteQuery;
     if (error) throw new Error(error.message);
   }
 
