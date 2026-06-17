@@ -184,7 +184,11 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
   const records: ParsedSalesRecord[] = [];
 
   for (const row of rows.slice(1)) {
-    if (row.some((cell) => normalize(cell) === "total")) continue;
+    if (isTotalRow(valueAt(row, classIndex)) ||
+      isTotalRow(valueAt(row, masterStyleIndex)) ||
+      isTotalRow(valueAt(row, styleColorIndex))) {
+      continue;
+    }
 
     const amount = parseNumber(valueAt(row, mtdAmountIndex));
     if (amount == null) {
@@ -412,7 +416,7 @@ function isRebelRagsHeader(header: string[]) {
 
 function isTotalRow(value: string | null) {
   const normalized = normalize(value);
-  return normalized === "total" || normalized === "grandtotal";
+  return normalized === "total" || normalized === "overalltotal" || normalized === "grandtotal";
 }
 
 function parseStyleIdentifier(rawValue: string | null) {
