@@ -517,6 +517,7 @@ export default function Home() {
   async function createShareLink(customerIds = selectedShareCustomerIds) {
     if (!supabase || !selectedCustomer || !user || !period || !customerIds.length) return;
     const client = supabase;
+    const activeCustomer = selectedCustomer;
     const shareCustomers = customers.filter((customer) => customerIds.includes(customer.id));
     if (!shareCustomers.length) return;
     const primaryCustomer = shareCustomers[0];
@@ -530,7 +531,7 @@ export default function Home() {
     const generatedAt = new Date().toISOString();
 
     async function reportForCustomer(customer: Customer) {
-      if (customer.id === selectedCustomer.id) {
+      if (customer.id === activeCustomer.id) {
         return buildReportPayload({
           accountName: customer.name,
           brandFilter,
@@ -1324,7 +1325,7 @@ function YtdInsightCard({ label, value, detail, tone }: { label: string; value: 
 function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsightMetrics> }) {
   return (
     <article className="ytdInsightCard productBreadthCard">
-      <p>Product Breadth</p>
+      <p>Styles / Colors / Artworks</p>
       <div>
         <span>
           <strong>{numberText(insights.stylesSold)}</strong>

@@ -360,7 +360,7 @@ function YtdInsightCard({ label, value, detail, tone }: { label: string; value: 
 function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
   return (
     <article className="ytdInsightCard productBreadthCard">
-      <p>Product Breadth</p>
+      <p>Styles / Colors / Artworks</p>
       <div>
         <span>
           <strong>{numberText(insights.stylesSold)}</strong>
