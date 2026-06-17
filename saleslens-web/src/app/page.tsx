@@ -147,7 +147,17 @@ const KNOWN_STYLE_PREFIXES = [
   "CS3055",
   "CS2070",
   "CS2071",
+  "CS2083",
+  "CP2028",
+  "CP2071",
   "CP2081",
+  "C6039",
+  "C6047",
+  "C6048",
+  "C6054",
+  "C7006",
+  "C81001",
+  "C81003",
   "CT1081",
   "CT1730",
   "GDH1000",
@@ -156,6 +166,10 @@ const KNOWN_STYLE_PREFIXES = [
   "GDH400",
   "G1092",
   "G1093",
+  "G715",
+  "G7391",
+  "P940",
+  "S760",
 ];
 
 export default function Home() {
@@ -2057,10 +2071,11 @@ function monthlyDriverMetrics(currentRecords: SalesRecord[], priorRecords: Sales
 }
 
 function breadthMetrics(records: SalesRecord[]) {
+  const soldRecords = records.filter((record) => (record.units ?? 0) !== 0 || amountValue(record) !== 0);
   return {
-    styles: uniqueCount(records.map(normalizedStyle)),
-    colors: uniqueCount(records.map(colorName)),
-    artworks: uniqueCount(records.map((record) => clean(record.art_code))),
+    styles: uniqueCount(soldRecords.map(normalizedStyle)),
+    colors: uniqueCount(soldRecords.map(colorName)),
+    artworks: uniqueCount(soldRecords.map((record) => clean(record.art_code))),
   };
 }
 
@@ -2097,9 +2112,11 @@ function audienceName(record: MerchandiseRecord) {
 function normalizedStyle(record: MerchandiseRecord) {
   const raw = clean(record.style_number) || clean(record.raw_style_identifier) || "-";
   const upper = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const knownPrefix = KNOWN_STYLE_PREFIXES.find((prefix) => upper.startsWith(prefix));
+  const knownPrefix = [...KNOWN_STYLE_PREFIXES]
+    .sort((left, right) => right.length - left.length)
+    .find((prefix) => upper.startsWith(prefix));
   if (knownPrefix) return knownPrefix;
-  return raw.toUpperCase().replace(/[-\s]+$/g, "") || "-";
+  return raw.toUpperCase().replace(/[^A-Z0-9]+$/g, "") || "-";
 }
 
 function styleKey(record: MerchandiseRecord) {

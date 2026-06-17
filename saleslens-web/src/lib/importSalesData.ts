@@ -64,6 +64,38 @@ const COLOR_NAMES_BY_CODE: Record<string, string> = {
 };
 
 const REBEL_RAGS_GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
+const KNOWN_STYLE_PREFIXES = [
+  "CS1220",
+  "CT1000",
+  "CS3050",
+  "CS3051",
+  "CS3055",
+  "CS2070",
+  "CS2071",
+  "CS2083",
+  "CP2028",
+  "CP2071",
+  "CP2081",
+  "C6039",
+  "C6047",
+  "C6048",
+  "C6054",
+  "C7006",
+  "C81001",
+  "C81003",
+  "CT1081",
+  "CT1730",
+  "GDH1000",
+  "GDH100",
+  "GDH135",
+  "GDH400",
+  "G1092",
+  "G1093",
+  "G715",
+  "G7391",
+  "P940",
+  "S760",
+];
 
 const MONTHS: Record<string, number> = {
   jan: 0,
@@ -425,9 +457,13 @@ function parseStyleIdentifier(rawValue: string | null) {
 
   const artMatch = cleaned.match(/(APC|APO|AEC|AE|AP)[A-Z0-9]+$/);
   const artCode = artMatch?.[0] ?? null;
-  const prefix = artMatch ? cleaned.slice(0, artMatch.index ?? 0) : cleaned;
+  const prefix = (artMatch ? cleaned.slice(0, artMatch.index ?? 0) : cleaned).replace(/[^A-Z0-9]+$/g, "");
+  const compactPrefix = prefix.replace(/[^A-Z0-9]/g, "");
+  const knownStyle = [...KNOWN_STYLE_PREFIXES]
+    .sort((left, right) => right.length - left.length)
+    .find((style) => compactPrefix.startsWith(style));
   const colorCode = splitColorCode(prefix);
-  const styleNumber = colorCode ? prefix.slice(0, -colorCode.length).replace(/[-\s]+$/g, "") : prefix.replace(/[-\s]+$/g, "");
+  const styleNumber = knownStyle ?? (colorCode ? prefix.slice(0, -colorCode.length).replace(/[-\s]+$/g, "") : prefix.replace(/[-\s]+$/g, ""));
 
   return {
     styleNumber: styleNumber || null,
