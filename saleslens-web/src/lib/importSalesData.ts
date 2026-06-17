@@ -175,6 +175,7 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
   const receivedDateFromFileName = reportDateFromFileName(fileName);
   const receivedDate = receivedDateFromFileName ?? fileDate;
   const salesDate = salesPeriodDateFromFileName(fileName, receivedDateFromFileName) ?? monthStart(fileDate);
+  const salesEndDate = salesPeriodEndDateFromFileName(fileName) ?? salesDate;
   if (!salesDate) {
     throw new Error("Could not determine the sales month from the file name or file date.");
   }
@@ -226,7 +227,7 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
     records,
     skippedCount,
     salesPeriodStart: salesDate,
-    salesPeriodEnd: salesDate,
+    salesPeriodEnd: salesEndDate,
     receivedDate,
   };
 }
@@ -521,6 +522,7 @@ function reportBrandFromRows(rows: unknown[][]) {
 
 function reportDateFromFileName(fileName: string) {
   const parsed = monthDateFromText(fileName);
+  if (parsed?.isRange) return null;
   return parsed ? formatDate(parsed.year, parsed.month, parsed.day ?? 1) : null;
 }
 
@@ -528,7 +530,7 @@ function salesPeriodDateFromFileName(fileName: string, receivedDate: string | nu
   const parsed = monthDateFromText(fileName);
   if (parsed) {
     const date = new Date(Date.UTC(parsed.year, parsed.month, parsed.day ?? 1));
-    if ((parsed.day ?? 1) === 1) {
+    if (!parsed.isRange && (parsed.day ?? 1) === 1) {
       date.setUTCMonth(date.getUTCMonth() - 1);
     }
     return formatDate(date.getUTCFullYear(), date.getUTCMonth(), 1);
@@ -540,9 +542,28 @@ function salesPeriodDateFromFileName(fileName: string, receivedDate: string | nu
   return formatDate(date.getUTCFullYear(), date.getUTCMonth(), 1);
 }
 
+function salesPeriodEndDateFromFileName(fileName: string) {
+  const parsed = monthDateFromText(fileName);
+  if (!parsed?.isRange || !parsed.endDay) return null;
+  return formatDate(parsed.year, parsed.month, parsed.endDay);
+}
+
 function monthDateFromText(value: string) {
   const lower = value.toLowerCase();
   for (const [name, month] of Object.entries(MONTHS)) {
+    const rangeMatch = lower.match(new RegExp(`\\b${name}\\b\\D*(\\d{1,2})\\s*(?:-|–|—|to|through|thru)\\s*(\\d{1,2})\\D*(\\d{2,4})`));
+    if (rangeMatch) {
+      const year = normalizeYear(rangeMatch[3]);
+      if (!year) continue;
+      return {
+        month,
+        day: Number(rangeMatch[1]),
+        endDay: Number(rangeMatch[2]),
+        year,
+        isRange: true,
+      };
+    }
+
     const match = lower.match(new RegExp(`\\b${name}\\b\\D*(\\d{1,2})?\\D*(\\d{2,4})`));
     if (!match) continue;
     const year = normalizeYear(match[2]);
@@ -551,6 +572,7 @@ function monthDateFromText(value: string) {
       month,
       day: match[1] ? Number(match[1]) : null,
       year,
+      isRange: false,
     };
   }
   return null;
