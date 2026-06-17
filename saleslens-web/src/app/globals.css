@@ -1962,7 +1962,9 @@ tbody tr:nth-child(even) {
 }
 
 .bundleDashboardHeader {
+  grid-template-rows: auto auto;
   margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .accountReportSwitcher > input {
@@ -1975,9 +1977,13 @@ tbody tr:nth-child(even) {
 
 .accountReportTabs {
   border: var(--hairline);
+  border-bottom: 0;
+  border-left: 0;
+  border-right: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  margin: 1.25rem 0 0;
+  grid-column: 1 / -1;
+  margin: clamp(1rem, 2vw, 1.5rem) calc(clamp(1.5rem, 4vw, 3.25rem) * -1) 0;
 }
 
 .accountReportTabs label {
@@ -2004,10 +2010,10 @@ tbody tr:nth-child(even) {
   min-width: 0;
 }
 
-#account-report-0:checked ~ .accountReportTabs label:nth-child(1),
-#account-report-1:checked ~ .accountReportTabs label:nth-child(2),
-#account-report-2:checked ~ .accountReportTabs label:nth-child(3),
-#account-report-3:checked ~ .accountReportTabs label:nth-child(4) {
+#account-report-0:checked ~ .bundleDashboardHeader .accountReportTabs label:nth-child(1),
+#account-report-1:checked ~ .bundleDashboardHeader .accountReportTabs label:nth-child(2),
+#account-report-2:checked ~ .bundleDashboardHeader .accountReportTabs label:nth-child(3),
+#account-report-3:checked ~ .bundleDashboardHeader .accountReportTabs label:nth-child(4) {
   background: var(--steel);
   color: #fffdfa;
 }

@@ -48,36 +48,6 @@ function SharedReportBundle({ payload }: { payload: ReportSnapshotBundlePayload 
   return (
     <main className="publicShell accountThemeDefault">
       <section className="publicReport publicBundleReport" id="saleslens-report-capture">
-        <header className="dashboardHeader publicDashboardHeader bundleDashboardHeader">
-          <div>
-            <div className="navBrand publicShareBrand">
-              <h1>SalesLens</h1>
-              <p>by Lester Sales</p>
-            </div>
-            <h1>Account Review</h1>
-            <p className="muted">Toggle between accounts to review the same snapshot fields across the full SalesLens book.</p>
-          </div>
-
-          <aside className="publicHeaderAside">
-            <div className="publicContactCard">
-              <span>Sales Rep: Ryan Lester</span>
-              <span>Phone: (502) 689-7374</span>
-              <span>Email: ryanlestersells@gmail.com</span>
-              <span>Website: www.lestersales.net</span>
-            </div>
-            <div className="publicContextCard">
-              <div>
-                <span>Brand/Class</span>
-                <strong>{payload.brandFilter}</strong>
-              </div>
-              <div>
-                <span>Period</span>
-                <strong>{payload.periodTitle}</strong>
-              </div>
-            </div>
-          </aside>
-        </header>
-
         <div className="accountReportSwitcher">
           {payload.reports.map((report, index) => (
             <input
@@ -89,13 +59,43 @@ function SharedReportBundle({ payload }: { payload: ReportSnapshotBundlePayload 
               type="radio"
             />
           ))}
-          <div className="accountReportTabs" role="tablist" aria-label="Shared account reports">
-            {payload.reports.map((report, index) => (
-              <label htmlFor={`account-report-${index}`} key={report.accountName}>
-                {report.accountName}
-              </label>
-            ))}
-          </div>
+          <header className="dashboardHeader publicDashboardHeader bundleDashboardHeader">
+            <div>
+              <div className="navBrand publicShareBrand">
+                <h1>SalesLens</h1>
+                <p>by Lester Sales</p>
+              </div>
+              <h1>Account Review</h1>
+              <p className="muted">Toggle between accounts to review the same snapshot fields across the full SalesLens book.</p>
+            </div>
+
+            <aside className="publicHeaderAside">
+              <div className="publicContactCard">
+                <span>Sales Rep: Ryan Lester</span>
+                <span>Phone: (502) 689-7374</span>
+                <span>Email: ryanlestersells@gmail.com</span>
+                <span>Website: www.lestersales.net</span>
+              </div>
+              <div className="publicContextCard">
+                <div>
+                  <span>Brand/Class</span>
+                  <strong>{payload.brandFilter}</strong>
+                </div>
+                <div>
+                  <span>Period</span>
+                  <strong>{payload.periodTitle}</strong>
+                </div>
+              </div>
+            </aside>
+
+            <div className="accountReportTabs" role="tablist" aria-label="Shared account reports">
+              {payload.reports.map((report, index) => (
+                <label htmlFor={`account-report-${index}`} key={report.accountName}>
+                  {report.accountName}
+                </label>
+              ))}
+            </div>
+          </header>
           <div className="accountReportPanels">
             {payload.reports.map((report) => (
               <div className={`accountReportPanel ${accountThemeClass(report.accountName)}`} key={report.accountName}>
@@ -115,35 +115,37 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
   return (
     <Shell className={embedded ? "" : `publicShell ${accountThemeClass(payload.accountName)}`}>
       <section className={embedded ? "publicAccountReport" : "publicReport"} id={embedded ? undefined : "saleslens-report-capture"}>
-        <header className="dashboardHeader publicDashboardHeader">
-          <div>
-            <div className="navBrand publicShareBrand">
-              <h1>SalesLens</h1>
-              <p>by Lester Sales</p>
+        {!embedded ? (
+          <header className="dashboardHeader publicDashboardHeader">
+            <div>
+              <div className="navBrand publicShareBrand">
+                <h1>SalesLens</h1>
+                <p>by Lester Sales</p>
+              </div>
+              <h1>{payload.accountName}</h1>
+              <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and top-performing styles and art.</p>
             </div>
-            <h1>{payload.accountName}</h1>
-            <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and top-performing styles and art.</p>
-          </div>
 
-          <aside className="publicHeaderAside">
-            <div className="publicContactCard">
-              <span>Sales Rep: Ryan Lester</span>
-              <span>Phone: (502) 689-7374</span>
-              <span>Email: ryanlestersells@gmail.com</span>
-              <span>Website: www.lestersales.net</span>
-            </div>
-            <div className="publicContextCard">
-              <div>
-                <span>Brand/Class</span>
-                <strong>{payload.brandFilter}</strong>
+            <aside className="publicHeaderAside">
+              <div className="publicContactCard">
+                <span>Sales Rep: Ryan Lester</span>
+                <span>Phone: (502) 689-7374</span>
+                <span>Email: ryanlestersells@gmail.com</span>
+                <span>Website: www.lestersales.net</span>
               </div>
-              <div>
-                <span>Period</span>
-                <strong>{payload.periodTitle}</strong>
+              <div className="publicContextCard">
+                <div>
+                  <span>Brand/Class</span>
+                  <strong>{payload.brandFilter}</strong>
+                </div>
+                <div>
+                  <span>Period</span>
+                  <strong>{payload.periodTitle}</strong>
+                </div>
               </div>
-            </div>
-          </aside>
-        </header>
+            </aside>
+          </header>
+        ) : null}
 
         <ReportSection
           title={payload.periodMode === "ytd" ? "Year Scorecard" : "YTD Scorecard"}
