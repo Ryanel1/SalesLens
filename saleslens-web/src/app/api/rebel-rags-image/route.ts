@@ -9,6 +9,8 @@ type ImageRequestItem = {
   artCode?: string;
   color?: string;
   styleName?: string;
+  parentSku?: string;
+  sku?: string;
 };
 
 type ProductImageLookup = {
@@ -28,6 +30,7 @@ type ProductImageMatch = {
 };
 
 const REBEL_RAGS_BASE_URL = "https://www.rebelrags.net";
+const VOLSHOP_BASE_URL = "https://www.utvolshop.com";
 const MAX_LOOKUPS = 30;
 
 export async function POST(request: NextRequest) {
@@ -48,23 +51,40 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
+  const accountName = clean(body?.accountName);
   const items = Array.isArray(body?.items) ? body.items.slice(0, MAX_LOOKUPS) as ImageRequestItem[] : [];
   const matches: ProductImageMatch[] = [];
 
   for (const item of items) {
-    const match = await matchingImage(item).catch(() => null);
+    const match = await matchingImage(item, accountName).catch(() => null);
     if (match) matches.push(match);
   }
 
   return NextResponse.json({ matches });
 }
 
-async function matchingImage(item: ImageRequestItem): Promise<ProductImageMatch | null> {
+async function matchingImage(item: ImageRequestItem, accountName: string): Promise<ProductImageMatch | null> {
   const style = clean(item.style);
   const artCode = clean(item.artCode);
   const color = clean(item.color);
 
   if (!style || !artCode || !color) return null;
+
+  if (isVolshopAccount(accountName)) {
+    const volshopImage = await matchingVolshopImage(item);
+    if (volshopImage) {
+      return {
+        style,
+        artCode,
+        color,
+        productUrl: volshopImage.productUrl,
+        imageUrl: volshopImage.imageUrl,
+        lookupArtCode: volshopImage.lookupValue,
+        isManualOverride: false,
+      };
+    }
+    return null;
+  }
 
   const lookup = imageLookup(item);
   const productUrls = lookup.productUrl ? [lookup.productUrl] : await productDetailUrlsForItem(item, lookup.searchArtCode);
@@ -92,6 +112,115 @@ async function matchingImage(item: ImageRequestItem): Promise<ProductImageMatch 
   }
 
   return null;
+}
+
+async function matchingVolshopImage(item: ImageRequestItem) {
+  const parentSku = volshopSku(item.parentSku);
+  const sku = volshopSku(item.sku);
+  const lookupValue = parentSku || sku;
+  if (!lookupValue) return null;
+
+  const directUrl = volshopProductImageUrl(lookupValue);
+  if (await imageExists(directUrl)) {
+    return { imageUrl: directUrl, productUrl: VOLSHOP_BASE_URL, lookupValue };
+  }
+
+  for (const keyword of [parentSku, sku, clean(item.style), clean(item.artCode)].filter(Boolean) as string[]) {
+    const productUrls = await volshopProductDetailUrlsForKeyword(keyword);
+    for (const productUrl of productUrls.slice(0, 12)) {
+      const detailHtml = await fetchText(productUrl).catch(() => "");
+      if (!detailHtml) continue;
+      if (!volshopDetailMatches(detailHtml, item, keyword)) continue;
+      const imageUrl = volshopImageFromDetail(detailHtml, productUrl);
+      if (imageUrl) return { imageUrl, productUrl, lookupValue: keyword };
+    }
+  }
+
+  return null;
+}
+
+function volshopProductImageUrl(parentSku: string) {
+  return `${VOLSHOP_BASE_URL}/site/product-images/${encodeURIComponent(parentSku)}_01.jpg?resizeid=3&resizeh=1200&resizew=1200`;
+}
+
+async function volshopProductDetailUrlsForKeyword(keyword: string) {
+  const searchUrls = [
+    `${VOLSHOP_BASE_URL}/search?keywords=${encodeURIComponent(keyword)}`,
+    `${VOLSHOP_BASE_URL}/search?keyword=${encodeURIComponent(keyword)}`,
+  ];
+  const urls: string[] = [];
+  const seen = new Set<string>();
+
+  for (const searchUrl of searchUrls) {
+    const html = await fetchText(searchUrl).catch(() => "");
+    const pattern = /href\s*=\s*["']((?:https?:\/\/www\.utvolshop\.com)?\/[^"']+?)(?:["?#]|&quot;)/gi;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(html))) {
+      const value = absoluteUrl(decodeHtml(match[1]), VOLSHOP_BASE_URL);
+      if (!value || seen.has(value) || !looksLikeVolshopProductUrl(value)) continue;
+      seen.add(value);
+      urls.push(value);
+    }
+  }
+
+  return urls;
+}
+
+function volshopDetailMatches(html: string, item: ImageRequestItem, keyword: string) {
+  const compactHtml = normalized(html);
+  const productSku = normalized(keyword);
+  if (productSku && compactHtml.includes(productSku)) return true;
+
+  const parentSku = normalized(item.parentSku);
+  const sku = normalized(item.sku);
+  if (parentSku && compactHtml.includes(parentSku)) return true;
+  if (sku && compactHtml.includes(sku)) return true;
+
+  const title = normalized(productTitle(html));
+  const description = normalized(item.styleName);
+  return Boolean(description && title && sharedMeaningfulWords(description, title) >= 2);
+}
+
+function volshopImageFromDetail(html: string, productUrl: string) {
+  const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1];
+  if (ogImage) return decodeHtml(absoluteUrl(ogImage, productUrl));
+
+  const image = html.match(/https?:\/\/www\.utvolshop\.com\/site\/product-images\/[^"']+\.(?:jpg|jpeg|png)(?:\?[^"']*)?/i)?.[0];
+  return image ? decodeHtml(image) : null;
+}
+
+async function imageExists(url: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      headers: {
+        "User-Agent": "SalesLens/1.0 (product image matching)",
+      },
+      signal: controller.signal,
+    });
+    return response.ok && (response.headers.get("content-type") ?? "").toLowerCase().includes("image");
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function looksLikeVolshopProductUrl(value: string) {
+  const url = new URL(value);
+  return url.hostname === "www.utvolshop.com" && /_[0-9]+\/?$/.test(url.pathname);
+}
+
+function volshopSku(value: string | null | undefined) {
+  const cleaned = clean(value).replace(/\s+/g, "");
+  return /^[A-Za-z0-9_-]+$/.test(cleaned) ? cleaned : "";
+}
+
+function isVolshopAccount(accountName: string) {
+  const normalizedName = accountName.toLowerCase();
+  return normalizedName.includes("volshop") || normalizedName.includes("vol shop");
 }
 
 async function productDetailUrlsForItem(item: ImageRequestItem, lookupArtCode: string) {

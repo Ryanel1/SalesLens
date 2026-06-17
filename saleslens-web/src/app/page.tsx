@@ -21,6 +21,8 @@ type SalesRecord = {
   units: number | null;
   transaction_number: string | null;
   barcode: string | null;
+  parent_sku: string | null;
+  sku: string | null;
   product_class: string | null;
   master_style: string | null;
   color: string | null;
@@ -94,6 +96,8 @@ type TopArt = MetricSet & {
   styleName: string;
   color: string;
   artCode: string;
+  parentSku: string | null;
+  sku: string | null;
   cySales: number;
   cyUnits: number;
   inventoryUnits: number | null;
@@ -347,7 +351,7 @@ export default function Home() {
   }, [dashboardData.records]);
 
   useEffect(() => {
-    if (!supabase || !selectedCustomerId || !selectedCustomer || !isRebelRagsCustomer(selectedCustomer.name)) return;
+    if (!supabase || !selectedCustomerId || !selectedCustomer || !supportsProductImageFetch(selectedCustomer.name)) return;
     const client = supabase;
     const customerId = selectedCustomerId;
 
@@ -370,11 +374,14 @@ export default function Home() {
           ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}),
         },
         body: JSON.stringify({
+          accountName: selectedCustomer.name,
           items: missingRows.map((row) => ({
             style: row.style,
             artCode: row.artCode,
             color: row.color,
             styleName: row.styleName,
+            parentSku: row.parentSku,
+            sku: row.sku,
           })),
         }),
       });
@@ -392,7 +399,7 @@ export default function Home() {
         product_url: match.productUrl,
         image_url: match.imageUrl,
         is_manual_override: match.isManualOverride,
-        notes: `Matched from Rebel Rags website using ${match.lookupArtCode}`,
+        notes: `Matched from product website using ${match.lookupArtCode}`,
       }));
 
       const { error } = await client
@@ -1493,7 +1500,7 @@ async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await client
       .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units")
+      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units")
       .eq("customer_id", customerId)
       .order("transaction_date", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -1730,6 +1737,8 @@ function topArtRows(
         styleName: clean(first.master_style) || "Unknown Style Name",
         color,
         artCode,
+        parentSku: firstNonBlank(group.map((record) => record.parent_sku)),
+        sku: firstNonBlank(group.map((record) => record.sku)),
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
         transactions: group.length,
@@ -1800,8 +1809,10 @@ function legacyProductImageUrl(
   return null;
 }
 
-function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color">) {
-  return imageKey(row.style, row.artCode, row.color);
+function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color" | "parentSku" | "sku">) {
+  return [imageKey(row.style, row.artCode, row.color), compactImagePart(row.parentSku ?? ""), compactImagePart(row.sku ?? "")]
+    .filter(Boolean)
+    .join("|");
 }
 
 function mergeProductImages(images: ProductImage[], matches: RebelRagsImageMatch[]) {
@@ -1823,6 +1834,11 @@ function mergeProductImages(images: ProductImage[], matches: RebelRagsImageMatch
 
 function isRebelRagsCustomer(name: string | null | undefined) {
   return (name ?? "").toLowerCase().includes("rebel");
+}
+
+function supportsProductImageFetch(name: string | null | undefined) {
+  const normalizedName = (name ?? "").toLowerCase();
+  return normalizedName.includes("rebel") || normalizedName.includes("volshop") || normalizedName.includes("vol shop");
 }
 
 function cachedImageUrlAllowedForColor(value: string, color: string, style: string, artCode: string) {
@@ -2520,6 +2536,10 @@ function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
 
 function compactKey(value: string | null | undefined) {
   return (value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function firstNonBlank(values: Array<string | null | undefined>) {
+  return values.map(clean).find(Boolean) ?? null;
 }
 
 function escapePostgrestPattern(value: string) {

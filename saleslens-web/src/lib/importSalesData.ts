@@ -8,6 +8,8 @@ export type ParsedSalesRecord = {
   source_file: string;
   transaction_number: string | null;
   barcode: string | null;
+  parent_sku: string | null;
+  sku: string | null;
   product_class: string | null;
   master_style: string | null;
   color: string | null;
@@ -156,6 +158,7 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
   const colorIndex = findColumn(header, ["color", "colour"]);
   const sizeIndex = findColumn(header, ["size"]);
   const styleColorIndex = findColumn(header, ["stylecolour", "stylecolor", "stylecolournumber", "stylecolornumber"]);
+  const skuIndex = findColumn(header, ["name", "sku"]);
   const lastReceivedIndex = findColumn(header, ["lastrcvd", "lastreceived"]);
   const retailIndex = findColumn(header, ["currentretail"]);
   const mtdUnitsIndex = findColumn(header, ["mtdu"]);
@@ -188,6 +191,7 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
 
     const rawStyleIdentifier = valueAt(row, styleColorIndex);
     const parsed = parseStyleIdentifier(rawStyleIdentifier);
+    const parsedSku = parseVolshopSkuName(valueAt(row, skuIndex));
 
     records.push({
       transaction_date: salesDate,
@@ -197,6 +201,8 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
       source_file: fileName,
       transaction_number: null,
       barcode: null,
+      parent_sku: parsedSku.parentSku,
+      sku: parsedSku.sku,
       product_class: clean(valueAt(row, classIndex)) ?? normalizedBrandClass(customerName),
       master_style: clean(valueAt(row, masterStyleIndex)),
       color: clean(valueAt(row, colorIndex)),
@@ -266,6 +272,8 @@ function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
       source_file: fileName,
       transaction_number: clean(valueAt(row, transactionNumberIndex)),
       barcode: clean(valueAt(row, barcodeIndex)),
+      parent_sku: null,
+      sku: null,
       product_class: normalizedBrandClass(valueAt(row, brandIndex)),
       master_style: clean(valueAt(row, descriptionIndex)),
       color,
@@ -418,6 +426,17 @@ function parseStyleIdentifier(rawValue: string | null) {
     styleNumber: styleNumber || null,
     colorCode,
     artCode,
+  };
+}
+
+function parseVolshopSkuName(value: string | null) {
+  const cleaned = clean(value);
+  if (!cleaned) return { parentSku: null, sku: null };
+
+  const [parent, child] = cleaned.split(":").map((part) => clean(part));
+  return {
+    parentSku: parent ?? null,
+    sku: child ?? parent ?? null,
   };
 }
 

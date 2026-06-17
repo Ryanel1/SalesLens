@@ -42,6 +42,8 @@ create table if not exists public.sales_records (
   source_file text not null,
   transaction_number text,
   barcode text,
+  parent_sku text,
+  sku text,
   product_class text,
   master_style text,
   color text,
@@ -63,7 +65,9 @@ create table if not exists public.sales_records (
 
 alter table public.sales_records
   add column if not exists transaction_number text,
-  add column if not exists barcode text;
+  add column if not exists barcode text,
+  add column if not exists parent_sku text,
+  add column if not exists sku text;
 
 create index if not exists sales_records_customer_date_idx
   on public.sales_records(customer_id, transaction_date);
