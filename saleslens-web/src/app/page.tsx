@@ -1492,6 +1492,7 @@ function MiniLineChart({
     const pairedY = pairedValue ? yFor(pairedValue) : null;
     const isClose = pairedY != null && Math.abs(y - pairedY) < 6;
     if (!isClose) return y - 2.4;
+    if (value !== pairedValue) return value > pairedValue ? y - 5.2 : y + 5.1;
     return series === "prior" ? y - 5.2 : y + 5.1;
   }
 }
