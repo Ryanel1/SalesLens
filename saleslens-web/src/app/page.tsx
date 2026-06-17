@@ -1843,10 +1843,21 @@ function supportsProductImageFetch(name: string | null | undefined) {
 }
 
 function cachedImageUrlAllowedForColor(value: string, color: string, style: string, artCode: string) {
+  if (isVolshopProductImageUrl(value)) return true;
+
   const isAllowedDefault = compactImagePart(color) === "WHITE"
     || compactImagePart(style) === "CBRZU0Z"
     || Boolean(knownProductImageUrl(style, artCode, color));
   return imageUrlMatchesColor(value, color) || (isAllowedDefault && imageColorToken(value) === "DEFAULT");
+}
+
+function isVolshopProductImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.hostname === "www.utvolshop.com" && url.pathname.includes("/site/product-images/");
+  } catch {
+    return false;
+  }
 }
 
 function knownProductImageUrl(style: string, artCode: string, color: string) {
