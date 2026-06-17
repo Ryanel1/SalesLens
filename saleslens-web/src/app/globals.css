@@ -540,6 +540,73 @@ select {
   display: none;
 }
 
+.importFilePicker {
+  align-items: start;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 132px minmax(0, 1fr);
+  margin-top: 1.15rem;
+}
+
+.browseButton {
+  align-items: center;
+  background: var(--charcoal);
+  color: #fffdfa;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0 1rem;
+  text-transform: uppercase;
+}
+
+.browseButton input {
+  display: none;
+}
+
+.selectedFileList {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.selectedFileEmpty,
+.selectedFilePill {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.72);
+  border: var(--hairline);
+  color: var(--taupe);
+  display: flex;
+  font-size: 0.86rem;
+  font-weight: 800;
+  justify-content: space-between;
+  min-height: 3rem;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+}
+
+.selectedFilePill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedFilePill button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--stone-2);
+  color: var(--charcoal);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-weight: 900;
+  height: 1.85rem;
+  justify-content: center;
+  margin-left: 0.75rem;
+  width: 1.85rem;
+}
+
 .modalOverlay {
   align-items: center;
   background: rgba(36, 35, 33, 0.28);
@@ -1870,6 +1937,7 @@ tbody tr:nth-child(even) {
   .styleComparisonGrid,
   .inventoryCard,
   .inventorySummaryGrid,
+  .importFilePicker,
   .importDateRange,
   .navControls,
   .controlDock {

@@ -188,6 +188,7 @@ export default function Home() {
   const [brandFilter, setBrandFilter] = useState("All");
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
   const [importRangeStart, setImportRangeStart] = useState("");
   const [importRangeEnd, setImportRangeEnd] = useState("");
@@ -539,23 +540,29 @@ export default function Home() {
 
   function beginImportFiles(files: File[]) {
     if (files.length === 0 || !selectedCustomer) return;
-    setPendingImportFiles(files);
+    setPendingImportFiles((current) => [...current, ...files]);
   }
 
   function closeImportModal() {
+    setImportModalOpen(false);
     setPendingImportFiles([]);
     setImportRangeStart("");
     setImportRangeEnd("");
+    setCustomerStatus("");
+  }
+
+  function removePendingImportFile(indexToRemove: number) {
+    setPendingImportFiles((files) => files.filter((_file, index) => index !== indexToRemove));
   }
 
   function selectedImportRange(): SalesImportOptions | null {
     if (!importRangeStart && !importRangeEnd) return {};
     if (!importRangeStart || !importRangeEnd) {
-      setImportStatus("Choose both a start and end date, or leave both dates blank.");
+      setCustomerStatus("Choose both a start and end date, or leave both dates blank.");
       return null;
     }
     if (importRangeStart > importRangeEnd) {
-      setImportStatus("The upload start date must be before the end date.");
+      setCustomerStatus("The upload start date must be before the end date.");
       return null;
     }
     return {
@@ -566,6 +573,7 @@ export default function Home() {
 
   async function importSalesFiles(files: File[], options: SalesImportOptions = {}) {
     if (files.length === 0) return;
+    setCustomerStatus("");
     let imported = 0;
     for (const [index, file] of files.entries()) {
       setImportStatus(`Importing sales file ${index + 1} of ${files.length}: ${file.name}`);
@@ -579,6 +587,7 @@ export default function Home() {
 
   async function importInventoryFiles(files: File[]) {
     if (files.length === 0) return;
+    setCustomerStatus("");
     let imported = 0;
     for (const [index, file] of files.entries()) {
       setImportStatus(`Importing inventory file ${index + 1} of ${files.length}: ${file.name}`);
@@ -741,18 +750,16 @@ export default function Home() {
                 <p>Last Upload:</p>
                 <strong>{compactDateText(lastUploaded)}</strong>
               </div>
-              <label className="fileButton">
+              <button
+                className="fileButton"
+                onClick={() => {
+                  setCustomerStatus("");
+                  setImportModalOpen(true);
+                }}
+                type="button"
+              >
                 Upload / Import
-                <input
-                  accept=".xls,.xlsx,.csv"
-                  multiple
-                  type="file"
-                  onChange={(event) => {
-                    beginImportFiles(Array.from(event.target.files ?? []));
-                    event.currentTarget.value = "";
-                  }}
-                />
-              </label>
+              </button>
               {(customerStatus || importStatus) ? (
                 <div className="navMessage">
                   <span>{importStatus || customerStatus}</span>
@@ -779,7 +786,7 @@ export default function Home() {
           </div>
         </nav>
 
-        {pendingImportFiles.length > 0 ? (
+        {importModalOpen ? (
           <div className="modalOverlay" role="presentation">
             <section className="shareModal importTypeModal" role="dialog" aria-modal="true" aria-labelledby="import-type-title">
               <button
@@ -791,16 +798,44 @@ export default function Home() {
               </button>
               <p className="eyebrow">{selectedCustomer?.name ?? "Account"} Import</p>
               <h3 id="import-type-title">What are you uploading?</h3>
-              <p>
-                {pendingImportFiles.length === 1
-                  ? pendingImportFiles[0].name
-                  : `${numberText(pendingImportFiles.length)} files selected`}
-              </p>
+              <div className="importFilePicker">
+                <label className="browseButton">
+                  Browse
+                  <input
+                    accept=".xls,.xlsx,.csv"
+                    multiple
+                    type="file"
+                    onChange={(event) => {
+                      beginImportFiles(Array.from(event.target.files ?? []));
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                <div className="selectedFileList">
+                  {pendingImportFiles.length ? (
+                    pendingImportFiles.map((file, index) => (
+                      <span className="selectedFilePill" key={`${file.name}-${file.lastModified}-${index}`}>
+                        <span>{file.name}</span>
+                        <button
+                          aria-label={`Remove ${file.name}`}
+                          onClick={() => removePendingImportFile(index)}
+                          type="button"
+                        >
+                          X
+                        </button>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="selectedFileEmpty">No file selected</span>
+                  )}
+                </div>
+              </div>
               {pendingImportFiles.length > 1 ? (
                 <p className="muted">
                   Files will import one at a time in the order selected.
                 </p>
               ) : null}
+              {customerStatus ? <p className="shareStatus">{customerStatus}</p> : null}
               <div className="importDateRange">
                 <div>
                   <strong>Sales report date range</strong>
@@ -825,6 +860,7 @@ export default function Home() {
               </div>
               <div className="shareScopeGrid">
                 <button
+                  disabled={pendingImportFiles.length === 0}
                   onClick={() => {
                     const range = selectedImportRange();
                     if (!range) return;
@@ -838,6 +874,7 @@ export default function Home() {
                   <span>POS sales with units and dollars. The selected date range applies to every file in this upload.</span>
                 </button>
                 <button
+                  disabled={pendingImportFiles.length === 0}
                   onClick={() => {
                     const files = pendingImportFiles;
                     closeImportModal();
