@@ -120,9 +120,15 @@ async function matchingVolshopImage(item: ImageRequestItem) {
   const lookupValue = parentSku || sku;
   if (!lookupValue) return null;
 
-  const directUrl = volshopProductImageUrl(lookupValue);
-  if (await imageExists(directUrl)) {
-    return { imageUrl: directUrl, productUrl: VOLSHOP_BASE_URL, lookupValue };
+  for (const directUrl of volshopProductImageUrls(lookupValue)) {
+    if (await imageExists(directUrl)) {
+      return { imageUrl: directUrl, productUrl: VOLSHOP_BASE_URL, lookupValue };
+    }
+  }
+
+  for (const keyword of [parentSku, sku].filter(Boolean) as string[]) {
+    const searchImage = await volshopImageFromSearchKeyword(keyword);
+    if (searchImage) return { ...searchImage, lookupValue: keyword };
   }
 
   for (const keyword of [parentSku, sku, clean(item.style), clean(item.artCode)].filter(Boolean) as string[]) {
@@ -139,8 +145,22 @@ async function matchingVolshopImage(item: ImageRequestItem) {
   return null;
 }
 
-function volshopProductImageUrl(parentSku: string) {
-  return `${VOLSHOP_BASE_URL}/site/product-images/${encodeURIComponent(parentSku)}_01.jpg?resizeid=3&resizeh=1200&resizew=1200`;
+async function volshopImageFromSearchKeyword(keyword: string) {
+  const searchUrl = `${VOLSHOP_BASE_URL}/search?keywords=${encodeURIComponent(keyword)}`;
+  const html = await fetchText(searchUrl).catch(() => "");
+  if (!html) return null;
+
+  const imageUrl = volshopImageFromDetail(html, searchUrl);
+  if (!imageUrl || imageUrl.toLowerCase().includes("no_image_available")) return null;
+
+  return { imageUrl, productUrl: searchUrl };
+}
+
+function volshopProductImageUrls(parentSku: string) {
+  const encodedSku = encodeURIComponent(parentSku);
+  return ["jpg", "png", "jpeg"].map(
+    (extension) => `${VOLSHOP_BASE_URL}/site/product-images/${encodedSku}_01.${extension}?resizeid=3&resizeh=1200&resizew=1200`,
+  );
 }
 
 async function volshopProductDetailUrlsForKeyword(keyword: string) {
