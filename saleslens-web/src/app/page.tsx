@@ -153,6 +153,7 @@ type WeeklyScorecardRow = {
     sales: number;
     imageUrl: string | null;
   } | null;
+  topItems: WeeklyTopItem[];
 };
 
 type PeriodSelection =
@@ -1471,31 +1472,25 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
               </span>
             </div>
 
-            <div className="weeklyBreadth">
-              <span>Product Breadth</span>
-              <strong>
-                {numberText(row.breadth.styles)} styles | {numberText(row.breadth.colors)} colors | {numberText(row.breadth.artworks)} artworks
-              </strong>
-              <em>
-                LY: {numberText(row.priorBreadth.styles)} styles | {numberText(row.priorBreadth.artworks)} artworks
-              </em>
-            </div>
-
-            <div className="weeklyTopItem">
-              <span>Top Art</span>
-              {row.topItem ? (
-                <>
-                  <div className="weeklyTopItemContent">
-                    <div>
-                      <strong>{row.topItem.artCode}</strong>
-                      <em>{row.topItem.style} | {row.topItem.color}</em>
-                      <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+            <div className="weeklyTopProducts">
+              <span>Top 3 Products</span>
+              {row.topItems.length ? (
+                <div className="weeklyTopProductList">
+                  {row.topItems.map((item) => (
+                    <div className="weeklyTopProduct" key={`${item.style}-${item.artCode}-${item.color}`}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} />
+                      ) : (
+                        <div className="weeklyTopProductPlaceholder">No Image</div>
+                      )}
+                      <div>
+                        <strong>{item.artCode}</strong>
+                        <em>{item.style} | {item.color}</em>
+                        <small>{numberText(item.units)} units | {currencyText(item.sales)}</small>
+                      </div>
                     </div>
-                    {row.topItem.imageUrl ? (
-                      <img src={row.topItem.imageUrl} alt={`${row.topItem.style} ${row.topItem.artCode}`} />
-                    ) : null}
-                  </div>
-                </>
+                  ))}
+                </div>
               ) : (
                 <strong>No sales</strong>
               )}
@@ -2387,7 +2382,7 @@ function weeklyScorecardRows(records: SalesRecord[], month: string | null, image
     const priorEnd = addDays(segmentEnd, -364);
     const currentRecords = recordsBetween(records, dateKey(segmentStart), dateKey(segmentEnd));
     const priorRecords = recordsBetween(records, dateKey(priorStart), dateKey(priorEnd));
-    const topItem = topWeeklyArtItem(currentRecords, imageLookup);
+    const topItems = topWeeklyArtItems(currentRecords, imageLookup);
 
     rows.push({
       rank: rows.length + 1,
@@ -2399,15 +2394,16 @@ function weeklyScorecardRows(records: SalesRecord[], month: string | null, image
       avgSalePerTransaction: currentRecords.length ? sum(currentRecords.map(amountValue)) / currentRecords.length : 0,
       breadth: breadthMetrics(currentRecords),
       priorBreadth: breadthMetrics(priorRecords),
-      topItem,
+      topItem: topItems[0] ?? null,
+      topItems,
     });
   }
 
   return rows;
 }
 
-function topWeeklyArtItem(records: SalesRecord[], imageLookup: ReturnType<typeof imageLookupMaps>) {
-  const row = groupedRows(records, artKey)
+function topWeeklyArtItems(records: SalesRecord[], imageLookup: ReturnType<typeof imageLookupMaps>) {
+  return groupedRows(records, artKey)
     .map<WeeklyTopItem>(([_key, group]) => {
       const first = group[0];
       const style = normalizedStyle(first);
@@ -2422,9 +2418,8 @@ function topWeeklyArtItem(records: SalesRecord[], imageLookup: ReturnType<typeof
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
-    .sort(sortWeeklyTopItems)[0];
-
-  return row ?? null;
+    .sort(sortWeeklyTopItems)
+    .slice(0, 3);
 }
 
 function recordsBetween(records: SalesRecord[], startDate: string, endDate: string) {

@@ -115,6 +115,14 @@ export type SnapshotWeeklyScorecardRow = {
     sales: number;
     imageUrl: string | null;
   } | null;
+  topItems?: {
+    style: string;
+    artCode: string;
+    color: string;
+    units: number;
+    sales: number;
+    imageUrl: string | null;
+  }[];
 };
 
 export type SnapshotInventory = {

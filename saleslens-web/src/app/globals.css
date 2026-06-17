@@ -1236,15 +1236,14 @@ select {
   border: var(--hairline);
   display: grid;
   gap: 1px;
-  grid-template-columns: minmax(128px, 0.55fr) minmax(180px, 0.8fr) minmax(260px, 1.25fr) minmax(260px, 1.1fr) minmax(220px, 0.9fr);
+  grid-template-columns: minmax(128px, 0.55fr) minmax(180px, 0.8fr) minmax(260px, 1.25fr) minmax(420px, 2fr);
   min-height: 148px;
 }
 
 .weeklyDateRail,
 .weeklyPrimary,
 .weeklyMetrics,
-.weeklyBreadth,
-.weeklyTopItem {
+.weeklyTopProducts {
   display: grid;
   padding: 1rem;
 }
@@ -1257,8 +1256,7 @@ select {
 
 .weeklyDateRail span,
 .weeklyPrimary span,
-.weeklyBreadth span,
-.weeklyTopItem span,
+.weeklyTopProducts > span,
 .weeklyMetrics em {
   color: var(--taupe);
   font-size: 0.7rem;
@@ -1277,9 +1275,8 @@ select {
 
 .weeklyDateRail em,
 .weeklyPrimary em,
-.weeklyBreadth em,
-.weeklyTopItem em,
-.weeklyTopItem small,
+.weeklyTopProducts em,
+.weeklyTopProducts small,
 .weeklyMetrics small {
   color: var(--taupe);
   font-size: 0.78rem;
@@ -1319,40 +1316,58 @@ select {
   line-height: 1;
 }
 
-.weeklyBreadth,
-.weeklyTopItem {
+.weeklyTopProducts {
   align-content: center;
   border-left: var(--hairline);
-  gap: 0.35rem;
+  gap: 0.55rem;
 }
 
-.weeklyBreadth strong,
-.weeklyTopItem strong {
+.weeklyTopProducts strong {
   color: var(--soft-black);
   font-size: 0.94rem;
   line-height: 1.25;
 }
 
-.weeklyTopItemContent {
-  align-items: center;
+.weeklyTopProductList {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 0.45rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.weeklyTopItemContent > div {
+.weeklyTopProduct {
+  align-items: center;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.55rem;
+  grid-template-columns: 54px minmax(0, 1fr);
   min-width: 0;
 }
 
-.weeklyTopItemContent img {
+.weeklyTopProduct > div:not(.weeklyTopProductPlaceholder) {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.weeklyTopProduct img,
+.weeklyTopProductPlaceholder {
   aspect-ratio: 1;
   background: rgba(231, 222, 209, 0.35);
   border: var(--hairline);
-  height: 72px;
+  height: 54px;
   object-fit: contain;
-  width: 72px;
+  width: 54px;
+}
+
+.weeklyTopProductPlaceholder {
+  align-items: center;
+  color: var(--taupe);
+  display: flex;
+  font-size: 0.55rem;
+  font-weight: 900;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .monthlySalesCard {
@@ -2149,19 +2164,23 @@ tbody tr:nth-child(even) {
 
   .monthlySalesStory,
   .monthlySalesPair,
-  .weeklyTopItemContent,
+  .weeklyTopProductList,
   .weeklyMetrics {
     grid-template-columns: 1fr;
   }
 
-  .weeklyTopItemContent img {
-    height: 96px;
-    width: 96px;
+  .weeklyTopProduct {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .weeklyTopProduct img,
+  .weeklyTopProductPlaceholder {
+    height: 72px;
+    width: 72px;
   }
 
   .weeklyMetrics span,
-  .weeklyBreadth,
-  .weeklyTopItem {
+  .weeklyTopProducts {
     border-left: 0;
     border-top: var(--hairline);
   }

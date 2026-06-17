@@ -476,6 +476,7 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
         const salesDelta = row.current.sales - row.prior.sales;
         const unitsDelta = row.current.units - row.prior.units;
         const transactionDelta = row.current.transactions - row.prior.transactions;
+        const topProducts = row.topItems?.length ? row.topItems : row.topItem ? [row.topItem] : [];
         return (
           <article className="weeklyScorecardRow" key={row.dateRange}>
             <div className="weeklyDateRail">
@@ -510,31 +511,25 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
               </span>
             </div>
 
-            <div className="weeklyBreadth">
-              <span>Product Breadth</span>
-              <strong>
-                {numberText(row.breadth.styles)} styles | {numberText(row.breadth.colors)} colors | {numberText(row.breadth.artworks)} artworks
-              </strong>
-              <em>
-                LY: {numberText(row.priorBreadth.styles)} styles | {numberText(row.priorBreadth.artworks)} artworks
-              </em>
-            </div>
-
-            <div className="weeklyTopItem">
-              <span>Top Art</span>
-              {row.topItem ? (
-                <>
-                  <div className="weeklyTopItemContent">
-                    <div>
-                      <strong>{row.topItem.artCode}</strong>
-                      <em>{row.topItem.style} | {row.topItem.color}</em>
-                      <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+            <div className="weeklyTopProducts">
+              <span>Top 3 Products</span>
+              {topProducts.length ? (
+                <div className="weeklyTopProductList">
+                  {topProducts.map((item) => (
+                    <div className="weeklyTopProduct" key={`${item.style}-${item.artCode}-${item.color}`}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} />
+                      ) : (
+                        <div className="weeklyTopProductPlaceholder">No Image</div>
+                      )}
+                      <div>
+                        <strong>{item.artCode}</strong>
+                        <em>{item.style} | {item.color}</em>
+                        <small>{numberText(item.units)} units | {currencyText(item.sales)}</small>
+                      </div>
                     </div>
-                    {row.topItem.imageUrl ? (
-                      <img src={row.topItem.imageUrl} alt={`${row.topItem.style} ${row.topItem.artCode}`} />
-                    ) : null}
-                  </div>
-                </>
+                  ))}
+                </div>
               ) : (
                 <strong>No sales</strong>
               )}
