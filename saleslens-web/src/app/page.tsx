@@ -1017,7 +1017,7 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>{selectedPeriodKind === "year" ? "Year Sales Tracker" : "YTD Sales Tracker"}</h3>
+                <h3>{selectedPeriodKind === "year" ? "Year Scorecard" : "YTD Scorecard"}</h3>
                 <p>{ytdTitle(periodEndMonth)} compared with the same date range last year.</p>
               </div>
               <strong className={`changeBadge ${changeClass(ytdLine.currentTotal - ytdLine.priorTotal)}`}>
@@ -1046,7 +1046,7 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>{selectedPeriodKind === "year" ? "Selected Year Summary" : "Monthly Sales Tracker"}</h3>
+                <h3>{selectedPeriodKind === "year" ? "Selected Year Scorecard" : "Monthly Scorecard"}</h3>
                 <p>{selectedPeriodTitle} compared with {priorPeriodTitle}.</p>
               </div>
             </div>

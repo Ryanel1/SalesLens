@@ -145,7 +145,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         </header>
 
         <ReportSection
-          title={payload.periodMode === "ytd" ? "Year Sales Tracker" : "YTD Sales Tracker"}
+          title={payload.periodMode === "ytd" ? "Year Scorecard" : "YTD Scorecard"}
           subtitle={`${payload.periodTitle} compared with the same date range last year.`}
           aside={changeText(payload.ytdLine.currentTotal, payload.ytdLine.priorTotal)}
           asideTone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
@@ -177,7 +177,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         </ReportSection>
 
         <ReportSection
-          title={payload.periodMode === "ytd" ? "Selected Year Summary" : "Monthly Sales Tracker"}
+          title={payload.periodMode === "ytd" ? "Selected Year Scorecard" : "Monthly Scorecard"}
           subtitle={`${payload.periodTitle} compared with ${payload.priorPeriodTitle}.`}
         >
           {payload.monthlyDrivers ? (
