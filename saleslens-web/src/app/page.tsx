@@ -354,6 +354,7 @@ export default function Home() {
     if (!supabase || !selectedCustomerId || !selectedCustomer || !supportsProductImageFetch(selectedCustomer.name)) return;
     const client = supabase;
     const customerId = selectedCustomerId;
+    const accountName = selectedCustomer.name;
 
     const missingRows = topArt
       .filter((row) => !row.imageUrl && row.style !== "-")
@@ -374,7 +375,7 @@ export default function Home() {
           ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}),
         },
         body: JSON.stringify({
-          accountName: selectedCustomer.name,
+          accountName,
           items: missingRows.map((row) => ({
             style: row.style,
             artCode: row.artCode,
