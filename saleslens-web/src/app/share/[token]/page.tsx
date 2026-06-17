@@ -522,9 +522,16 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
               <span>Top Art</span>
               {row.topItem ? (
                 <>
-                  <strong>{row.topItem.artCode}</strong>
-                  <em>{row.topItem.style} | {row.topItem.color}</em>
-                  <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+                  <div className="weeklyTopItemContent">
+                    <div>
+                      <strong>{row.topItem.artCode}</strong>
+                      <em>{row.topItem.style} | {row.topItem.color}</em>
+                      <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+                    </div>
+                    {row.topItem.imageUrl ? (
+                      <img src={row.topItem.imageUrl} alt={`${row.topItem.style} ${row.topItem.artCode}`} />
+                    ) : null}
+                  </div>
                 </>
               ) : (
                 <strong>No sales</strong>

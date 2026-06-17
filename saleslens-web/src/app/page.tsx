@@ -97,6 +97,7 @@ type WeeklyTopItem = {
   artCode: string;
   sales: number;
   units: number;
+  imageUrl: string | null;
 };
 
 type TopArt = MetricSet & {
@@ -150,6 +151,7 @@ type WeeklyScorecardRow = {
     color: string;
     units: number;
     sales: number;
+    imageUrl: string | null;
   } | null;
 };
 
@@ -369,8 +371,8 @@ export default function Home() {
   const priorMetrics = useMemo(() => metricSet(priorPeriodRecords), [priorPeriodRecords]);
   const monthlyDrivers = useMemo(() => monthlyDriverMetrics(periodRecords, priorPeriodRecords), [periodRecords, priorPeriodRecords]);
   const weeklyScorecards = useMemo(
-    () => weeklyScorecardRows(recordsForCustomer, periodEndMonth),
-    [periodEndMonth, recordsForCustomer],
+    () => weeklyScorecardRows(recordsForCustomer, periodEndMonth, dashboardData.images),
+    [dashboardData.images, periodEndMonth, recordsForCustomer],
   );
   const totalRecordsMetrics = useMemo(() => metricSet(recordsForCustomer), [recordsForCustomer]);
   const ytdCurrentRecords = useMemo(
@@ -1466,9 +1468,16 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
               <span>Top Art</span>
               {row.topItem ? (
                 <>
-                  <strong>{row.topItem.artCode}</strong>
-                  <em>{row.topItem.style} | {row.topItem.color}</em>
-                  <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+                  <div className="weeklyTopItemContent">
+                    <div>
+                      <strong>{row.topItem.artCode}</strong>
+                      <em>{row.topItem.style} | {row.topItem.color}</em>
+                      <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+                    </div>
+                    {row.topItem.imageUrl ? (
+                      <img src={row.topItem.imageUrl} alt={`${row.topItem.style} ${row.topItem.artCode}`} />
+                    ) : null}
+                  </div>
                 </>
               ) : (
                 <strong>No sales</strong>
@@ -1862,7 +1871,7 @@ function buildReportPayload({
     ytdLine: ytdPoints(filteredRecords, periodEndMonth),
     ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
-    weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth) : [],
+    weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth),
     salesMix: salesMixSlices(periodRecords),
     bestDay: {
@@ -2345,8 +2354,9 @@ function monthlyDriverMetrics(currentRecords: SalesRecord[], priorRecords: Sales
   };
 }
 
-function weeklyScorecardRows(records: SalesRecord[], month: string | null): WeeklyScorecardRow[] {
+function weeklyScorecardRows(records: SalesRecord[], month: string | null, images: ProductImage[]): WeeklyScorecardRow[] {
   if (!month) return [];
+  const imageLookup = imageLookupMaps(images);
   const monthStartDate = parseDate(`${month}-01`);
   const monthEndDate = endOfMonth(monthStartDate);
   const firstWeekStart = startOfMondayWeek(monthStartDate);
@@ -2360,7 +2370,7 @@ function weeklyScorecardRows(records: SalesRecord[], month: string | null): Week
     const priorEnd = addDays(segmentEnd, -364);
     const currentRecords = recordsBetween(records, dateKey(segmentStart), dateKey(segmentEnd));
     const priorRecords = recordsBetween(records, dateKey(priorStart), dateKey(priorEnd));
-    const topItem = topWeeklyArtItem(currentRecords);
+    const topItem = topWeeklyArtItem(currentRecords, imageLookup);
 
     rows.push({
       rank: rows.length + 1,
@@ -2379,15 +2389,22 @@ function weeklyScorecardRows(records: SalesRecord[], month: string | null): Week
   return rows;
 }
 
-function topWeeklyArtItem(records: SalesRecord[]) {
+function topWeeklyArtItem(records: SalesRecord[], imageLookup: ReturnType<typeof imageLookupMaps>) {
   const row = groupedRows(records, artKey)
-    .map<WeeklyTopItem>(([_key, group]) => ({
-      style: normalizedStyle(group[0]),
-      color: colorName(group[0]),
-      artCode: displayArtCode(group[0]),
-      sales: sum(group.map(amountValue)),
-      units: sum(group.map((record) => record.units ?? 0)),
-    }))
+    .map<WeeklyTopItem>(([_key, group]) => {
+      const first = group[0];
+      const style = normalizedStyle(first);
+      const color = colorName(first);
+      const artCode = displayArtCode(first);
+      return {
+        style,
+        color,
+        artCode,
+        sales: sum(group.map(amountValue)),
+        units: sum(group.map((record) => record.units ?? 0)),
+        imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
+      };
+    })
     .sort(sortWeeklyTopItems)[0];
 
   return row ?? null;

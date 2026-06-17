@@ -113,6 +113,7 @@ export type SnapshotWeeklyScorecardRow = {
     color: string;
     units: number;
     sales: number;
+    imageUrl: string | null;
   } | null;
 };
 
