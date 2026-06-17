@@ -93,6 +93,7 @@ const MONTHS: Record<string, number> = {
 };
 
 export async function parseSalesWorkbook(file: File, customerName: string): Promise<ParsedUpload> {
+  const fileDate = Number.isFinite(file.lastModified) ? dateFromTimestamp(file.lastModified) : null;
   const workbook = XLSX.read(await file.arrayBuffer(), {
     cellDates: true,
     type: "array",
@@ -119,7 +120,7 @@ export async function parseSalesWorkbook(file: File, customerName: string): Prom
     return parseRebelRagsRows(usableRows, file.name);
   }
 
-  return parseVolshopRows(usableRows, file.name, customerName);
+  return parseVolshopRows(usableRows, file.name, customerName, fileDate);
 }
 
 export async function parseInventoryWorkbook(file: File, customerName: string): Promise<ParsedInventoryUpload> {
@@ -149,7 +150,7 @@ export async function parseInventoryWorkbook(file: File, customerName: string): 
   return parseInventoryRows(usableRows, file.name, customerName, reportDate, reportBrand);
 }
 
-function parseVolshopRows(rows: unknown[][], fileName: string, customerName: string): ParsedUpload {
+function parseVolshopRows(rows: unknown[][], fileName: string, customerName: string, fileDate: string | null): ParsedUpload {
   const firstRow = rows[0];
   if (!firstRow) throw new Error("No header row found in this file.");
   const header = firstRow.map(normalize);
@@ -171,10 +172,11 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
     throw new Error("Missing required Volshop columns: MTD ($) and MTD (U).");
   }
 
-  const receivedDate = reportDateFromFileName(fileName);
-  const salesDate = salesPeriodDateFromFileName(fileName, receivedDate);
+  const receivedDateFromFileName = reportDateFromFileName(fileName);
+  const receivedDate = receivedDateFromFileName ?? fileDate;
+  const salesDate = salesPeriodDateFromFileName(fileName, receivedDateFromFileName) ?? monthStart(fileDate);
   if (!salesDate) {
-    throw new Error("Could not determine the sales month from the file name.");
+    throw new Error("Could not determine the sales month from the file name or file date.");
   }
 
   let skippedCount = 0;
@@ -577,6 +579,19 @@ function dateOnly(value: string | null) {
 
 function formatDate(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function dateFromTimestamp(timestamp: number) {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  return formatDate(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function monthStart(value: string | null) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  return formatDate(date.getFullYear(), date.getMonth(), 1);
 }
 
 function normalize(value: unknown) {
