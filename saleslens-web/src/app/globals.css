@@ -719,6 +719,32 @@ select {
   line-height: 1.45;
 }
 
+.shareAccountToggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+
+.shareAccountToggles button {
+  background: rgba(255, 253, 248, 0.72);
+  border: var(--hairline);
+  color: var(--charcoal);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 900;
+  min-height: 2.65rem;
+  min-width: 8.5rem;
+  padding: 0.65rem 1rem;
+  text-align: center;
+}
+
+.shareAccountToggles button.active {
+  background: var(--steel);
+  border-color: var(--steel);
+  color: #fffdfa;
+}
+
 .shareGenerateButton {
   background: var(--charcoal);
   border: 1px solid var(--charcoal);

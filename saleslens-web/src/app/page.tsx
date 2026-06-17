@@ -229,7 +229,7 @@ export default function Home() {
   const [importRangeEnd, setImportRangeEnd] = useState("");
   const [dashboardStatus, setDashboardStatus] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [shareScope, setShareScope] = useState<"selected" | "all">("selected");
+  const [selectedShareCustomerIds, setSelectedShareCustomerIds] = useState<string[]>([]);
   const [shareStatus, setShareStatus] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [importStatus, setImportStatus] = useState("");
@@ -502,66 +502,86 @@ export default function Home() {
     setStatus("");
   }
 
-  async function createShareLink(scope: "selected" | "all" = shareScope) {
-    if (!supabase || !selectedCustomer || !user || !period) return;
-    const client = supabase;
+  function toggleShareCustomer(customerId: string) {
+    setSelectedShareCustomerIds((current) => {
+      if (current.includes(customerId)) {
+        return current.length === 1 ? current : current.filter((id) => id !== customerId);
+      }
+      return [...current, customerId];
+    });
+    setShareStatus("");
+    setShareUrl("");
+  }
 
-    setShareStatus(scope === "all" ? "Generating all-account share link..." : "Generating share link...");
+  async function createShareLink(customerIds = selectedShareCustomerIds) {
+    if (!supabase || !selectedCustomer || !user || !period || !customerIds.length) return;
+    const client = supabase;
+    const shareCustomers = customers.filter((customer) => customerIds.includes(customer.id));
+    if (!shareCustomers.length) return;
+    const primaryCustomer = shareCustomers[0];
+    if (!primaryCustomer) return;
+    const isMultiAccount = shareCustomers.length > 1;
+
+    setShareStatus(isMultiAccount ? "Generating multi-account share link..." : "Generating share link...");
     setShareUrl("");
 
     const token = createReportToken();
     const generatedAt = new Date().toISOString();
-    let title = `${selectedCustomer.name} ${selectedPeriodTitle} Sales Snapshot`;
-    let payload: ReportSnapshotPayload | ReportSnapshotBundlePayload = buildReportPayload({
-      accountName: selectedCustomer.name,
-      brandFilter,
-      generatedAt,
-      images: dashboardData.images,
-      inventoryRecords: dashboardData.inventoryRecords,
-      period,
-      records: dashboardData.records,
-    });
 
-    if (scope === "all" && customers.length > 1) {
-      const reports = await Promise.all(
-        customers.map(async (customer) => {
-          if (customer.id === selectedCustomer.id) return payload as ReportSnapshotPayload;
-          const [recordsResult, inventoryResult, imagesResult] = await Promise.all([
-            fetchAllRecords(client, customer.id),
-            fetchInventoryRecords(client, customer.id),
-            fetchProductImages(client, customer.id),
-          ]);
-          return buildReportPayload({
-            accountName: customer.name,
-            brandFilter,
-            generatedAt,
-            images: imagesResult.images,
-            inventoryRecords: inventoryResult.records,
-            period,
-            records: recordsResult.records,
-          });
-        }),
-      );
+    async function reportForCustomer(customer: Customer) {
+      if (customer.id === selectedCustomer.id) {
+        return buildReportPayload({
+          accountName: customer.name,
+          brandFilter,
+          generatedAt,
+          images: dashboardData.images,
+          inventoryRecords: dashboardData.inventoryRecords,
+          period,
+          records: dashboardData.records,
+        });
+      }
 
-      title = `All Accounts ${selectedPeriodTitle} Sales Snapshot`;
-      payload = {
-        version: 1,
-        reportKind: "account_bundle",
-        generatedAt,
-        accountName: "All Accounts",
+      const [recordsResult, inventoryResult, imagesResult] = await Promise.all([
+        fetchAllRecords(client, customer.id),
+        fetchInventoryRecords(client, customer.id),
+        fetchProductImages(client, customer.id),
+      ]);
+      return buildReportPayload({
+        accountName: customer.name,
         brandFilter,
-        periodMode: selectedPeriodKind === "month" ? "monthly" : "ytd",
-        selectedMonth: periodEndMonth,
-        periodTitle: selectedPeriodTitle,
-        priorPeriodTitle,
-        reports,
-      };
+        generatedAt,
+        images: imagesResult.images,
+        inventoryRecords: inventoryResult.records,
+        period,
+        records: recordsResult.records,
+      });
     }
+
+    const reports = await Promise.all(shareCustomers.map(reportForCustomer));
+    const primaryReport = reports[0];
+    if (!primaryReport) return;
+    const title = isMultiAccount
+      ? `${shareCustomers.map((customer) => customer.name).join(" + ")} ${selectedPeriodTitle} Sales Snapshot`
+      : `${primaryCustomer.name} ${selectedPeriodTitle} Sales Snapshot`;
+    const payload: ReportSnapshotPayload | ReportSnapshotBundlePayload = isMultiAccount
+      ? {
+          version: 1,
+          reportKind: "account_bundle",
+          generatedAt,
+          accountName: shareCustomers.map((customer) => customer.name).join(" + "),
+          brandFilter,
+          periodMode: selectedPeriodKind === "month" ? "monthly" : "ytd",
+          selectedMonth: periodEndMonth,
+          periodTitle: selectedPeriodTitle,
+          priorPeriodTitle,
+          reports,
+        }
+      : primaryReport;
 
     const { error } = await client.from("report_snapshots").insert({
       token,
       title,
-      customer_id: scope === "all" ? null : selectedCustomer.id,
+      customer_id: isMultiAccount ? null : primaryCustomer.id,
       created_by: user.id,
       payload,
     });
@@ -971,7 +991,7 @@ export default function Home() {
                 className="shareButton"
                 onClick={() => {
                   setShareModalOpen(true);
-                  setShareScope("selected");
+                  setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
                   setShareStatus("");
                   setShareUrl("");
                 }}
@@ -998,30 +1018,27 @@ export default function Home() {
                 </button>
                 <p className="eyebrow">Share Snapshot</p>
                 <h3 id="share-report-title">Create report link</h3>
-                <p>Choose exactly who this share link should show.</p>
+                <p>Select one account for an account-only link, or select multiple accounts for a combined review.</p>
 
-                <div className="shareScopeGrid" role="radiogroup" aria-label="Share report scope">
-                  <button
-                    className={shareScope === "selected" ? "active" : ""}
-                    onClick={() => setShareScope("selected")}
-                    type="button"
-                  >
-                    <strong>{selectedCustomer?.name ?? "Selected Account"}</strong>
-                    <span>Single-account link for customers or account-specific follow-up.</span>
-                  </button>
-                  <button
-                    className={shareScope === "all" ? "active" : ""}
-                    disabled={customers.length < 2}
-                    onClick={() => setShareScope("all")}
-                    type="button"
-                  >
-                    <strong>All Accounts</strong>
-                    <span>{customers.map((customer) => customer.name).join(" + ")}</span>
-                  </button>
+                <div className="shareAccountToggles" aria-label="Share report accounts">
+                  {customers.map((customer) => {
+                    const isSelected = selectedShareCustomerIds.includes(customer.id);
+                    return (
+                      <button
+                        aria-pressed={isSelected}
+                        className={isSelected ? "active" : ""}
+                        key={customer.id}
+                        onClick={() => toggleShareCustomer(customer.id)}
+                        type="button"
+                      >
+                        {customer.name}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                <button className="shareGenerateButton" onClick={() => createShareLink(shareScope)} disabled={shareStatus.includes("Generating")}>
-                  Generate {shareScope === "all" ? "All-Account" : "Single-Account"} Link
+                <button className="shareGenerateButton" onClick={() => createShareLink()} disabled={!selectedShareCustomerIds.length || shareStatus.includes("Generating")}>
+                  Generate {selectedShareCustomerIds.length > 1 ? "Multi-Account" : "Account"} Link
                 </button>
 
                 {shareStatus ? <p className="shareStatus">{shareStatus}</p> : null}
