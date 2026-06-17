@@ -120,6 +120,31 @@ type TopStyle = MetricSet & {
   priorArtCount: number;
 };
 
+type BreadthMetrics = {
+  styles: number;
+  colors: number;
+  artworks: number;
+};
+
+type WeeklyScorecardRow = {
+  rank: number;
+  title: string;
+  dateRange: string;
+  dayCount: number;
+  current: MetricSet;
+  prior: MetricSet;
+  avgSalePerTransaction: number;
+  breadth: BreadthMetrics;
+  priorBreadth: BreadthMetrics;
+  topItem: {
+    style: string;
+    artCode: string;
+    color: string;
+    units: number;
+    sales: number;
+  } | null;
+};
+
 type PeriodSelection =
   | { kind: "month"; value: string; year: number }
   | { kind: "year"; value: string; year: number };
@@ -335,6 +360,10 @@ export default function Home() {
   const currentMetrics = useMemo(() => metricSet(periodRecords), [periodRecords]);
   const priorMetrics = useMemo(() => metricSet(priorPeriodRecords), [priorPeriodRecords]);
   const monthlyDrivers = useMemo(() => monthlyDriverMetrics(periodRecords, priorPeriodRecords), [periodRecords, priorPeriodRecords]);
+  const weeklyScorecards = useMemo(
+    () => weeklyScorecardRows(recordsForCustomer, periodEndMonth),
+    [periodEndMonth, recordsForCustomer],
+  );
   const totalRecordsMetrics = useMemo(() => metricSet(recordsForCustomer), [recordsForCustomer]);
   const ytdCurrentRecords = useMemo(
     () => currentYearRecords(recordsForCustomer, periodEndMonth),
@@ -1060,6 +1089,18 @@ export default function Home() {
             />
           </section>
 
+          {selectedPeriodKind === "month" && weeklyScorecards.length ? (
+            <section className="sectionBlock">
+              <div className="sectionTitle">
+                <div>
+                  <h3>Weekly Scorecard</h3>
+                  <p>Monday-Sunday sales weeks inside {selectedPeriodTitle}, compared with the same weekday range last year.</p>
+                </div>
+              </div>
+              <WeeklyScorecard rows={weeklyScorecards} />
+            </section>
+          ) : null}
+
           {inventorySnapshot ? (
             <section className="sectionBlock inventorySection">
               <div className="sectionTitle">
@@ -1362,6 +1403,76 @@ function DriverTile({ label, value, details, tone }: { label: string; value: str
   );
 }
 
+function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
+  return (
+    <div className="weeklyScorecardList">
+      {rows.map((row) => {
+        const salesDelta = row.current.sales - row.prior.sales;
+        const unitsDelta = row.current.units - row.prior.units;
+        const transactionDelta = row.current.transactions - row.prior.transactions;
+        return (
+          <article className="weeklyScorecardRow" key={row.dateRange}>
+            <div className="weeklyDateRail">
+              <span>Week {row.rank}</span>
+              <strong>{row.dateRange}</strong>
+              <em>{countText(row.dayCount, "day", "days")}</em>
+            </div>
+
+            <div className="weeklyPrimary">
+              <span>Sales</span>
+              <strong>{currencyText(row.current.sales)}</strong>
+              <em className={changeClass(salesDelta)}>
+                {changeText(row.current.sales, row.prior.sales)} | {signedCurrencyText(salesDelta)}
+              </em>
+            </div>
+
+            <div className="weeklyMetrics">
+              <span>
+                <em>Units</em>
+                <strong>{numberText(row.current.units)}</strong>
+                <small className={changeClass(unitsDelta)}>{signedNumberText(unitsDelta)} vs LY</small>
+              </span>
+              <span>
+                <em>Transactions</em>
+                <strong>{numberText(row.current.transactions)}</strong>
+                <small className={changeClass(transactionDelta)}>{signedNumberText(transactionDelta)} vs LY</small>
+              </span>
+              <span>
+                <em>Avg Sale</em>
+                <strong>{currencyText(row.avgSalePerTransaction)}</strong>
+                <small>per transaction</small>
+              </span>
+            </div>
+
+            <div className="weeklyBreadth">
+              <span>Product Breadth</span>
+              <strong>
+                {numberText(row.breadth.styles)} styles | {numberText(row.breadth.colors)} colors | {numberText(row.breadth.artworks)} artworks
+              </strong>
+              <em>
+                LY: {numberText(row.priorBreadth.styles)} styles | {numberText(row.priorBreadth.artworks)} artworks
+              </em>
+            </div>
+
+            <div className="weeklyTopItem">
+              <span>Top Art</span>
+              {row.topItem ? (
+                <>
+                  <strong>{row.topItem.artCode}</strong>
+                  <em>{row.topItem.style} | {row.topItem.color}</em>
+                  <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+                </>
+              ) : (
+                <strong>No sales</strong>
+              )}
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
   if (!snapshot) return null;
   return (
@@ -1595,6 +1706,59 @@ function compactNumber(value: number) {
   return numberText(Math.round(value));
 }
 
+function parseDate(value: string) {
+  return new Date(`${value}T00:00:00Z`);
+}
+
+function dateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function startOfMondayWeek(date: Date) {
+  const day = date.getUTCDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  return addDays(date, offset);
+}
+
+function endOfMonth(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0));
+}
+
+function maxDate(left: Date, right: Date) {
+  return left > right ? left : right;
+}
+
+function minDate(left: Date, right: Date) {
+  return left < right ? left : right;
+}
+
+function daysBetween(startDate: Date, endDate: Date) {
+  return Math.round((endDate.getTime() - startDate.getTime()) / 86400000);
+}
+
+function dateRangeText(startDate: Date, endDate: Date) {
+  const start = dateKey(startDate);
+  const end = dateKey(endDate);
+  const startText = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(startDate);
+  const sameYear = startDate.getUTCFullYear() === endDate.getUTCFullYear();
+  const sameMonth = sameYear && startDate.getUTCMonth() === endDate.getUTCMonth();
+  const endOptions: Intl.DateTimeFormatOptions = sameMonth
+    ? { day: "numeric", timeZone: "UTC" }
+    : sameYear
+      ? { month: "short", day: "numeric", timeZone: "UTC" }
+      : { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" };
+  const endText = new Intl.DateTimeFormat("en-US", endOptions).format(endDate);
+  const yearText = new Intl.DateTimeFormat("en-US", { year: "numeric", timeZone: "UTC" }).format(endDate);
+  if (start === end) return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(startDate);
+  return `${startText}-${endText}, ${yearText}`;
+}
+
 async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   const records: SalesRecord[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
@@ -1690,6 +1854,7 @@ function buildReportPayload({
     ytdLine: ytdPoints(filteredRecords, periodEndMonth),
     ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
+    weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth),
     salesMix: salesMixSlices(periodRecords),
     bestDay: {
@@ -2172,7 +2337,59 @@ function monthlyDriverMetrics(currentRecords: SalesRecord[], priorRecords: Sales
   };
 }
 
-function breadthMetrics(records: SalesRecord[]) {
+function weeklyScorecardRows(records: SalesRecord[], month: string | null): WeeklyScorecardRow[] {
+  if (!month) return [];
+  const monthStartDate = parseDate(`${month}-01`);
+  const monthEndDate = endOfMonth(monthStartDate);
+  const firstWeekStart = startOfMondayWeek(monthStartDate);
+  const rows: WeeklyScorecardRow[] = [];
+
+  for (let weekStart = firstWeekStart; weekStart <= monthEndDate; weekStart = addDays(weekStart, 7)) {
+    const weekEnd = addDays(weekStart, 6);
+    const segmentStart = maxDate(weekStart, monthStartDate);
+    const segmentEnd = minDate(weekEnd, monthEndDate);
+    const priorStart = addDays(segmentStart, -364);
+    const priorEnd = addDays(segmentEnd, -364);
+    const currentRecords = recordsBetween(records, dateKey(segmentStart), dateKey(segmentEnd));
+    const priorRecords = recordsBetween(records, dateKey(priorStart), dateKey(priorEnd));
+    const topItem = topWeeklyArtItem(currentRecords);
+
+    rows.push({
+      rank: rows.length + 1,
+      title: `Week ${rows.length + 1}`,
+      dateRange: dateRangeText(segmentStart, segmentEnd),
+      dayCount: daysBetween(segmentStart, segmentEnd) + 1,
+      current: metricSet(currentRecords),
+      prior: metricSet(priorRecords),
+      avgSalePerTransaction: currentRecords.length ? sum(currentRecords.map(amountValue)) / currentRecords.length : 0,
+      breadth: breadthMetrics(currentRecords),
+      priorBreadth: breadthMetrics(priorRecords),
+      topItem,
+    });
+  }
+
+  return rows;
+}
+
+function topWeeklyArtItem(records: SalesRecord[]) {
+  const row = groupedRows(records, artKey)
+    .map(([_key, group]) => ({
+      style: normalizedStyle(group[0]),
+      color: colorName(group[0]),
+      artCode: displayArtCode(group[0]),
+      sales: sum(group.map(amountValue)),
+      units: sum(group.map((record) => record.units ?? 0)),
+    }))
+    .sort(sortByUnits)[0];
+
+  return row ?? null;
+}
+
+function recordsBetween(records: SalesRecord[], startDate: string, endDate: string) {
+  return records.filter((record) => record.transaction_date >= startDate && record.transaction_date <= endDate);
+}
+
+function breadthMetrics(records: SalesRecord[]): BreadthMetrics {
   const soldRecords = records.filter((record) => (record.units ?? 0) !== 0 || amountValue(record) !== 0);
   return {
     styles: uniqueCount(soldRecords.map(normalizedStyle)),
@@ -2457,6 +2674,11 @@ function changeText(current: number, prior: number) {
 function signedCurrencyText(value: number) {
   if (!value) return currencyText(0);
   return `${value > 0 ? "+" : "-"}${currencyText(Math.abs(value))}`;
+}
+
+function signedNumberText(value: number) {
+  if (!value) return numberText(0);
+  return `${value > 0 ? "+" : "-"}${numberText(Math.abs(value))}`;
 }
 
 function changeClass(value: number) {

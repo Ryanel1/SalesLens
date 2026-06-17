@@ -1200,6 +1200,113 @@ select {
   border-left: 4px solid var(--clay);
 }
 
+.weeklyScorecardList {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.weeklyScorecardRow {
+  background: rgba(255, 253, 248, 0.9);
+  border: var(--hairline);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: minmax(128px, 0.55fr) minmax(180px, 0.8fr) minmax(260px, 1.25fr) minmax(260px, 1.1fr) minmax(220px, 0.9fr);
+  min-height: 148px;
+}
+
+.weeklyDateRail,
+.weeklyPrimary,
+.weeklyMetrics,
+.weeklyBreadth,
+.weeklyTopItem {
+  display: grid;
+  padding: 1rem;
+}
+
+.weeklyDateRail {
+  align-content: center;
+  background: rgba(231, 222, 209, 0.28);
+  border-left: 4px solid var(--steel);
+}
+
+.weeklyDateRail span,
+.weeklyPrimary span,
+.weeklyBreadth span,
+.weeklyTopItem span,
+.weeklyMetrics em {
+  color: var(--taupe);
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.weeklyDateRail strong {
+  color: var(--soft-black);
+  font-size: clamp(1.1rem, 1.7vw, 1.55rem);
+  line-height: 1.05;
+  margin-top: 0.35rem;
+}
+
+.weeklyDateRail em,
+.weeklyPrimary em,
+.weeklyBreadth em,
+.weeklyTopItem em,
+.weeklyTopItem small,
+.weeklyMetrics small {
+  color: var(--taupe);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.weeklyPrimary {
+  align-content: center;
+  gap: 0.45rem;
+}
+
+.weeklyPrimary strong {
+  color: var(--soft-black);
+  font-size: clamp(1.55rem, 2.35vw, 2.35rem);
+  line-height: 1;
+}
+
+.weeklyMetrics {
+  align-content: stretch;
+  gap: 1px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0;
+}
+
+.weeklyMetrics span {
+  align-content: center;
+  border-left: var(--hairline);
+  display: grid;
+  gap: 0.28rem;
+  padding: 1rem;
+}
+
+.weeklyMetrics strong {
+  color: var(--soft-black);
+  font-size: clamp(1.05rem, 1.55vw, 1.45rem);
+  line-height: 1;
+}
+
+.weeklyBreadth,
+.weeklyTopItem {
+  align-content: center;
+  border-left: var(--hairline);
+  gap: 0.35rem;
+}
+
+.weeklyBreadth strong,
+.weeklyTopItem strong {
+  color: var(--soft-black);
+  font-size: 0.94rem;
+  line-height: 1.25;
+}
+
 .monthlySalesCard {
   align-content: start;
   gap: 1rem;
@@ -1935,6 +2042,7 @@ tbody tr:nth-child(even) {
   .ytdTrackerLayout,
   .ytdTrackerTiles,
   .styleComparisonGrid,
+  .weeklyScorecardRow,
   .inventoryCard,
   .inventorySummaryGrid,
   .importFilePicker,
@@ -1986,8 +2094,16 @@ tbody tr:nth-child(even) {
   }
 
   .monthlySalesStory,
-  .monthlySalesPair {
+  .monthlySalesPair,
+  .weeklyMetrics {
     grid-template-columns: 1fr;
+  }
+
+  .weeklyMetrics span,
+  .weeklyBreadth,
+  .weeklyTopItem {
+    border-left: 0;
+    border-top: var(--hairline);
   }
 
   .topNav {

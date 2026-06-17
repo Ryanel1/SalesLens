@@ -12,6 +12,7 @@ import {
   type SnapshotMetricSet,
   type SnapshotMonthlyDrivers,
   type SnapshotTopArt,
+  type SnapshotWeeklyScorecardRow,
   type SnapshotYtdInsights,
 } from "@/lib/reportSnapshot";
 import { StyleStudyTabs } from "./StyleStudyTabs";
@@ -190,6 +191,15 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
             />
           ) : null}
         </ReportSection>
+
+        {payload.periodMode !== "ytd" && payload.weeklyScorecards?.length ? (
+          <ReportSection
+            title="Weekly Scorecard"
+            subtitle={`Monday-Sunday sales weeks inside ${payload.periodTitle}, compared with the same weekday range last year.`}
+          >
+            <WeeklyScorecard rows={payload.weeklyScorecards} />
+          </ReportSection>
+        ) : null}
 
         {payload.inventorySnapshot ? (
           <ReportSection
@@ -457,6 +467,76 @@ function DriverTile({ label, value, details, tone }: { label: string; value: str
   );
 }
 
+function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
+  return (
+    <div className="weeklyScorecardList">
+      {rows.map((row) => {
+        const salesDelta = row.current.sales - row.prior.sales;
+        const unitsDelta = row.current.units - row.prior.units;
+        const transactionDelta = row.current.transactions - row.prior.transactions;
+        return (
+          <article className="weeklyScorecardRow" key={row.dateRange}>
+            <div className="weeklyDateRail">
+              <span>Week {row.rank}</span>
+              <strong>{row.dateRange}</strong>
+              <em>{countText(row.dayCount, "day", "days")}</em>
+            </div>
+
+            <div className="weeklyPrimary">
+              <span>Sales</span>
+              <strong>{currencyText(row.current.sales)}</strong>
+              <em className={changeClass(salesDelta)}>
+                {changeText(row.current.sales, row.prior.sales)} | {signedCurrencyText(salesDelta)}
+              </em>
+            </div>
+
+            <div className="weeklyMetrics">
+              <span>
+                <em>Units</em>
+                <strong>{numberText(row.current.units)}</strong>
+                <small className={changeClass(unitsDelta)}>{signedNumberText(unitsDelta)} vs LY</small>
+              </span>
+              <span>
+                <em>Transactions</em>
+                <strong>{numberText(row.current.transactions)}</strong>
+                <small className={changeClass(transactionDelta)}>{signedNumberText(transactionDelta)} vs LY</small>
+              </span>
+              <span>
+                <em>Avg Sale</em>
+                <strong>{currencyText(row.avgSalePerTransaction)}</strong>
+                <small>per transaction</small>
+              </span>
+            </div>
+
+            <div className="weeklyBreadth">
+              <span>Product Breadth</span>
+              <strong>
+                {numberText(row.breadth.styles)} styles | {numberText(row.breadth.colors)} colors | {numberText(row.breadth.artworks)} artworks
+              </strong>
+              <em>
+                LY: {numberText(row.priorBreadth.styles)} styles | {numberText(row.priorBreadth.artworks)} artworks
+              </em>
+            </div>
+
+            <div className="weeklyTopItem">
+              <span>Top Art</span>
+              {row.topItem ? (
+                <>
+                  <strong>{row.topItem.artCode}</strong>
+                  <em>{row.topItem.style} | {row.topItem.color}</em>
+                  <small>{numberText(row.topItem.units)} units | {currencyText(row.topItem.sales)}</small>
+                </>
+              ) : (
+                <strong>No sales</strong>
+              )}
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay; periodTitle: string }) {
   const maxUnits = Math.max(...bestDay.items.map((item) => item.units), 1);
   const hasDailySales = (bestDay.dayCount ?? 0) > 1;
@@ -644,6 +724,11 @@ function changeText(current: number, prior: number) {
 function signedCurrencyText(value: number) {
   if (!value) return currencyText(0);
   return `${value > 0 ? "+" : "-"}${currencyText(Math.abs(value))}`;
+}
+
+function signedNumberText(value: number) {
+  if (!value) return numberText(0);
+  return `${value > 0 ? "+" : "-"}${numberText(Math.abs(value))}`;
 }
 
 function changeClass(value: number) {

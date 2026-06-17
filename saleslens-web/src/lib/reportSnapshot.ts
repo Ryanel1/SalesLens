@@ -89,6 +89,33 @@ export type SnapshotMonthlyDrivers = {
   topFiveStyleShare: number;
 };
 
+export type SnapshotWeeklyScorecardRow = {
+  rank: number;
+  title: string;
+  dateRange: string;
+  dayCount: number;
+  current: SnapshotMetricSet;
+  prior: SnapshotMetricSet;
+  avgSalePerTransaction: number;
+  breadth: {
+    styles: number;
+    colors: number;
+    artworks: number;
+  };
+  priorBreadth: {
+    styles: number;
+    colors: number;
+    artworks: number;
+  };
+  topItem: {
+    style: string;
+    artCode: string;
+    color: string;
+    units: number;
+    sales: number;
+  } | null;
+};
+
 export type SnapshotInventory = {
   date: string;
   totalUnits: number;
@@ -115,6 +142,7 @@ export type ReportSnapshotPayload = {
   ytdLine: SnapshotYtdLine;
   ytdInsights?: SnapshotYtdInsights;
   monthlyDrivers?: SnapshotMonthlyDrivers;
+  weeklyScorecards?: SnapshotWeeklyScorecardRow[];
   inventorySnapshot?: SnapshotInventory;
   salesMix: SnapshotSalesMixSlice[];
   bestDay: SnapshotBestDay;
