@@ -91,6 +91,14 @@ type MetricSet = {
   transactions: number;
 };
 
+type WeeklyTopItem = {
+  style: string;
+  color: string;
+  artCode: string;
+  sales: number;
+  units: number;
+};
+
 type TopArt = MetricSet & {
   rank: number;
   key: string;
@@ -2373,14 +2381,14 @@ function weeklyScorecardRows(records: SalesRecord[], month: string | null): Week
 
 function topWeeklyArtItem(records: SalesRecord[]) {
   const row = groupedRows(records, artKey)
-    .map(([_key, group]) => ({
+    .map<WeeklyTopItem>(([_key, group]) => ({
       style: normalizedStyle(group[0]),
       color: colorName(group[0]),
       artCode: displayArtCode(group[0]),
       sales: sum(group.map(amountValue)),
       units: sum(group.map((record) => record.units ?? 0)),
     }))
-    .sort(sortByUnits)[0];
+    .sort(sortWeeklyTopItems)[0];
 
   return row ?? null;
 }
@@ -2662,6 +2670,10 @@ function sortBySales(left: MetricSet, right: MetricSet) {
 }
 
 function sortByUnits(left: MetricSet, right: MetricSet) {
+  return right.units - left.units || right.sales - left.sales;
+}
+
+function sortWeeklyTopItems(left: WeeklyTopItem, right: WeeklyTopItem) {
   return right.units - left.units || right.sales - left.sales;
 }
 
