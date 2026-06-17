@@ -518,6 +518,7 @@ export default function Home() {
     if (!supabase || !selectedCustomer || !user || !period || !customerIds.length) return;
     const client = supabase;
     const activeCustomer = selectedCustomer;
+    const activePeriod = period;
     const shareCustomers = customers.filter((customer) => customerIds.includes(customer.id));
     if (!shareCustomers.length) return;
     const primaryCustomer = shareCustomers[0];
@@ -538,7 +539,7 @@ export default function Home() {
           generatedAt,
           images: dashboardData.images,
           inventoryRecords: dashboardData.inventoryRecords,
-          period,
+          period: activePeriod,
           records: dashboardData.records,
         });
       }
@@ -554,7 +555,7 @@ export default function Home() {
         generatedAt,
         images: imagesResult.images,
         inventoryRecords: inventoryResult.records,
-        period,
+        period: activePeriod,
         records: recordsResult.records,
       });
     }
