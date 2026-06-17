@@ -115,6 +115,15 @@ async function matchingImage(item: ImageRequestItem, accountName: string): Promi
 }
 
 async function matchingVolshopImage(item: ImageRequestItem) {
+  const knownUrl = knownVolshopProductImageUrl(item);
+  if (knownUrl) {
+    return {
+      imageUrl: knownUrl,
+      productUrl: VOLSHOP_BASE_URL,
+      lookupValue: clean(item.parentSku) || clean(item.sku) || clean(item.artCode),
+    };
+  }
+
   const parentSku = volshopSku(item.parentSku);
   const sku = volshopSku(item.sku);
   const lookupValue = parentSku || sku;
@@ -415,12 +424,28 @@ function preferLargeImageUrl(value: string) {
 }
 
 function knownProductImageUrl(item: ImageRequestItem) {
+  return knownVolshopProductImageUrl(item) ?? knownRebelRagsProductImageUrl(item);
+}
+
+function knownVolshopProductImageUrl(item: ImageRequestItem) {
+  const style = normalized(item.style);
+  const artCode = normalized(item.artCode);
+  const color = normalized(item.color);
+
+  return knownVolshopImages[imageKey(style, artCode, color)] ?? null;
+}
+
+function knownRebelRagsProductImageUrl(item: ImageRequestItem) {
   const style = normalized(item.style);
   const artCode = normalized(item.artCode);
   const color = normalized(item.color);
 
   return knownRebelRagsImages[imageKey(style, artCode, color)] ?? null;
 }
+
+const knownVolshopImages: Record<string, string> = {
+  [imageKey("CS3050", "AEC03612724", "GREY")]: `${VOLSHOP_BASE_URL}/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200`,
+};
 
 const knownRebelRagsImages: Record<string, string> = {
   [imageKey("CT1000", "03456518", "NAVY")]: `${REBEL_RAGS_BASE_URL}/prodimages/16228-MIDNIGHT_NAVY-l.jpg`,

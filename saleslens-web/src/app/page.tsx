@@ -1892,8 +1892,14 @@ function knownProductImageUrl(style: string, artCode: string, color: string) {
   const normalizedArt = compactImagePart(artCode);
   const normalizedColor = compactImagePart(color);
 
-  return knownRebelRagsImages[imageKey(normalizedStyle, normalizedArt, normalizedColor)] ?? null;
+  return knownVolshopImages[imageKey(normalizedStyle, normalizedArt, normalizedColor)]
+    ?? knownRebelRagsImages[imageKey(normalizedStyle, normalizedArt, normalizedColor)]
+    ?? null;
 }
+
+const knownVolshopImages: Record<string, string> = {
+  [imageKey("CS3050", "AEC03612724", "GREY")]: "https://www.utvolshop.com/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200",
+};
 
 const knownRebelRagsImages: Record<string, string> = {
   [imageKey("CT1000", "03456518", "NAVY")]: "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg",
