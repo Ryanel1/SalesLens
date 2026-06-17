@@ -32,6 +32,8 @@ type SalesRecord = {
   raw_style_identifier: string | null;
   art_code: string | null;
   inventory_units: number | null;
+  year_to_date_amount: number | string | null;
+  year_to_date_units: number | null;
 };
 
 type InventoryRecord = {
@@ -1515,7 +1517,7 @@ async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await client
       .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units")
+      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units,year_to_date_amount,year_to_date_units")
       .eq("customer_id", customerId)
       .order("transaction_date", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -1742,6 +1744,7 @@ function topArtRows(
       const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
+      const reportedYtd = reportedYtdTotals(group);
       const exactStandaloneInventory = inventoryGroups.get(key);
       const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory);
       return {
@@ -1757,8 +1760,8 @@ function topArtRows(
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
         transactions: group.length,
-        cySales: sum(cyGroup.map(amountValue)),
-        cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
+        cySales: reportedYtd?.sales ?? sum(cyGroup.map(amountValue)),
+        cyUnits: reportedYtd?.units ?? sum(cyGroup.map((record) => record.units ?? 0)),
         inventoryUnits: inventoryResult.units,
         inventoryScope: inventoryResult.scope,
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
@@ -1767,6 +1770,16 @@ function topArtRows(
     .sort(sortByUnits)
     .slice(0, 30)
     .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function reportedYtdTotals(records: SalesRecord[]) {
+  const rowsWithYtd = records.filter((record) => record.year_to_date_units != null || record.year_to_date_amount != null);
+  if (!rowsWithYtd.length) return null;
+
+  return {
+    sales: sum(rowsWithYtd.map((record) => Number(record.year_to_date_amount ?? 0))),
+    units: sum(rowsWithYtd.map((record) => record.year_to_date_units ?? 0)),
+  };
 }
 
 function storagePublicUrl(client: SupabaseClient, storagePath: string | null) {
