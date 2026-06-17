@@ -7,6 +7,7 @@ import {
   parseSalesWorkbook,
   type ParsedInventoryRecord,
   type ParsedSalesRecord,
+  type SalesImportOptions,
 } from "@/lib/importSalesData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
@@ -188,6 +189,8 @@ export default function Home() {
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
+  const [importRangeStart, setImportRangeStart] = useState("");
+  const [importRangeEnd, setImportRangeEnd] = useState("");
   const [dashboardStatus, setDashboardStatus] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [shareScope, setShareScope] = useState<"selected" | "all">("selected");
@@ -536,19 +539,37 @@ export default function Home() {
 
   function beginImportFiles(files: File[]) {
     if (files.length === 0 || !selectedCustomer) return;
-    if (isRebelRagsCustomer(selectedCustomer.name)) {
-      setPendingImportFiles(files);
-      return;
-    }
-    void importSalesFiles(files);
+    setPendingImportFiles(files);
   }
 
-  async function importSalesFiles(files: File[]) {
+  function closeImportModal() {
+    setPendingImportFiles([]);
+    setImportRangeStart("");
+    setImportRangeEnd("");
+  }
+
+  function selectedImportRange(): SalesImportOptions | null {
+    if (!importRangeStart && !importRangeEnd) return {};
+    if (!importRangeStart || !importRangeEnd) {
+      setImportStatus("Choose both a start and end date, or leave both dates blank.");
+      return null;
+    }
+    if (importRangeStart > importRangeEnd) {
+      setImportStatus("The upload start date must be before the end date.");
+      return null;
+    }
+    return {
+      reportStartDate: importRangeStart,
+      reportEndDate: importRangeEnd,
+    };
+  }
+
+  async function importSalesFiles(files: File[], options: SalesImportOptions = {}) {
     if (files.length === 0) return;
     let imported = 0;
     for (const [index, file] of files.entries()) {
       setImportStatus(`Importing sales file ${index + 1} of ${files.length}: ${file.name}`);
-      const success = await importSalesFile(file);
+      const success = await importSalesFile(file, options);
       if (success) imported += 1;
     }
     setImportStatus(`Finished sales import: ${numberText(imported)} of ${numberText(files.length)} files imported.`);
@@ -568,12 +589,12 @@ export default function Home() {
     setReloadKey((key) => key + 1);
   }
 
-  async function importSalesFile(file: File | null) {
+  async function importSalesFile(file: File | null, options: SalesImportOptions = {}) {
     if (!file || !supabase || !selectedCustomer || !user) return false;
 
     setImportStatus(`Reading ${file.name}...`);
     try {
-      const parsed = await parseSalesWorkbook(file, selectedCustomer.name);
+      const parsed = await parseSalesWorkbook(file, selectedCustomer.name, options);
       if (parsed.records.length === 0) {
         setImportStatus(`No importable records found. Skipped ${parsed.skippedCount} rows.`);
         return false;
@@ -764,11 +785,11 @@ export default function Home() {
               <button
                 aria-label="Close import type"
                 className="modalCloseButton"
-                onClick={() => setPendingImportFiles([])}
+                onClick={closeImportModal}
               >
                 X
               </button>
-              <p className="eyebrow">Rebel Rags Import</p>
+              <p className="eyebrow">{selectedCustomer?.name ?? "Account"} Import</p>
               <h3 id="import-type-title">What are you uploading?</h3>
               <p>
                 {pendingImportFiles.length === 1
@@ -780,22 +801,46 @@ export default function Home() {
                   Files will import one at a time in the order selected.
                 </p>
               ) : null}
+              <div className="importDateRange">
+                <div>
+                  <strong>Sales report date range</strong>
+                  <span>Optional. Use this when the file covers a weekly or custom range.</span>
+                </div>
+                <label>
+                  <span>Start</span>
+                  <input
+                    type="date"
+                    value={importRangeStart}
+                    onChange={(event) => setImportRangeStart(event.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>End</span>
+                  <input
+                    type="date"
+                    value={importRangeEnd}
+                    onChange={(event) => setImportRangeEnd(event.target.value)}
+                  />
+                </label>
+              </div>
               <div className="shareScopeGrid">
                 <button
                   onClick={() => {
+                    const range = selectedImportRange();
+                    if (!range) return;
                     const files = pendingImportFiles;
-                    setPendingImportFiles([]);
-                    void importSalesFiles(files);
+                    closeImportModal();
+                    void importSalesFiles(files, range);
                   }}
                   type="button"
                 >
                   <strong>Sales Data</strong>
-                  <span>Daily or date-range POS sales with transaction dates, units, and dollars.</span>
+                  <span>POS sales with units and dollars. The selected date range applies to every file in this upload.</span>
                 </button>
                 <button
                   onClick={() => {
                     const files = pendingImportFiles;
-                    setPendingImportFiles([]);
+                    closeImportModal();
                     void importInventoryFiles(files);
                   }}
                   type="button"

@@ -49,6 +49,11 @@ export type ParsedUpload = {
   receivedDate: string | null;
 };
 
+export type SalesImportOptions = {
+  reportStartDate?: string | null;
+  reportEndDate?: string | null;
+};
+
 export type ParsedInventoryUpload = {
   records: ParsedInventoryRecord[];
   skippedCount: number;
@@ -124,7 +129,7 @@ const MONTHS: Record<string, number> = {
   december: 11,
 };
 
-export async function parseSalesWorkbook(file: File, customerName: string): Promise<ParsedUpload> {
+export async function parseSalesWorkbook(file: File, customerName: string, options: SalesImportOptions = {}): Promise<ParsedUpload> {
   const fileDate = Number.isFinite(file.lastModified) ? dateFromTimestamp(file.lastModified) : null;
   const workbook = XLSX.read(await file.arrayBuffer(), {
     cellDates: true,
@@ -149,10 +154,10 @@ export async function parseSalesWorkbook(file: File, customerName: string): Prom
   const header = firstRow.map(normalize);
 
   if (isRebelRagsHeader(header)) {
-    return parseRebelRagsRows(usableRows, file.name);
+    return parseRebelRagsRows(usableRows, file.name, options);
   }
 
-  return parseVolshopRows(usableRows, file.name, customerName, fileDate);
+  return parseVolshopRows(usableRows, file.name, customerName, fileDate, options);
 }
 
 export async function parseInventoryWorkbook(file: File, customerName: string): Promise<ParsedInventoryUpload> {
@@ -182,7 +187,13 @@ export async function parseInventoryWorkbook(file: File, customerName: string): 
   return parseInventoryRows(usableRows, file.name, customerName, reportDate, reportBrand);
 }
 
-function parseVolshopRows(rows: unknown[][], fileName: string, customerName: string, fileDate: string | null): ParsedUpload {
+function parseVolshopRows(
+  rows: unknown[][],
+  fileName: string,
+  customerName: string,
+  fileDate: string | null,
+  options: SalesImportOptions,
+): ParsedUpload {
   const firstRow = rows[0];
   if (!firstRow) throw new Error("No header row found in this file.");
   const header = firstRow.map(normalize);
@@ -206,8 +217,10 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
 
   const receivedDateFromFileName = reportDateFromFileName(fileName);
   const receivedDate = receivedDateFromFileName ?? fileDate;
-  const salesDate = salesPeriodDateFromFileName(fileName, receivedDateFromFileName) ?? monthStart(fileDate);
-  const salesEndDate = salesPeriodEndDateFromFileName(fileName) ?? salesDate;
+  const selectedStartDate = validDateOnly(options.reportStartDate);
+  const selectedEndDate = validDateOnly(options.reportEndDate);
+  const salesDate = selectedStartDate ?? salesPeriodDateFromFileName(fileName, receivedDateFromFileName) ?? monthStart(fileDate);
+  const salesEndDate = selectedEndDate ?? salesPeriodEndDateFromFileName(fileName) ?? salesDate;
   if (!salesDate) {
     throw new Error("Could not determine the sales month from the file name or file date.");
   }
@@ -268,7 +281,7 @@ function parseVolshopRows(rows: unknown[][], fileName: string, customerName: str
   };
 }
 
-function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
+function parseRebelRagsRows(rows: unknown[][], fileName: string, options: SalesImportOptions): ParsedUpload {
   const firstRow = rows[0];
   if (!firstRow) throw new Error("No header row found in this file.");
   const header = firstRow.map(normalize);
@@ -331,11 +344,13 @@ function parseRebelRagsRows(rows: unknown[][], fileName: string): ParsedUpload {
   }
 
   const dates = records.map((record) => record.transaction_date).sort();
+  const selectedStartDate = validDateOnly(options.reportStartDate);
+  const selectedEndDate = validDateOnly(options.reportEndDate);
   return {
     records,
     skippedCount,
-    salesPeriodStart: dates[0] ?? null,
-    salesPeriodEnd: dates.at(-1) ?? null,
+    salesPeriodStart: selectedStartDate ?? dates[0] ?? null,
+    salesPeriodEnd: selectedEndDate ?? dates.at(-1) ?? null,
     receivedDate: null,
   };
 }
@@ -623,6 +638,11 @@ function normalizeYear(value: string | undefined) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return null;
   return parsed < 100 ? parsed + 2000 : parsed;
+}
+
+function validDateOnly(value: string | null | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return value;
 }
 
 function dateOnly(value: string | null) {
