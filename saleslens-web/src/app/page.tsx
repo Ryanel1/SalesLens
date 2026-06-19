@@ -1199,6 +1199,71 @@ export default function Home() {
             </section>
           ) : null}
 
+          <section className="sectionBlock">
+            <div className="sectionTitle">
+              <div>
+                <h3>Top Performing Styles</h3>
+                <p>
+                  {styleStudyMode === "month"
+                    ? `Top 10 Styles: ${selectedPeriodTitle} vs ${priorPeriodTitle}`
+                    : "Top 10 Styles vs Last YTD"}
+                </p>
+              </div>
+            </div>
+            <div className="studyTabs" aria-label="Style study views">
+              <button className={styleStudyMode === "month" ? "active" : ""} onClick={() => setStyleStudyMode("month")}>
+                {selectedPeriodKind === "year" ? "Selected Year" : "Current Month"}
+              </button>
+              <button className={styleStudyMode === "ytd" ? "active" : ""} onClick={() => setStyleStudyMode("ytd")}>
+                YTD
+              </button>
+            </div>
+            <div className="styleComparisonGrid">
+              {(styleStudyMode === "month" ? periodStyleStudy : ytdStyleStudy).map((style) => (
+                <StyleComparisonCard key={style.style} style={style} compareLabel="LY" />
+              ))}
+            </div>
+          </section>
+
+          <section className="sectionBlock">
+            <div className="sectionTitle">
+              <div>
+                <h3>Top Performing Arts</h3>
+                <p>
+                  {selectedPeriodTitle} Top 30 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
+                  {currencyText(sum(topArt.map((row) => row.sales)))}
+                </p>
+              </div>
+            </div>
+            <div className="artGrid">
+              {topArt.map((row) => (
+                <article className="artCard" key={row.key}>
+                  <div className="artImage">
+                    <b>#{row.rank}</b>
+                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
+                  </div>
+                  <div className="artMeta">
+                    {row.productUrl ? (
+                      <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                        {row.artCode}
+                      </a>
+                    ) : (
+                      <strong>{row.artCode}</strong>
+                    )}
+                    <span>{row.style} | {row.color}</span>
+                    <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
+                    {selectedPeriodKind === "month" ? (
+                      <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
+                    ) : null}
+                    {row.inventoryUnits != null ? (
+                      <span>{inventoryLabel(row)}</span>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
           {inventorySnapshot ? (
             <section className="sectionBlock inventorySection">
               <div className="sectionTitle">
@@ -1264,71 +1329,6 @@ export default function Home() {
               </div>
             </section>
           ) : null}
-
-          <section className="sectionBlock">
-            <div className="sectionTitle">
-              <div>
-                <h3>Top Performing Styles</h3>
-                <p>
-                  {styleStudyMode === "month"
-                    ? `Top 10 Styles: ${selectedPeriodTitle} vs ${priorPeriodTitle}`
-                    : "Top 10 Styles vs Last YTD"}
-                </p>
-              </div>
-            </div>
-            <div className="studyTabs" aria-label="Style study views">
-              <button className={styleStudyMode === "month" ? "active" : ""} onClick={() => setStyleStudyMode("month")}>
-                {selectedPeriodKind === "year" ? "Selected Year" : "Current Month"}
-              </button>
-              <button className={styleStudyMode === "ytd" ? "active" : ""} onClick={() => setStyleStudyMode("ytd")}>
-                YTD
-              </button>
-            </div>
-            <div className="styleComparisonGrid">
-              {(styleStudyMode === "month" ? periodStyleStudy : ytdStyleStudy).map((style) => (
-                <StyleComparisonCard key={style.style} style={style} compareLabel="LY" />
-              ))}
-            </div>
-          </section>
-
-          <section className="sectionBlock">
-            <div className="sectionTitle">
-              <div>
-                <h3>Top Performing Arts</h3>
-                <p>
-                  {selectedPeriodTitle} Top 30 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
-                  {currencyText(sum(topArt.map((row) => row.sales)))}
-                </p>
-              </div>
-            </div>
-            <div className="artGrid">
-              {topArt.map((row) => (
-                <article className="artCard" key={row.key}>
-                  <div className="artImage">
-                    <b>#{row.rank}</b>
-                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
-                  </div>
-                  <div className="artMeta">
-                    {row.productUrl ? (
-                      <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                        {row.artCode}
-                      </a>
-                    ) : (
-                      <strong>{row.artCode}</strong>
-                    )}
-                    <span>{row.style} | {row.color}</span>
-                    <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
-                    {selectedPeriodKind === "month" ? (
-                      <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
-                    ) : null}
-                    {row.inventoryUnits != null ? (
-                      <span>{inventoryLabel(row)}</span>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
 
           <p className="dataFootnote">
             All imported records for this account/filter: {numberText(totalRecordsMetrics.transactions)} transactions,{" "}

@@ -203,46 +203,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </ReportSection>
         ) : null}
 
-        {payload.inventorySnapshot ? (
-          <ReportSection
-            title="Inventory Snapshot"
-            subtitle="Current on-hand inventory from the latest available inventory data."
-            aside={dateText(payload.inventorySnapshot.date)}
-          >
-            <InventoryCard snapshot={payload.inventorySnapshot} />
-          </ReportSection>
-        ) : null}
-
-        {payload.inventoryTracker?.length ? (
-          <ReportSection
-            title="Inventory Tracker"
-            subtitle={`${payload.inventoryTrackerSort === "lowest" ? "Lowest" : "Highest"} ${numberText(payload.inventoryTracker.length)} current on-hand items with 5+ units | ${numberText(sum(payload.inventoryTracker.map((row) => row.inventoryUnits)))} Units`}
-          >
-            <div className="artGrid">
-              {payload.inventoryTracker.map((row) => (
-                <article className="artCard" key={row.key}>
-                  <div className="artImage">
-                    <b>#{row.rank}</b>
-                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
-                  </div>
-                  <div className="artMeta">
-                    {row.productUrl ? (
-                      <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                        {row.artCode}
-                      </a>
-                    ) : (
-                      <strong>{row.artCode}</strong>
-                    )}
-                    <span>{row.style} | {row.color}</span>
-                    <span>YTD Sold: {numberText(row.ytdUnits ?? 0)} Units</span>
-                    <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </ReportSection>
-        ) : null}
-
         <ReportSection title="Top Performing Styles" subtitle="Style-level units, sales, colors, and artwork breadth.">
           <StyleStudyTabs
             monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
@@ -286,6 +246,46 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
             ))}
           </div>
         </ReportSection>
+
+        {payload.inventorySnapshot ? (
+          <ReportSection
+            title="Inventory Snapshot"
+            subtitle="Current on-hand inventory from the latest available inventory data."
+            aside={dateText(payload.inventorySnapshot.date)}
+          >
+            <InventoryCard snapshot={payload.inventorySnapshot} />
+          </ReportSection>
+        ) : null}
+
+        {payload.inventoryTracker?.length ? (
+          <ReportSection
+            title="Inventory Tracker"
+            subtitle={`${payload.inventoryTrackerSort === "lowest" ? "Lowest" : "Highest"} ${numberText(payload.inventoryTracker.length)} current on-hand items with 5+ units | ${numberText(sum(payload.inventoryTracker.map((row) => row.inventoryUnits)))} Units`}
+          >
+            <div className="artGrid">
+              {payload.inventoryTracker.map((row) => (
+                <article className="artCard" key={row.key}>
+                  <div className="artImage">
+                    <b>#{row.rank}</b>
+                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
+                  </div>
+                  <div className="artMeta">
+                    {row.productUrl ? (
+                      <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                        {row.artCode}
+                      </a>
+                    ) : (
+                      <strong>{row.artCode}</strong>
+                    )}
+                    <span>{row.style} | {row.color}</span>
+                    <span>YTD Sold: {numberText(row.ytdUnits ?? 0)} Units</span>
+                    <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </ReportSection>
+        ) : null}
 
       </section>
     </Shell>
