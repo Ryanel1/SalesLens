@@ -877,9 +877,9 @@ select {
 }
 
 .sortControls button {
-  background: rgba(255, 253, 248, 0.68);
-  border: 1px solid rgba(216, 207, 193, 0.95);
-  color: var(--taupe);
+  background: rgba(255, 253, 248, 0.96);
+  border: 1px solid rgba(113, 105, 96, 0.42);
+  color: var(--charcoal);
   font-size: 0.74rem;
   font-weight: 900;
   padding: 0.48rem 0.72rem;
@@ -887,8 +887,8 @@ select {
 }
 
 .sortControls button.active {
-  background: var(--account-accent);
-  border-color: var(--account-accent);
+  background: var(--charcoal);
+  border-color: var(--charcoal);
   color: var(--paper);
 }
 
