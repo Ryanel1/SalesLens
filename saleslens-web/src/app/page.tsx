@@ -209,6 +209,7 @@ type InventorySnapshot = {
 const PAGE_SIZE = 1000;
 const IMAGE_FETCH_BATCH_SIZE = 30;
 const IMAGE_PREFETCH_LIMIT = 120;
+const INVENTORY_TRACKER_MIN_UNITS = 5;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
@@ -1219,7 +1220,7 @@ export default function Home() {
                 <div>
                   <h3>Inventory Tracker</h3>
                   <p>
-                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items |{" "}
+                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units |{" "}
                     {numberText(sum(inventoryTracker.map((row) => row.inventoryUnits)))} Units
                   </p>
                 </div>
@@ -2873,7 +2874,7 @@ function inventoryTrackerRows(
         productUrl: findProductPageUrl(imageLookup, style, artCode, color),
       };
     })
-    .filter((row) => row.inventoryUnits > 0)
+    .filter((row) => row.inventoryUnits >= INVENTORY_TRACKER_MIN_UNITS)
     .sort((left, right) => {
       const unitDelta = sort === "highest"
         ? right.inventoryUnits - left.inventoryUnits
