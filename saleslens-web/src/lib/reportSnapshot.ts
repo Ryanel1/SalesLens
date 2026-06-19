@@ -64,6 +64,13 @@ export type SnapshotYtdLine = {
   priorTotal: number;
 };
 
+export type SnapshotInventoryLine = {
+  current: Array<number | null>;
+  prior: Array<number | null>;
+  currentYear: number;
+  priorYear: number;
+};
+
 export type SnapshotYtdInsights = {
   averageMonthlySales: number;
   priorAverageMonthlySales: number;
@@ -132,6 +139,7 @@ export type SnapshotInventory = {
   styles: number;
   artworks: number;
   coverage: number | null;
+  line?: SnapshotInventoryLine | null;
   byBrand: { brand: string; units: number }[];
   topStyles: { style: string; brand: string; units: number; artworks: number }[];
 } | null;

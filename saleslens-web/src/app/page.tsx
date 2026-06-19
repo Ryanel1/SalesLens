@@ -196,12 +196,20 @@ type SalesMixSlice = {
   percent: number;
 };
 
+type InventoryLine = {
+  current: Array<number | null>;
+  prior: Array<number | null>;
+  currentYear: number;
+  priorYear: number;
+};
+
 type InventorySnapshot = {
   date: string;
   totalUnits: number;
   styles: number;
   artworks: number;
   coverage: number | null;
+  line: InventoryLine | null;
   byBrand: { brand: string; units: number }[];
   topStyles: { style: string; brand: string; units: number; artworks: number }[];
 } | null;
@@ -436,8 +444,8 @@ export default function Home() {
   const ytdStyleStudy = useMemo(() => topStyleRows(ytdCurrentRecords, ytdPriorRecords), [ytdCurrentRecords, ytdPriorRecords]);
   const salesMix = useMemo(() => salesMixSlices(periodRecords), [periodRecords]);
   const inventorySnapshot = useMemo(
-    () => inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth),
-    [inventoryRecordsForCustomer, periodEndMonth, periodRecords],
+    () => inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth, recordsForCustomer),
+    [inventoryRecordsForCustomer, periodEndMonth, periodRecords, recordsForCustomer],
   );
   const inventoryTracker = useMemo(
     () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort),
@@ -1642,7 +1650,22 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
           ))}
         </div>
       ) : null}
+      {snapshot.line ? <InventoryLineChart line={snapshot.line} /> : null}
     </article>
+  );
+}
+
+function InventoryLineChart({ line }: { line: InventoryLine }) {
+  return (
+    <MiniLineChart
+      ariaLabel="Inventory units on hand by month"
+      className="inventoryTrendChart"
+      current={line.current}
+      currentLabel={String(line.currentYear)}
+      currentYear={line.currentYear}
+      prior={line.prior}
+      priorLabel={String(line.priorYear)}
+    />
   );
 }
 
@@ -1728,34 +1751,56 @@ function CompareUnitBar({ label, value, max, secondary = false }: { label: strin
 }
 
 function MiniLineChart({
+  ariaLabel = "Comparative sales by month",
+  className = "",
   current,
+  currentLabel,
   prior,
+  priorLabel,
   currentYear,
 }: {
-  current: number[];
-  prior: number[];
+  ariaLabel?: string;
+  className?: string;
+  current: Array<number | null>;
+  currentLabel?: string;
+  prior: Array<number | null>;
+  priorLabel?: string;
   currentYear: number | null;
 }) {
   const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
   const currentValues = padMonths(current);
   const priorValues = padMonths(prior);
-  const maxValue = Math.max(...currentValues, ...priorValues, 1);
+  const numericValues = [...currentValues, ...priorValues].filter((value): value is number => typeof value === "number");
+  const maxValue = Math.max(...numericValues, 1);
   const currentMonthCount = Math.max(1, lastActiveMonthIndex(currentValues) + 1);
   const priorMonthCount = Math.max(1, lastActiveMonthIndex(priorValues) + 1);
   const displayedCurrent = currentValues.slice(0, currentMonthCount);
   const displayedPrior = priorValues.slice(0, priorMonthCount);
   const xFor = (index: number) => 12 + (index / 11) * 164;
   const yFor = (value: number) => 78 - (value / maxValue) * 66;
-  const points = (values: number[]) => values.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
+  const lineSegments = (values: Array<number | null>) => {
+    const segments: string[][] = [];
+    let currentSegment: string[] = [];
+    values.forEach((value, index) => {
+      if (value == null) {
+        if (currentSegment.length) segments.push(currentSegment);
+        currentSegment = [];
+        return;
+      }
+      currentSegment.push(`${xFor(index)},${yFor(value)}`);
+    });
+    if (currentSegment.length) segments.push(currentSegment);
+    return segments;
+  };
   const ticks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <div className="lineCard comparativeChart">
+    <div className={`lineCard comparativeChart ${className}`}>
       <div className="lineLegend">
-        <span><i className="dot current" />{currentYear ?? "CY"}</span>
-        <span><i className="dot prior" />{currentYear ? currentYear - 1 : "LY"}</span>
+        <span><i className="dot current" />{currentLabel ?? currentYear ?? "CY"}</span>
+        <span><i className="dot prior" />{priorLabel ?? (currentYear ? currentYear - 1 : "LY")}</span>
       </div>
-      <svg viewBox="0 0 180 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Comparative sales by month">
+      <svg viewBox="0 0 180 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label={ariaLabel}>
         {ticks.map((tick) => {
           const y = 78 - tick * 66;
           return (
@@ -1773,11 +1818,15 @@ function MiniLineChart({
         ))}
         <line className="axisLine" x1="12" x2="176" y1="78" y2="78" />
         <line className="axisLine" x1="12" x2="12" y1="12" y2="78" />
-        <polyline points={points(displayedPrior)} className="priorLine" />
-        <polyline points={points(displayedCurrent)} className="currentLine" />
+        {lineSegments(displayedPrior).map((segment, index) => (
+          <polyline key={`prior-line-${index}`} points={segment.join(" ")} className="priorLine" />
+        ))}
+        {lineSegments(displayedCurrent).map((segment, index) => (
+          <polyline key={`current-line-${index}`} points={segment.join(" ")} className="currentLine" />
+        ))}
         {displayedPrior.map((value, index) => (
           <g key={`prior-${index}`}>
-            <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
+            {value == null ? null : <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />}
             {value ? (
               <text className="pointLabel priorLabel" x={xFor(index)} y={labelY(value, displayedCurrent[index] ?? 0, "prior")}>
                 {compactNumber(value)}
@@ -1787,7 +1836,7 @@ function MiniLineChart({
         ))}
         {displayedCurrent.map((value, index) => (
           <g key={`current-${index}`}>
-            <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
+            {value == null ? null : <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />}
             {value ? (
               <text className="pointLabel currentLabel" x={xFor(index)} y={labelY(value, displayedPrior[index] ?? 0, "current")}>
                 {compactNumber(value)}
@@ -1809,11 +1858,11 @@ function MiniLineChart({
   }
 }
 
-function padMonths(values: number[]) {
-  return Array.from({ length: 12 }, (_, index) => values[index] ?? 0);
+function padMonths(values: Array<number | null>) {
+  return Array.from({ length: 12 }, (_, index) => (values[index] === null ? null : values[index] ?? 0));
 }
 
-function lastActiveMonthIndex(values: number[]) {
+function lastActiveMonthIndex(values: Array<number | null>) {
   for (let index = 11; index >= 0; index -= 1) {
     if ((values[index] ?? 0) > 0) return index;
   }
@@ -1976,7 +2025,7 @@ function buildReportPayload({
     ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
     weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
-    inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth),
+    inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth, filteredRecords),
     inventoryTrackerSort: inventorySort,
     inventoryTracker: inventoryTrackerRows(periodRecords, ytdCurrentRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort),
     salesMix: salesMixSlices(periodRecords),
@@ -2782,6 +2831,7 @@ function inventorySnapshotForRecords(
   records: SalesRecord[],
   standaloneInventoryRecords: InventoryRecord[] = [],
   periodEndMonth: string | null = null,
+  trendRecords: SalesRecord[] = records,
 ): InventorySnapshot {
   const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
   if (!snapshotRecords.length) return null;
@@ -2793,9 +2843,58 @@ function inventorySnapshotForRecords(
     styles: uniqueCount(snapshotRecords.map(styleKey)),
     artworks: uniqueCount(snapshotRecords.map((record) => clean(record.art_code))),
     coverage: monthlySalesPace ? totalUnits / monthlySalesPace : null,
+    line: inventoryLinePoints(trendRecords, standaloneInventoryRecords, periodEndMonth),
     byBrand: inventoryByBrand(snapshotRecords),
     topStyles: topInventoryStyles(snapshotRecords),
   };
+}
+
+function inventoryLinePoints(
+  salesRecords: SalesRecord[],
+  standaloneInventoryRecords: InventoryRecord[] = [],
+  periodEndMonth: string | null = null,
+): InventoryLine | null {
+  if (!periodEndMonth) return null;
+  const currentYear = Number(periodEndMonth.slice(0, 4));
+  const currentMonthIndex = Number(periodEndMonth.slice(5, 7)) - 1;
+  if (!currentYear || currentMonthIndex < 0) return null;
+
+  const useStandalone = standaloneInventoryRecords.some((record) => record.inventory_units != null);
+  const sourceRecords: Array<SalesRecord | InventoryRecord> = useStandalone
+    ? standaloneInventoryRecords
+    : salesRecords.filter((record) => record.inventory_units != null);
+  const current = monthlyInventoryPoints(sourceRecords, currentYear, currentMonthIndex);
+  const prior = monthlyInventoryPoints(sourceRecords, currentYear - 1, 11);
+  const hasPoints = [...current, ...prior].some((value) => value != null);
+
+  if (!hasPoints) return null;
+  return {
+    current,
+    prior,
+    currentYear,
+    priorYear: currentYear - 1,
+  };
+}
+
+function monthlyInventoryPoints(
+  records: Array<SalesRecord | InventoryRecord>,
+  year: number,
+  maxMonthIndex: number,
+) {
+  return Array.from({ length: 12 }, (_, monthIndex): number | null => {
+    if (monthIndex > maxMonthIndex) return null;
+    const month = `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+    const monthRecords = records.filter((record) => inventoryRecordDate(record).slice(0, 7) === month && record.inventory_units != null);
+    if (!monthRecords.length) return null;
+
+    const latestByBrand = [...groupBy(monthRecords, brandName).values()].flatMap((brandRecords) => {
+      const latestDate = brandRecords.map(inventoryRecordDate).sort().at(-1);
+      return latestDate ? brandRecords.filter((record) => inventoryRecordDate(record) === latestDate) : [];
+    });
+
+    const totalUnits = sum(latestByBrand.map((record) => record.inventory_units ?? 0));
+    return Number.isFinite(totalUnits) ? totalUnits : null;
+  });
 }
 
 function inventoryTrackerRows(

@@ -9,6 +9,7 @@ import {
   type ReportSnapshotRecord,
   type SnapshotBestDay,
   type SnapshotInventory,
+  type SnapshotInventoryLine,
   type SnapshotMetricSet,
   type SnapshotMonthlyDrivers,
   type SnapshotTopArt,
@@ -632,31 +633,84 @@ function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
           ))}
         </div>
       ) : null}
+      {snapshot.line ? <InventoryLineChart line={snapshot.line} /> : null}
     </article>
   );
 }
 
+function InventoryLineChart({ line }: { line: SnapshotInventoryLine }) {
+  return (
+    <StaticLineChartBase
+      ariaLabel="Inventory units on hand by month"
+      className="inventoryTrendChart"
+      current={line.current}
+      currentLabel={String(line.currentYear)}
+      prior={line.prior}
+      priorLabel={String(line.priorYear)}
+    />
+  );
+}
+
 function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
+  return (
+    <StaticLineChartBase
+      current={payload.ytdLine.current}
+      currentLabel="Current"
+      prior={payload.ytdLine.prior}
+      priorLabel="Last Year"
+    />
+  );
+}
+
+function StaticLineChartBase({
+  ariaLabel = "Comparative sales by month",
+  className = "",
+  current,
+  currentLabel,
+  prior,
+  priorLabel,
+}: {
+  ariaLabel?: string;
+  className?: string;
+  current: Array<number | null>;
+  currentLabel: string;
+  prior: Array<number | null>;
+  priorLabel: string;
+}) {
   const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-  const currentValues = padMonths(payload.ytdLine.current);
-  const priorValues = padMonths(payload.ytdLine.prior);
-  const maxValue = Math.max(...currentValues, ...priorValues, 1);
+  const currentValues = padMonths(current);
+  const priorValues = padMonths(prior);
+  const numericValues = [...currentValues, ...priorValues].filter((value): value is number => typeof value === "number");
+  const maxValue = Math.max(...numericValues, 1);
   const currentMonthCount = Math.max(1, lastActiveMonthIndex(currentValues) + 1);
   const priorMonthCount = Math.max(1, lastActiveMonthIndex(priorValues) + 1);
   const displayedCurrent = currentValues.slice(0, currentMonthCount);
   const displayedPrior = priorValues.slice(0, priorMonthCount);
   const xFor = (index: number) => 12 + (index / 11) * 164;
   const yFor = (value: number) => 78 - (value / maxValue) * 66;
-  const points = (values: number[]) => values.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
+  const lineSegments = (values: Array<number | null>) => {
+    const segments: string[][] = [];
+    let currentSegment: string[] = [];
+    values.forEach((value, index) => {
+      if (value == null) {
+        if (currentSegment.length) segments.push(currentSegment);
+        currentSegment = [];
+        return;
+      }
+      currentSegment.push(`${xFor(index)},${yFor(value)}`);
+    });
+    if (currentSegment.length) segments.push(currentSegment);
+    return segments;
+  };
   const ticks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <div className="lineCard comparativeChart">
+    <div className={`lineCard comparativeChart ${className}`}>
       <div className="lineLegend">
-        <span><i className="dot current" />Current</span>
-        <span><i className="dot prior" />Last Year</span>
+        <span><i className="dot current" />{currentLabel}</span>
+        <span><i className="dot prior" />{priorLabel}</span>
       </div>
-      <svg viewBox="0 0 180 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Comparative sales by month">
+      <svg viewBox="0 0 180 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label={ariaLabel}>
         {ticks.map((tick) => {
           const y = 78 - tick * 66;
           return (
@@ -674,11 +728,15 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
         ))}
         <line className="axisLine" x1="12" x2="176" y1="78" y2="78" />
         <line className="axisLine" x1="12" x2="12" y1="12" y2="78" />
-        <polyline points={points(displayedPrior)} className="priorLine" />
-        <polyline points={points(displayedCurrent)} className="currentLine" />
+        {lineSegments(displayedPrior).map((segment, index) => (
+          <polyline key={`prior-line-${index}`} points={segment.join(" ")} className="priorLine" />
+        ))}
+        {lineSegments(displayedCurrent).map((segment, index) => (
+          <polyline key={`current-line-${index}`} points={segment.join(" ")} className="currentLine" />
+        ))}
         {displayedPrior.map((value, index) => (
           <g key={`prior-${index}`}>
-            <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
+            {value == null ? null : <circle className="priorPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />}
             {value ? (
               <text className="pointLabel priorLabel" x={xFor(index)} y={labelY(value, displayedCurrent[index] ?? 0, "prior")}>
                 {compactNumber(value)}
@@ -688,7 +746,7 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
         ))}
         {displayedCurrent.map((value, index) => (
           <g key={`current-${index}`}>
-            <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />
+            {value == null ? null : <circle className="currentPoint" cx={xFor(index)} cy={yFor(value)} r="1.15" />}
             {value ? (
               <text className="pointLabel currentLabel" x={xFor(index)} y={labelY(value, displayedPrior[index] ?? 0, "current")}>
                 {compactNumber(value)}
@@ -709,11 +767,11 @@ function StaticLineChart({ payload }: { payload: ReportSnapshotPayload }) {
   }
 }
 
-function padMonths(values: number[]) {
-  return Array.from({ length: 12 }, (_, index) => values[index] ?? 0);
+function padMonths(values: Array<number | null>) {
+  return Array.from({ length: 12 }, (_, index) => (values[index] === null ? null : values[index] ?? 0));
 }
 
-function lastActiveMonthIndex(values: number[]) {
+function lastActiveMonthIndex(values: Array<number | null>) {
   for (let index = 11; index >= 0; index -= 1) {
     if ((values[index] ?? 0) > 0) return index;
   }

@@ -1729,6 +1729,12 @@ select {
   text-align: right;
 }
 
+.inventoryTrendChart {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+  min-height: 460px;
+}
+
 .bestRow {
   display: grid;
   gap: 0.32rem;
