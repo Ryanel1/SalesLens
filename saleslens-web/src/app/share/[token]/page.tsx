@@ -234,7 +234,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                       <strong>{row.artCode}</strong>
                     )}
                     <span>{row.style} | {row.color}</span>
-                    <span>{row.brand}</span>
+                    <span>YTD Sold: {numberText(row.ytdUnits ?? 0)} Units</span>
                     <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                   </div>
                 </article>
