@@ -54,6 +54,7 @@ export type SnapshotTopArt = SnapshotMetricSet & {
   inventoryUnits?: number | null;
   inventoryScope?: "color" | "styleArt" | null;
   imageUrl: string | null;
+  productUrl?: string | null;
 };
 
 export type SnapshotYtdLine = {

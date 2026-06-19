@@ -236,7 +236,13 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                   {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
                 </div>
                 <div className="artMeta">
-                  <strong>{row.artCode}</strong>
+                  {row.productUrl ? (
+                    <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                      {row.artCode}
+                    </a>
+                  ) : (
+                    <strong>{row.artCode}</strong>
+                  )}
                   <span>{row.style} | {row.color}</span>
                   <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
                   {payload.periodMode === "monthly" ? (

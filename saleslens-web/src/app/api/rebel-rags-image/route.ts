@@ -116,28 +116,17 @@ async function matchingImage(item: ImageRequestItem, accountName: string): Promi
 
 async function matchingVolshopImage(item: ImageRequestItem) {
   const knownUrl = knownVolshopProductImageUrl(item);
-  if (knownUrl) {
-    return {
-      imageUrl: knownUrl,
-      productUrl: VOLSHOP_BASE_URL,
-      lookupValue: clean(item.parentSku) || clean(item.sku) || clean(item.artCode),
-    };
-  }
-
   const parentSku = volshopSku(item.parentSku);
   const sku = volshopSku(item.sku);
   const lookupValue = parentSku || sku;
-  if (!lookupValue) return null;
-
-  for (const directUrl of volshopProductImageUrls(lookupValue)) {
-    if (await imageExists(directUrl)) {
-      return { imageUrl: directUrl, productUrl: VOLSHOP_BASE_URL, lookupValue };
-    }
-  }
-
-  for (const keyword of [parentSku, sku].filter(Boolean) as string[]) {
-    const searchImage = await volshopImageFromSearchKeyword(keyword);
-    if (searchImage) return { ...searchImage, lookupValue: keyword };
+  if (!lookupValue) {
+    return knownUrl
+      ? {
+          imageUrl: knownUrl,
+          productUrl: VOLSHOP_BASE_URL,
+          lookupValue: clean(item.artCode),
+        }
+      : null;
   }
 
   for (const keyword of [parentSku, sku, clean(item.style), clean(item.artCode)].filter(Boolean) as string[]) {
@@ -148,6 +137,25 @@ async function matchingVolshopImage(item: ImageRequestItem) {
       if (!volshopDetailMatches(detailHtml, item, keyword)) continue;
       const imageUrl = volshopImageFromDetail(detailHtml, productUrl);
       if (imageUrl) return { imageUrl, productUrl, lookupValue: keyword };
+    }
+  }
+
+  for (const keyword of [parentSku, sku].filter(Boolean) as string[]) {
+    const searchImage = await volshopImageFromSearchKeyword(keyword);
+    if (searchImage) return { ...searchImage, lookupValue: keyword };
+  }
+
+  if (knownUrl) {
+    return {
+      imageUrl: knownUrl,
+      productUrl: VOLSHOP_BASE_URL,
+      lookupValue,
+    };
+  }
+
+  for (const directUrl of volshopProductImageUrls(lookupValue)) {
+    if (await imageExists(directUrl)) {
+      return { imageUrl: directUrl, productUrl: VOLSHOP_BASE_URL, lookupValue };
     }
   }
 

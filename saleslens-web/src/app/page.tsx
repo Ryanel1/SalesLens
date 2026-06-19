@@ -64,6 +64,7 @@ type ProductImage = {
   style_number: string;
   art_code: string;
   color: string;
+  product_url: string | null;
   image_url: string | null;
   storage_path: string | null;
   resolved_url?: string | null;
@@ -115,6 +116,7 @@ type TopArt = MetricSet & {
   inventoryUnits: number | null;
   inventoryScope: "color" | null;
   imageUrl: string | null;
+  productUrl: string | null;
 };
 
 type TopStyle = MetricSet & {
@@ -1188,7 +1190,13 @@ export default function Home() {
                     {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
                   </div>
                   <div className="artMeta">
-                    <strong>{row.artCode}</strong>
+                    {row.productUrl ? (
+                      <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                        {row.artCode}
+                      </a>
+                    ) : (
+                      <strong>{row.artCode}</strong>
+                    )}
                     <span>{row.style} | {row.color}</span>
                     <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
                     {selectedPeriodKind === "month" ? (
@@ -1810,7 +1818,7 @@ async function fetchAllRecords(client: SupabaseClient, customerId: string) {
 async function fetchProductImages(client: SupabaseClient, customerId: string) {
   const { data } = await client
     .from("product_images")
-    .select("style_number,art_code,color,image_url,storage_path")
+    .select("style_number,art_code,color,product_url,image_url,storage_path")
     .eq("customer_id", customerId);
   return {
     images: ((data ?? []) as ProductImage[]).map((image) => ({
@@ -2044,6 +2052,7 @@ function topArtRows(
         inventoryUnits: inventoryResult.units,
         inventoryScope: inventoryResult.scope,
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
+        productUrl: findProductPageUrl(imageLookup, style, artCode, color),
       };
     })
     .sort(sortByUnits)
@@ -2073,14 +2082,49 @@ function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) 
 
 function imageLookupMaps(images: ProductImage[]) {
   const exact = new Map<string, string>();
+  const productUrls = new Map<string, string>();
 
   images.forEach((image) => {
+    const productUrl = cleanProductPageUrl(image.product_url);
+    if (productUrl) {
+      productUrls.set(imageKey(image.style_number, image.art_code, image.color), productUrl);
+    }
     const url = image.resolved_url ?? image.image_url;
     if (!url) return;
     exact.set(imageKey(image.style_number, image.art_code, image.color), url);
   });
 
-  return { exact };
+  return { exact, productUrls };
+}
+
+function cleanProductPageUrl(value: string | null | undefined) {
+  const raw = clean(value);
+  if (!raw) return null;
+
+  try {
+    const url = new URL(raw);
+    const path = url.pathname.toLowerCase();
+    if (url.hostname.includes("utvolshop.com")) {
+      if (path === "/" || path.startsWith("/search") || path.includes("/site/product-images/")) return null;
+    }
+    if (url.hostname.includes("rebelrags.net")) {
+      if (path === "/" || path.startsWith("/prodimages/") || path.includes("/browse/keyword/")) return null;
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function findProductPageUrl(
+  lookup: ReturnType<typeof imageLookupMaps>,
+  style: string,
+  artCode: string,
+  color: string,
+) {
+  return lookup.productUrls.get(imageKey(style, artCode, color))
+    ?? legacyProductPageUrl(lookup, style, artCode, color)
+    ?? knownProductPageUrl(style, artCode, color);
 }
 
 function findProductImageUrl(
@@ -2116,6 +2160,23 @@ function legacyProductImageUrl(
   return null;
 }
 
+function legacyProductPageUrl(
+  lookup: ReturnType<typeof imageLookupMaps>,
+  style: string,
+  artCode: string,
+  color: string,
+) {
+  if (
+    compactImagePart(artCode) === "APC03479022" &&
+    compactImagePart(color) === "WHITE" &&
+    ["CT1000", "CS1220", "CS2071", "CT1730"].includes(compactImagePart(style))
+  ) {
+    return lookup.productUrls.get(imageKey(style, "03456518", color)) ?? null;
+  }
+
+  return null;
+}
+
 function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color" | "parentSku" | "sku">) {
   return [imageKey(row.style, row.artCode, row.color), compactImagePart(row.parentSku ?? ""), compactImagePart(row.sku ?? "")]
     .filter(Boolean)
@@ -2131,6 +2192,7 @@ function mergeProductImages(images: ProductImage[], matches: RebelRagsImageMatch
       art_code: match.artCode,
       color: match.color,
       image_url: match.imageUrl,
+      product_url: match.productUrl,
       storage_path: null,
       resolved_url: match.imageUrl,
     });
@@ -2176,6 +2238,15 @@ function knownProductImageUrl(style: string, artCode: string, color: string) {
     ?? null;
 }
 
+function knownProductPageUrl(style: string, artCode: string, color: string) {
+  const normalizedStyle = compactImagePart(style);
+  const normalizedArt = compactImagePart(artCode);
+  const normalizedColor = compactImagePart(color);
+
+  return knownRebelRagsProductPages[imageKey(normalizedStyle, normalizedArt, normalizedColor)]
+    ?? null;
+}
+
 const knownVolshopImages: Record<string, string> = {
   [imageKey("CS3050", "AEC03612724", "GREY")]: "https://www.utvolshop.com/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200",
 };
@@ -2189,6 +2260,10 @@ const knownRebelRagsImages: Record<string, string> = {
   [imageKey("GDH100", "003862801", "PORCHBLUE")]: "https://www.rebelrags.net/prodimages/27361-PORCH_BLUE-l.jpg",
   [imageKey("GDH100", "003862801", "COTTONCANDY")]: "https://www.rebelrags.net/prodimages/27361-COTTON_CANDY-l.jpg",
   [imageKey("GDH100", "004116676", "COTTONCANDY")]: "https://www.rebelrags.net/prodimages/30756-COTTON_CANDY-l.jpg",
+};
+
+const knownRebelRagsProductPages: Record<string, string> = {
+  [imageKey("G1092", "004116734", "OXFORDHEATHER")]: "https://www.rebelrags.net/gear/arch-block-ole-miss-big-cotton-tumbled-crewneck-31395",
 };
 
 function imageUrlMatchesColor(value: string, color: string) {
