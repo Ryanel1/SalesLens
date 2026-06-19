@@ -136,6 +136,18 @@ export type SnapshotInventory = {
   topStyles: { style: string; brand: string; units: number; artworks: number }[];
 } | null;
 
+export type SnapshotInventoryTrackerItem = {
+  rank: number;
+  key: string;
+  style: string;
+  brand: string;
+  color: string;
+  artCode: string;
+  inventoryUnits: number;
+  imageUrl: string | null;
+  productUrl?: string | null;
+};
+
 export type ReportSnapshotPayload = {
   version: 1;
   generatedAt: string;
@@ -154,6 +166,8 @@ export type ReportSnapshotPayload = {
   monthlyDrivers?: SnapshotMonthlyDrivers;
   weeklyScorecards?: SnapshotWeeklyScorecardRow[];
   inventorySnapshot?: SnapshotInventory;
+  inventoryTrackerSort?: "highest" | "lowest";
+  inventoryTracker?: SnapshotInventoryTrackerItem[];
   salesMix: SnapshotSalesMixSlice[];
   bestDay: SnapshotBestDay;
   topStyles: SnapshotTopStyle[];

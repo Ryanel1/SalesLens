@@ -119,6 +119,20 @@ type TopArt = MetricSet & {
   productUrl: string | null;
 };
 
+type InventoryTrackerItem = {
+  rank: number;
+  key: string;
+  style: string;
+  brand: string;
+  color: string;
+  artCode: string;
+  inventoryUnits: number;
+  imageUrl: string | null;
+  productUrl: string | null;
+};
+
+type InventorySort = "highest" | "lowest";
+
 type TopStyle = MetricSet & {
   rank: number;
   style: string;
@@ -225,6 +239,7 @@ export default function Home() {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("All");
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
+  const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
@@ -403,6 +418,10 @@ export default function Home() {
     () => inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth),
     [inventoryRecordsForCustomer, periodEndMonth, periodRecords],
   );
+  const inventoryTracker = useMemo(
+    () => inventoryTrackerRows(periodRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort),
+    [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords],
+  );
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
   const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, periodEndMonth), [recordsForCustomer, periodEndMonth]);
   const lastUploaded = latestDate(recordsForCustomer);
@@ -541,6 +560,7 @@ export default function Home() {
           generatedAt,
           images: dashboardData.images,
           inventoryRecords: dashboardData.inventoryRecords,
+          inventorySort,
           period: activePeriod,
           records: dashboardData.records,
         });
@@ -557,6 +577,7 @@ export default function Home() {
         generatedAt,
         images: imagesResult.images,
         inventoryRecords: inventoryResult.records,
+        inventorySort,
         period: activePeriod,
         records: recordsResult.records,
       });
@@ -1143,6 +1164,59 @@ export default function Home() {
                 <strong>{dateText(inventorySnapshot.date)}</strong>
               </div>
               <InventoryCard snapshot={inventorySnapshot} />
+            </section>
+          ) : null}
+
+          {inventoryTracker.length ? (
+            <section className="sectionBlock">
+              <div className="sectionTitle">
+                <div>
+                  <h3>Inventory Tracker</h3>
+                  <p>
+                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items |{" "}
+                    {numberText(sum(inventoryTracker.map((row) => row.inventoryUnits)))} Units
+                  </p>
+                </div>
+                <div className="sortControls" aria-label="Inventory sort controls">
+                  <span>Sort by:</span>
+                  <button
+                    className={inventorySort === "highest" ? "active" : ""}
+                    type="button"
+                    onClick={() => setInventorySort("highest")}
+                  >
+                    Highest
+                  </button>
+                  <button
+                    className={inventorySort === "lowest" ? "active" : ""}
+                    type="button"
+                    onClick={() => setInventorySort("lowest")}
+                  >
+                    Lowest
+                  </button>
+                </div>
+              </div>
+              <div className="artGrid">
+                {inventoryTracker.map((row) => (
+                  <article className="artCard" key={row.key}>
+                    <div className="artImage">
+                      <b>#{row.rank}</b>
+                      {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
+                    </div>
+                    <div className="artMeta">
+                      {row.productUrl ? (
+                        <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                          {row.artCode}
+                        </a>
+                      ) : (
+                        <strong>{row.artCode}</strong>
+                      )}
+                      <span>{row.style} | {row.color}</span>
+                      <span>{row.brand}</span>
+                      <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </section>
           ) : null}
 
@@ -1851,6 +1925,7 @@ function buildReportPayload({
   generatedAt,
   images,
   inventoryRecords,
+  inventorySort = "highest",
   period,
   records,
 }: {
@@ -1859,6 +1934,7 @@ function buildReportPayload({
   generatedAt: string;
   images: ProductImage[];
   inventoryRecords: InventoryRecord[];
+  inventorySort?: InventorySort;
   period: PeriodSelection;
   records: SalesRecord[];
 }): ReportSnapshotPayload {
@@ -1895,6 +1971,8 @@ function buildReportPayload({
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
     weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth),
+    inventoryTrackerSort: inventorySort,
+    inventoryTracker: inventoryTrackerRows(periodRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort),
     salesMix: salesMixSlices(periodRecords),
     bestDay: {
       date: bestDay.date,
@@ -2635,6 +2713,45 @@ function inventorySnapshotForRecords(
     byBrand: inventoryByBrand(snapshotRecords),
     topStyles: topInventoryStyles(snapshotRecords),
   };
+}
+
+function inventoryTrackerRows(
+  records: SalesRecord[],
+  standaloneInventoryRecords: InventoryRecord[] = [],
+  periodEndMonth: string | null,
+  images: ProductImage[],
+  sort: InventorySort = "highest",
+) {
+  const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
+  const imageLookup = imageLookupMaps(images);
+
+  return groupedRows(snapshotRecords, artKey)
+    .map<InventoryTrackerItem>(([key, group]) => {
+      const first = group[0];
+      const style = normalizedStyle(first);
+      const artCode = displayArtCode(first);
+      const color = colorName(first);
+      return {
+        rank: 0,
+        key,
+        style,
+        brand: brandName(first),
+        color,
+        artCode,
+        inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),
+        imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
+        productUrl: findProductPageUrl(imageLookup, style, artCode, color),
+      };
+    })
+    .filter((row) => row.inventoryUnits > 0)
+    .sort((left, right) => {
+      const unitDelta = sort === "highest"
+        ? right.inventoryUnits - left.inventoryUnits
+        : left.inventoryUnits - right.inventoryUnits;
+      return unitDelta || left.style.localeCompare(right.style) || left.artCode.localeCompare(right.artCode);
+    })
+    .slice(0, 100)
+    .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 function normalizedMonthlyUnitPace(records: SalesRecord[]) {
