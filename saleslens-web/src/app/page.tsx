@@ -2725,7 +2725,7 @@ function inventoryTrackerRows(
   const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
   const imageLookup = imageLookupMaps(images);
 
-  return groupedRows(snapshotRecords, artKey)
+  return groupedRows(snapshotRecords, (record) => artKey(record))
     .map<InventoryTrackerItem>(([key, group]) => {
       const first = group[0];
       const style = normalizedStyle(first);
@@ -2810,7 +2810,7 @@ function latestInventoryRecords(
   records: SalesRecord[],
   standaloneInventoryRecords: InventoryRecord[],
   _periodEndMonth: string | null,
-) {
+): Array<SalesRecord | InventoryRecord> {
   const standaloneSnapshot = latestStandaloneInventoryRecords(standaloneInventoryRecords);
   if (standaloneSnapshot.length) return standaloneSnapshot;
   return latestEmbeddedInventoryRecords(records);
