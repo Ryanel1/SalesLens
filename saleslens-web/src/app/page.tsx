@@ -80,6 +80,16 @@ type RebelRagsImageMatch = {
   isManualOverride: boolean;
 };
 
+type ImageFetchCandidate = {
+  style: string;
+  artCode: string;
+  color: string;
+  styleName: string;
+  parentSku: string | null;
+  sku: string | null;
+  imageUrl: string | null;
+};
+
 type DashboardData = {
   records: SalesRecord[];
   inventoryRecords: InventoryRecord[];
@@ -124,8 +134,11 @@ type InventoryTrackerItem = {
   key: string;
   style: string;
   brand: string;
+  styleName: string;
   color: string;
   artCode: string;
+  parentSku: string | null;
+  sku: string | null;
   inventoryUnits: number;
   imageUrl: string | null;
   productUrl: string | null;
@@ -193,6 +206,8 @@ type InventorySnapshot = {
 } | null;
 
 const PAGE_SIZE = 1000;
+const IMAGE_FETCH_BATCH_SIZE = 30;
+const IMAGE_PREFETCH_LIMIT = 120;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
@@ -253,7 +268,13 @@ export default function Home() {
   const [importStatus, setImportStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
+  const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    imageFetchAttempts.current.clear();
+    setImagePrefetchRun(0);
+  }, [selectedCustomerId]);
 
   useEffect(() => {
     if (!supabase) {
@@ -423,6 +444,17 @@ export default function Home() {
     [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords],
   );
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
+  const imagePrefetchCandidates = useMemo(
+    () => productImageCandidates({
+      bestDayItems: bestDay.items,
+      images: dashboardData.images,
+      inventoryTracker,
+      records: [...periodRecords, ...ytdCurrentRecords],
+      topArt,
+      weeklyScorecards,
+    }),
+    [bestDay.items, dashboardData.images, inventoryTracker, periodRecords, topArt, weeklyScorecards, ytdCurrentRecords],
+  );
   const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, periodEndMonth), [recordsForCustomer, periodEndMonth]);
   const lastUploaded = latestDate(recordsForCustomer);
 
@@ -437,10 +469,10 @@ export default function Home() {
     const customerId = selectedCustomerId;
     const accountName = selectedCustomer.name;
 
-    const missingRows = topArt
+    const missingRows = imagePrefetchCandidates
       .filter((row) => !row.imageUrl && row.style !== "-")
       .filter((row) => !imageFetchAttempts.current.has(imageAttemptKey(row)))
-      .slice(0, 30);
+      .slice(0, IMAGE_PREFETCH_LIMIT);
 
     if (!missingRows.length) return;
     missingRows.forEach((row) => imageFetchAttempts.current.add(imageAttemptKey(row)));
@@ -449,29 +481,42 @@ export default function Home() {
 
     async function fetchMissingImages() {
       const { data } = await client.auth.getSession();
-      const response = await fetch("/api/rebel-rags-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}),
-        },
-        body: JSON.stringify({
-          accountName,
-          items: missingRows.map((row) => ({
-            style: row.style,
-            artCode: row.artCode,
-            color: row.color,
-            styleName: row.styleName,
-            parentSku: row.parentSku,
-            sku: row.sku,
-          })),
-        }),
-      });
+      const allMatches: RebelRagsImageMatch[] = [];
 
-      if (!response.ok) return;
-      const payload = (await response.json()) as { matches?: RebelRagsImageMatch[] };
-      const matches = payload.matches?.filter((match) => match.imageUrl) ?? [];
-      if (!matches.length) return;
+      for (let index = 0; index < missingRows.length; index += IMAGE_FETCH_BATCH_SIZE) {
+        if (isCancelled) return;
+        const batch = missingRows.slice(index, index + IMAGE_FETCH_BATCH_SIZE);
+        const response = await fetch("/api/rebel-rags-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(data.session?.access_token ? { Authorization: `Bearer ${data.session.access_token}` } : {}),
+          },
+          body: JSON.stringify({
+            accountName,
+            items: batch.map((row) => ({
+              style: row.style,
+              artCode: row.artCode,
+              color: row.color,
+              styleName: row.styleName,
+              parentSku: row.parentSku,
+              sku: row.sku,
+            })),
+          }),
+        });
+
+        if (!response.ok) continue;
+        const payload = (await response.json()) as { matches?: RebelRagsImageMatch[] };
+        allMatches.push(...(payload.matches?.filter((match) => match.imageUrl) ?? []));
+      }
+
+      const matchesByKey = new Map<string, RebelRagsImageMatch>();
+      allMatches.forEach((match) => matchesByKey.set(imageKey(match.style, match.artCode, match.color), match));
+      const matches = [...matchesByKey.values()];
+      if (!matches.length) {
+        if (!isCancelled) setImagePrefetchRun((run) => run + 1);
+        return;
+      }
 
       const rows = matches.map((match) => ({
         customer_id: customerId,
@@ -501,7 +546,7 @@ export default function Home() {
     return () => {
       isCancelled = true;
     };
-  }, [selectedCustomer, selectedCustomerId, supabase, topArt]);
+  }, [imagePrefetchCandidates, imagePrefetchRun, selectedCustomer, selectedCustomerId, supabase]);
 
   async function signIn() {
     if (!supabase) {
@@ -2255,7 +2300,85 @@ function legacyProductPageUrl(
   return null;
 }
 
-function imageAttemptKey(row: Pick<TopArt, "style" | "artCode" | "color" | "parentSku" | "sku">) {
+function productImageCandidates({
+  bestDayItems,
+  images,
+  inventoryTracker,
+  records,
+  topArt,
+  weeklyScorecards,
+}: {
+  bestDayItems: Array<{ style: string; artCode: string; color: string }>;
+  images: ProductImage[];
+  inventoryTracker: InventoryTrackerItem[];
+  records: SalesRecord[];
+  topArt: TopArt[];
+  weeklyScorecards: WeeklyScorecardRow[];
+}) {
+  const imageLookup = imageLookupMaps(images);
+  const byKey = new Map<string, ImageFetchCandidate>();
+
+  function addCandidate(candidate: Omit<ImageFetchCandidate, "imageUrl"> & { imageUrl?: string | null }) {
+    const style = clean(candidate.style);
+    const artCode = clean(candidate.artCode);
+    const color = clean(candidate.color);
+    if (!style || !artCode || !color || style === "-" || artCode === "-") return;
+
+    const key = imageKey(style, artCode, color);
+    const imageUrl = candidate.imageUrl ?? findProductImageUrl(imageLookup, style, artCode, color);
+    if (imageUrl) return;
+
+    const prepared: ImageFetchCandidate = {
+      style,
+      artCode,
+      color,
+      styleName: clean(candidate.styleName),
+      parentSku: clean(candidate.parentSku) || null,
+      sku: clean(candidate.sku) || null,
+      imageUrl: null,
+    };
+    const existing = byKey.get(key);
+    if (!existing || (!existing.parentSku && prepared.parentSku) || (!existing.sku && prepared.sku)) {
+      byKey.set(key, existing ? { ...existing, ...prepared } : prepared);
+    }
+  }
+
+  topArt.forEach((row) => addCandidate(row));
+  inventoryTracker.forEach((row) => addCandidate(row));
+  weeklyScorecards.forEach((row) => row.topItems.forEach((item) => addCandidate({
+    ...item,
+    parentSku: null,
+    sku: null,
+    styleName: "",
+  })));
+  bestDayItems.forEach((item) => addCandidate({
+    ...item,
+    parentSku: null,
+    sku: null,
+    styleName: "",
+  }));
+
+  groupedRows(records, artKey)
+    .map(([_key, group]) => {
+      const first = group[0];
+      return {
+        style: normalizedStyle(first),
+        artCode: displayArtCode(first),
+        color: colorName(first),
+        styleName: clean(first.master_style),
+        parentSku: firstNonBlank(group.map((record) => record.parent_sku)),
+        sku: firstNonBlank(group.map((record) => record.sku)),
+        sales: sum(group.map(amountValue)),
+        units: sum(group.map((record) => record.units ?? 0)),
+      };
+    })
+    .sort((left, right) => right.units - left.units || right.sales - left.sales || left.style.localeCompare(right.style))
+    .forEach((row) => addCandidate(row));
+
+  return [...byKey.values()];
+}
+
+function imageAttemptKey(row: Pick<ImageFetchCandidate, "style" | "artCode" | "color" | "parentSku" | "sku">) {
   return [imageKey(row.style, row.artCode, row.color), compactImagePart(row.parentSku ?? ""), compactImagePart(row.sku ?? "")]
     .filter(Boolean)
     .join("|");
@@ -2736,8 +2859,11 @@ function inventoryTrackerRows(
         key,
         style,
         brand: brandName(first),
+        styleName: clean(first.master_style),
         color,
         artCode,
+        parentSku: firstNonBlank(group.map(recordParentSku)),
+        sku: firstNonBlank(group.map(recordSku)),
         inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
         productUrl: findProductPageUrl(imageLookup, style, artCode, color),
@@ -2841,6 +2967,14 @@ function inventoryErrorMessage(error: string | null | undefined) {
 
 function inventoryRecordDate(record: SalesRecord | InventoryRecord) {
   return "inventory_date" in record ? record.inventory_date : record.transaction_date;
+}
+
+function recordParentSku(record: SalesRecord | InventoryRecord) {
+  return "parent_sku" in record ? record.parent_sku : null;
+}
+
+function recordSku(record: SalesRecord | InventoryRecord) {
+  return "sku" in record ? record.sku : null;
 }
 
 function inventoryByBrand(records: Array<SalesRecord | InventoryRecord>) {
