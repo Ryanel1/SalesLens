@@ -287,36 +287,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </div>
         </ReportSection>
 
-        <ReportSection title="All Styles Sold" subtitle={`${numberText(payload.allStyles.length)} styles for this report.`}>
-          <div className="tableWrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Style</th>
-                  <th>Brand/Class</th>
-                  <th>Colors</th>
-                  <th>Artwork</th>
-                  <th>Units</th>
-                  <th>Sales</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payload.allStyles.map((style) => (
-                  <tr key={style.style}>
-                    <td>{style.rank}</td>
-                    <td>{style.style}</td>
-                    <td>{style.brand}</td>
-                    <td>{numberText(style.colorCount)}</td>
-                    <td>{numberText(style.artCount)}</td>
-                    <td>{numberText(style.units)}</td>
-                    <td>{currencyText(style.sales)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </ReportSection>
       </section>
     </Shell>
   );

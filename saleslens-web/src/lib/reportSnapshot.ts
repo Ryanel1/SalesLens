@@ -175,7 +175,6 @@ export type ReportSnapshotPayload = {
   styleStudyMonthly?: SnapshotTopStyle[];
   styleStudyYtd?: SnapshotTopStyle[];
   topArt: SnapshotTopArt[];
-  allStyles: SnapshotTopStyle[];
 };
 
 export type ReportSnapshotBundlePayload = {

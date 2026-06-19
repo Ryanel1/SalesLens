@@ -434,8 +434,6 @@ export default function Home() {
   );
   const periodStyleStudy = useMemo(() => topStyleRows(periodRecords, comparisonRecords), [periodRecords, comparisonRecords]);
   const ytdStyleStudy = useMemo(() => topStyleRows(ytdCurrentRecords, ytdPriorRecords), [ytdCurrentRecords, ytdPriorRecords]);
-  const allStyleRowsForPeriod = useMemo(() => allStyleRows(periodRecords), [periodRecords]);
-  const allStyles = useMemo(() => allStyleRowsForPeriod.slice(0, 100), [allStyleRowsForPeriod]);
   const salesMix = useMemo(() => salesMixSlices(periodRecords), [periodRecords]);
   const inventorySnapshot = useMemo(
     () => inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth),
@@ -1332,45 +1330,6 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="sectionBlock">
-            <div className="sectionTitle">
-              <div>
-                <h3>All Styles Sold</h3>
-                <p>
-                  Showing {numberText(allStyles.length)} of {numberText(allStyleRowsForPeriod.length)} styles for the selected period.
-                </p>
-              </div>
-            </div>
-            <div className="tableWrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Style</th>
-                    <th>Brand/Class</th>
-                    <th>Colors</th>
-                    <th>Artwork</th>
-                    <th>Units</th>
-                    <th>Sales</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allStyles.map((style) => (
-                    <tr key={style.style}>
-                      <td>{style.rank}</td>
-                      <td>{style.style}</td>
-                      <td>{style.brand}</td>
-                      <td>{numberText(style.colorCount)}</td>
-                      <td>{numberText(style.artCount)}</td>
-                      <td>{numberText(style.units)}</td>
-                      <td>{currencyText(style.sales)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
           <p className="dataFootnote">
             All imported records for this account/filter: {numberText(totalRecordsMetrics.transactions)} transactions,{" "}
             {numberText(totalRecordsMetrics.units)} units, {currencyText(totalRecordsMetrics.sales)}.
@@ -2033,7 +1992,6 @@ function buildReportPayload({
     styleStudyMonthly: topStyleRows(periodRecords, priorPeriodRecords),
     styleStudyYtd: ytdStyleStudy,
     topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords),
-    allStyles: allStyleRows(periodRecords).slice(0, 100),
   };
 }
 
