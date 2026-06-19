@@ -216,7 +216,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         {payload.inventoryTracker?.length ? (
           <ReportSection
             title="Inventory Tracker"
-            subtitle={`${payload.inventoryTrackerSort === "lowest" ? "Lowest" : "Highest"} ${numberText(payload.inventoryTracker.length)} current on-hand items | ${numberText(sum(payload.inventoryTracker.map((row) => row.inventoryUnits)))} Units`}
+            subtitle={`${payload.inventoryTrackerSort === "lowest" ? "Lowest" : "Highest"} ${numberText(payload.inventoryTracker.length)} current on-hand items with 5+ units | ${numberText(sum(payload.inventoryTracker.map((row) => row.inventoryUnits)))} Units`}
           >
             <div className="artGrid">
               {payload.inventoryTracker.map((row) => (
