@@ -585,6 +585,7 @@ function inventoryLabel(row: Pick<SnapshotTopArt, "inventoryScope" | "inventoryU
 
 function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
   if (!snapshot) return null;
+  const position = snapshot.position ?? inventoryPositionFallback(snapshot.coverage);
   return (
     <article className="inventoryCard">
       <div className="inventoryTotal">
@@ -620,21 +621,36 @@ function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
           This helps show whether stock looks heavy, lean, or balanced against recent demand.
         </p>
       </div>
-      {snapshot.topStyles.length ? (
-        <div className="inventoryTopStyles">
-          <h4>ON-HAND INVENTORY STYLES</h4>
-          {snapshot.topStyles.map((row) => (
-            <div key={row.style}>
-              <span>{row.brand}</span>
-              <strong>{row.style}</strong>
-              <em>{numberText(row.units)} units</em>
-              <small>{countText(row.artworks, "artwork", "artworks")}</small>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      <InventoryPositionCard position={position} />
       {snapshot.line ? <InventoryLineChart line={snapshot.line} /> : null}
     </article>
+  );
+}
+
+function InventoryPositionCard({
+  position,
+}: {
+  position: NonNullable<NonNullable<SnapshotInventory>["position"]>;
+}) {
+  return (
+    <div className="inventoryPosition">
+      <div className="inventoryPositionHeader">
+        <span>Inventory Position</span>
+        <strong>{position.label}</strong>
+      </div>
+      <div className="inventoryGauge" aria-label={`Inventory position is ${position.label}`}>
+        <div className="inventoryGaugeLabels">
+          <span>Lean</span>
+          <span>Heavy</span>
+        </div>
+        <div className="inventoryGaugeTrack">
+          <i style={{ left: `${position.score}%` }} />
+        </div>
+      </div>
+      <p>{position.headline}</p>
+      <small>{position.detail}</small>
+      <em>{position.comparison}</em>
+    </div>
   );
 }
 
@@ -818,4 +834,24 @@ function sum(values: number[]) {
 
 function countText(value: number, singular: string, plural: string) {
   return `${numberText(value)} ${value === 1 ? singular : plural}`;
+}
+
+function inventoryPositionFallback(
+  coverage: number | null | undefined,
+): NonNullable<NonNullable<SnapshotInventory>["position"]> {
+  const score = coverage == null ? 50 : Math.min(95, Math.max(5, Math.round(50 + ((coverage - 3.4) / 3.4) * 42)));
+  const label = score < 40 ? "Lean" : score > 60 ? "Heavy" : "Balanced";
+  return {
+    score,
+    label,
+    headline: label === "Balanced"
+      ? "Inventory looks balanced against current pace and seasonal demand."
+      : label === "Lean"
+        ? "Inventory is leaning light for the demand window ahead."
+        : "Inventory is carrying heavier than the current selling pace.",
+    detail: coverage == null
+      ? "Current stock cannot be matched cleanly to recent selling pace yet."
+      : `Current stock covers about ${coverage.toFixed(1)} months at the normalized sales pace.`,
+    comparison: "Prior-year same-month inventory context was not saved with this older snapshot.",
+  };
 }

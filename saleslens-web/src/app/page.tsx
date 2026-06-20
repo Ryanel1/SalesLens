@@ -203,6 +203,14 @@ type InventoryLine = {
   priorYear: number;
 };
 
+type InventoryPosition = {
+  score: number;
+  label: "Lean" | "Balanced" | "Heavy";
+  headline: string;
+  detail: string;
+  comparison: string;
+};
+
 type InventorySnapshot = {
   date: string;
   totalUnits: number;
@@ -210,6 +218,7 @@ type InventorySnapshot = {
   artworks: number;
   coverage: number | null;
   line: InventoryLine | null;
+  position: InventoryPosition;
   byBrand: { brand: string; units: number }[];
   topStyles: { style: string; brand: string; units: number; artworks: number }[];
 } | null;
@@ -1637,21 +1646,32 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
           This helps show whether stock looks heavy, lean, or balanced against recent demand.
         </p>
       </div>
-      {snapshot.topStyles.length ? (
-        <div className="inventoryTopStyles">
-          <h4>ON-HAND INVENTORY STYLES</h4>
-          {snapshot.topStyles.map((row) => (
-            <div key={row.style}>
-              <span>{row.brand}</span>
-              <strong>{row.style}</strong>
-              <em>{numberText(row.units)} units</em>
-              <small>{countText(row.artworks, "artwork", "artworks")}</small>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      <InventoryPositionCard position={snapshot.position} />
       {snapshot.line ? <InventoryLineChart line={snapshot.line} /> : null}
     </article>
+  );
+}
+
+function InventoryPositionCard({ position }: { position: InventoryPosition }) {
+  return (
+    <div className="inventoryPosition">
+      <div className="inventoryPositionHeader">
+        <span>Inventory Position</span>
+        <strong>{position.label}</strong>
+      </div>
+      <div className="inventoryGauge" aria-label={`Inventory position is ${position.label}`}>
+        <div className="inventoryGaugeLabels">
+          <span>Lean</span>
+          <span>Heavy</span>
+        </div>
+        <div className="inventoryGaugeTrack">
+          <i style={{ left: `${position.score}%` }} />
+        </div>
+      </div>
+      <p>{position.headline}</p>
+      <small>{position.detail}</small>
+      <em>{position.comparison}</em>
+    </div>
   );
 }
 
@@ -2837,16 +2857,97 @@ function inventorySnapshotForRecords(
   if (!snapshotRecords.length) return null;
   const totalUnits = sum(snapshotRecords.map((record) => record.inventory_units ?? 0));
   const monthlySalesPace = normalizedMonthlyUnitPace(records);
+  const line = inventoryLinePoints(trendRecords, standaloneInventoryRecords, periodEndMonth);
+  const coverage = monthlySalesPace ? totalUnits / monthlySalesPace : null;
+  const date = inventoryRecordDate(snapshotRecords[0]);
   return {
-    date: inventoryRecordDate(snapshotRecords[0]),
+    date,
     totalUnits,
     styles: uniqueCount(snapshotRecords.map(styleKey)),
     artworks: uniqueCount(snapshotRecords.map((record) => clean(record.art_code))),
-    coverage: monthlySalesPace ? totalUnits / monthlySalesPace : null,
-    line: inventoryLinePoints(trendRecords, standaloneInventoryRecords, periodEndMonth),
+    coverage,
+    line,
+    position: inventoryPositionForSnapshot(totalUnits, coverage, line, date),
     byBrand: inventoryByBrand(snapshotRecords),
     topStyles: topInventoryStyles(snapshotRecords),
   };
+}
+
+function inventoryPositionForSnapshot(
+  totalUnits: number,
+  coverage: number | null,
+  line: InventoryLine | null,
+  date: string,
+): InventoryPosition {
+  const monthIndex = monthIndexFromDate(date);
+  const targetCoverage = inventoryTargetCoverage(monthIndex);
+  const coverageScore = coverage == null
+    ? 50
+    : clamp(50 + ((coverage - targetCoverage) / targetCoverage) * 42, 8, 92);
+  const priorSameMonth = monthIndex == null ? null : line?.prior[monthIndex] ?? null;
+  const priorShift = priorSameMonth && priorSameMonth > 0
+    ? clamp(((totalUnits - priorSameMonth) / priorSameMonth) * 22, -12, 12)
+    : 0;
+  const score = Math.round(clamp(coverageScore + priorShift, 5, 95));
+  const label: InventoryPosition["label"] = score < 40 ? "Lean" : score > 60 ? "Heavy" : "Balanced";
+  const coverageText = coverage == null
+    ? "Current stock cannot be matched cleanly to recent selling pace yet."
+    : `Current stock covers about ${coverage.toFixed(1)} months at the normalized sales pace.`;
+  const detail = `${coverageText} ${inventorySeasonText(monthIndex)}`;
+  const comparison = priorSameMonth && priorSameMonth > 0
+    ? sameMonthInventoryComparison(totalUnits, priorSameMonth, line?.priorYear)
+    : "Prior-year same-month inventory is not available yet, so this read leans more on current sales pace.";
+
+  return {
+    score,
+    label,
+    headline: inventoryPositionHeadline(label),
+    detail,
+    comparison,
+  };
+}
+
+function inventoryPositionHeadline(label: InventoryPosition["label"]) {
+  if (label === "Lean") return "Inventory is leaning light for the demand window ahead.";
+  if (label === "Heavy") return "Inventory is carrying heavier than the current selling pace.";
+  return "Inventory looks balanced against current pace and seasonal demand.";
+}
+
+function inventorySeasonText(monthIndex: number | null) {
+  if (monthIndex == null) return "Use this as a directional read until more dated inventory history is available.";
+  if (monthIndex === 5 || monthIndex === 6) {
+    return "Because August back-to-school and football traffic are close, a healthy position should sit above an ordinary month without getting overbuilt.";
+  }
+  if (monthIndex >= 7 && monthIndex <= 10) {
+    return "This is the back-to-school and football demand window, so weekly sell-through can accelerate quickly.";
+  }
+  if (monthIndex === 11 || monthIndex === 0) {
+    return "This is more of a reset window after the busiest season, so extra stock deserves closer review.";
+  }
+  return "This is a planning window before campus traffic ramps, so the score favors balanced depth over aggressive inventory.";
+}
+
+function inventoryTargetCoverage(monthIndex: number | null) {
+  if (monthIndex == null) return 3.4;
+  if (monthIndex === 5 || monthIndex === 6) return 4.2;
+  if (monthIndex >= 7 && monthIndex <= 10) return 3.1;
+  if (monthIndex === 11 || monthIndex === 0) return 2.5;
+  return 3.3;
+}
+
+function sameMonthInventoryComparison(totalUnits: number, priorUnits: number, priorYear?: number) {
+  const percent = ((totalUnits - priorUnits) / priorUnits) * 100;
+  const direction = percent >= 0 ? "above" : "below";
+  return `Inventory is ${Math.abs(percent).toFixed(1)}% ${direction} ${priorYear ?? "prior-year"} same-month on-hand levels.`;
+}
+
+function monthIndexFromDate(value: string) {
+  const month = Number(value.slice(5, 7));
+  return month ? month - 1 : null;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function inventoryLinePoints(

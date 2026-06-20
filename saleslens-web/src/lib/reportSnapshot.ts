@@ -71,6 +71,14 @@ export type SnapshotInventoryLine = {
   priorYear: number;
 };
 
+export type SnapshotInventoryPosition = {
+  score: number;
+  label: "Lean" | "Balanced" | "Heavy";
+  headline: string;
+  detail: string;
+  comparison: string;
+};
+
 export type SnapshotYtdInsights = {
   averageMonthlySales: number;
   priorAverageMonthlySales: number;
@@ -140,6 +148,7 @@ export type SnapshotInventory = {
   artworks: number;
   coverage: number | null;
   line?: SnapshotInventoryLine | null;
+  position?: SnapshotInventoryPosition | null;
   byBrand: { brand: string; units: number }[];
   topStyles: { style: string; brand: string; units: number; artworks: number }[];
 } | null;
