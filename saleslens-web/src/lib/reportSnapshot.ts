@@ -162,6 +162,7 @@ export type SnapshotInventoryTrackerItem = {
   artCode: string;
   ytdUnits?: number;
   priorYtdUnits?: number;
+  recentSixMonthUnits?: number;
   inventoryUnits: number;
   imageUrl: string | null;
   productUrl?: string | null;

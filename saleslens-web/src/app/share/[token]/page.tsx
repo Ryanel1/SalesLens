@@ -261,7 +261,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         {payload.inventoryTracker?.length ? (
           <ReportSection
             title="Inventory Tracker"
-            subtitle={`${payload.inventoryTrackerSort === "lowest" ? "Lowest" : "Highest"} ${numberText(payload.inventoryTracker.length)} current on-hand items with 5+ units | ${numberText(sum(payload.inventoryTracker.map((row) => row.inventoryUnits)))} Units`}
+            subtitle={`${payload.inventoryTrackerSort === "lowest" ? "Lowest" : "Highest"} ${numberText(payload.inventoryTracker.length)} current on-hand items with 5+ units, plus low-stock items selling more than 25 in 6 months | ${numberText(sum(payload.inventoryTracker.map((row) => row.inventoryUnits)))} Units`}
           >
             <div className="artGrid">
               {payload.inventoryTracker.map((row) => (
@@ -282,6 +282,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                     <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                     <span>YTD Sold: {numberText(row.ytdUnits ?? 0)} Units</span>
                     <span>LY Sold: {numberText(row.priorYtdUnits ?? 0)} Units</span>
+                    <span>6 Mo Sold: {numberText(row.recentSixMonthUnits ?? 0)} Units</span>
                   </div>
                 </article>
               ))}

@@ -141,6 +141,7 @@ type InventoryTrackerItem = {
   sku: string | null;
   ytdUnits: number;
   priorYtdUnits: number;
+  recentSixMonthUnits: number;
   inventoryUnits: number;
   imageUrl: string | null;
   productUrl: string | null;
@@ -229,6 +230,7 @@ const PAGE_SIZE = 1000;
 const IMAGE_FETCH_BATCH_SIZE = 30;
 const IMAGE_PREFETCH_LIMIT = 180;
 const INVENTORY_TRACKER_MIN_UNITS = 5;
+const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
@@ -1322,7 +1324,7 @@ export default function Home() {
                 <div>
                   <h3>Inventory Tracker</h3>
                   <p>
-                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units |{" "}
+                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units, plus low-stock items selling more than 25 in 6 months |{" "}
                     {numberText(sum(inventoryTracker.map((row) => row.inventoryUnits)))} Units
                   </p>
                 </div>
@@ -1363,6 +1365,7 @@ export default function Home() {
                       <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                       <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
                       <span>LY Sold: {numberText(row.priorYtdUnits)} Units</span>
+                      <span>6 Mo Sold: {numberText(row.recentSixMonthUnits)} Units</span>
                     </div>
                   </article>
                 ))}
@@ -2182,6 +2185,22 @@ function currentYearRecords(records: SalesRecord[], month: string | null) {
     const recordMonth = monthKey(record.transaction_date);
     return recordMonth?.slice(0, 4) === month.slice(0, 4) && recordMonth <= month;
   });
+}
+
+function trailingSixMonthRecords(records: SalesRecord[], endMonth: string | null) {
+  if (!endMonth) return [];
+  const startMonth = shiftMonth(endMonth, -5);
+  return records.filter((record) => {
+    const recordMonth = monthKey(record.transaction_date);
+    return Boolean(recordMonth && recordMonth >= startMonth && recordMonth <= endMonth);
+  });
+}
+
+function shiftMonth(month: string, offset: number) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  if (!year || !monthNumber) return month;
+  const date = new Date(Date.UTC(year, monthNumber - 1 + offset, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 function metricSet(records: SalesRecord[]): MetricSet {
@@ -3038,6 +3057,8 @@ function inventoryTrackerRows(
   const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
   const ytdGroups = groupBy(ytdRecords, (record) => artKey(record));
   const priorYtdGroups = groupBy(priorYtdRecords, (record) => artKey(record));
+  const recentRecords = trailingSixMonthRecords(contextRecords.length ? contextRecords : [...records, ...ytdRecords], periodEndMonth);
+  const recentGroups = groupBy(recentRecords, (record) => artKey(record));
   const salesContextGroups = groupBy([...contextRecords, ...records, ...ytdRecords, ...priorYtdRecords], (record) => artKey(record));
   const imageLookup = imageLookupMaps(images);
 
@@ -3060,12 +3081,16 @@ function inventoryTrackerRows(
         sku: firstNonBlank([...group.map(recordSku), ...salesContext.map((record) => record.sku)]),
         ytdUnits: sum((ytdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         priorYtdUnits: sum((priorYtdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
+        recentSixMonthUnits: sum((recentGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
         productUrl: findProductPageUrl(imageLookup, style, artCode, color),
       };
     })
-    .filter((row) => row.inventoryUnits >= INVENTORY_TRACKER_MIN_UNITS)
+    .filter((row) => (
+      row.inventoryUnits >= INVENTORY_TRACKER_MIN_UNITS ||
+      row.recentSixMonthUnits > INVENTORY_TRACKER_RECENT_DEMAND_UNITS
+    ))
     .sort((left, right) => {
       const unitDelta = sort === "highest"
         ? right.inventoryUnits - left.inventoryUnits
