@@ -159,8 +159,8 @@ type InventoryTrackerItem = {
 type InventorySort = "highest" | "lowest";
 type InventoryAudience = "Unisex" | "Womens" | "Mens" | "Youth";
 type InventoryAudienceFilter = "All" | "Unisex" | "Womens" | "Mens";
-type InventoryProductCategory = "Fleece" | "Tees" | "Other";
-type InventoryProductFilter = "All" | "Fleece" | "Tees";
+type InventoryProductCategory = "Powerblend" | "Reverse Weave" | "Tees" | "Other";
+type InventoryProductFilter = "All" | "Powerblend" | "Reverse Weave" | "Tees";
 type TopArtSort = "units" | "dollars";
 
 type TopStyle = MetricSet & {
@@ -246,7 +246,8 @@ const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
-const INVENTORY_FLEECE_STYLES = new Set(["CS1220", "CS2070", "CS2071", "CP2028", "CP2071", "CP2081"]);
+const INVENTORY_POWERBLEND_STYLES = new Set(["CS1220", "CS2070", "CS2071", "CP2028", "CP2071", "CP2081"]);
+const INVENTORY_REVERSE_WEAVE_STYLES = new Set(["CS3050", "CS3051"]);
 const INVENTORY_TEE_STYLES = new Set(["CT1000", "CT1081", "CT1730", "C6039", "C6047", "C6048", "C6054", "C7006"]);
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
@@ -1439,7 +1440,7 @@ export default function Home() {
                     {filter === "Womens" ? "Women's" : filter}
                   </button>
                 ))}
-                {(["Fleece", "Tees"] as InventoryProductFilter[]).map((filter) => (
+                {(["Powerblend", "Reverse Weave", "Tees"] as InventoryProductFilter[]).map((filter) => (
                   <button
                     className={inventoryProductFilter === filter ? "active" : ""}
                     key={filter}
@@ -2936,7 +2937,8 @@ function inventoryAudienceName(record: MerchandiseRecord): InventoryAudience {
 }
 
 function inventoryProductCategory(style: string): InventoryProductCategory {
-  if (INVENTORY_FLEECE_STYLES.has(style)) return "Fleece";
+  if (INVENTORY_POWERBLEND_STYLES.has(style)) return "Powerblend";
+  if (INVENTORY_REVERSE_WEAVE_STYLES.has(style)) return "Reverse Weave";
   if (INVENTORY_TEE_STYLES.has(style)) return "Tees";
   return "Other";
 }
