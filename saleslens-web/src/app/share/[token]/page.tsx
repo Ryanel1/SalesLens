@@ -282,7 +282,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                     <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                     <span>YTD Sold: {numberText(row.ytdUnits ?? 0)} Units</span>
                     <span>LY Sold: {numberText(row.priorYtdUnits ?? 0)} Units</span>
-                    <span>6 Mo Sold: {numberText(row.recentSixMonthUnits ?? 0)} Units</span>
                   </div>
                 </article>
               ))}

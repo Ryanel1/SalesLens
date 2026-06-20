@@ -1365,7 +1365,6 @@ export default function Home() {
                       <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                       <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
                       <span>LY Sold: {numberText(row.priorYtdUnits)} Units</span>
-                      <span>6 Mo Sold: {numberText(row.recentSixMonthUnits)} Units</span>
                     </div>
                   </article>
                 ))}
