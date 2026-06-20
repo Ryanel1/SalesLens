@@ -159,8 +159,8 @@ type InventoryTrackerItem = {
 type InventorySort = "highest" | "lowest";
 type InventoryAudience = "Unisex" | "Womens" | "Mens" | "Youth";
 type InventoryAudienceFilter = "All" | "Mens" | "Womens" | "Youth";
-type InventoryProductCategory = "Powerblend" | "Reverse Weave" | "Tees" | "Other";
-type InventoryProductFilter = "All" | "Powerblend" | "Reverse Weave" | "Tees";
+type InventoryProductCategory = "Fleece" | "Reverse Weave" | "Tees" | "Other";
+type InventoryProductFilter = "All" | "Fleece" | "Reverse Weave" | "Tees";
 type TopArtSort = "units" | "dollars";
 
 type TopStyle = MetricSet & {
@@ -246,9 +246,69 @@ const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
-const INVENTORY_POWERBLEND_STYLES = new Set(["CS1220", "CS2070", "CS2071", "CP2028", "CP2071", "CP2081"]);
+const INVENTORY_FLEECE_STYLES = new Set([
+  "CS1220",
+  "CS2070",
+  "CS2071",
+  "CP2028",
+  "CP2071",
+  "CP2081",
+  "C4002",
+  "C4003",
+  "C4005",
+  "G1092",
+  "G1093",
+  "G1495",
+  "G2099",
+  "G3153",
+  "G3156",
+  "G3158",
+  "G3159",
+  "G4001",
+  "G4003",
+  "G4017",
+  "G7134",
+  "G7143",
+  "G7146",
+  "G7149",
+  "G715",
+  "G7154",
+  "G7155",
+  "G7156",
+  "G7158",
+  "G7394",
+  "GDH200",
+  "GDH400",
+  "GDH450",
+]);
+const INVENTORY_FLEECE_STYLE_PREFIXES = ["C400"];
 const INVENTORY_REVERSE_WEAVE_STYLES = new Set(["CS3050", "CS3051"]);
-const INVENTORY_TEE_STYLES = new Set(["CT1000", "CT1081", "CT1730", "C6039", "C6047", "C6048", "C6054", "C7006"]);
+const INVENTORY_TEE_STYLES = new Set([
+  "CT1000",
+  "CT1081",
+  "CT1730",
+  "C6036",
+  "C6039",
+  "C6047",
+  "C6048",
+  "C6054",
+  "C7006",
+  "G1357",
+  "G2327",
+  "G3154",
+  "G3155",
+  "G3157",
+  "G7371",
+  "G7372",
+  "G7382",
+  "G7391",
+  "G7392",
+  "G7393",
+  "G7396",
+  "GDH100",
+  "GDH135",
+]);
+const INVENTORY_TEE_STYLE_PREFIXES = ["C603"];
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
   "CT1000",
@@ -261,6 +321,10 @@ const KNOWN_STYLE_PREFIXES = [
   "CP2028",
   "CP2071",
   "CP2081",
+  "C4002",
+  "C4003",
+  "C4005",
+  "C6036",
   "C6039",
   "C6047",
   "C6048",
@@ -273,10 +337,42 @@ const KNOWN_STYLE_PREFIXES = [
   "GDH1000",
   "GDH100",
   "GDH135",
+  "GDH200",
   "GDH400",
+  "GDH450",
   "G1092",
   "G1093",
+  "G1357",
+  "G1495",
+  "G2099",
+  "G2327",
+  "G3153",
+  "G3154",
+  "G3155",
+  "G3156",
+  "G3157",
+  "G3158",
+  "G3159",
+  "G3161",
+  "G4001",
+  "G4003",
+  "G4017",
+  "G7134",
+  "G7143",
+  "G7146",
+  "G7149",
+  "G7154",
+  "G7155",
+  "G7156",
+  "G7158",
   "G715",
+  "G7371",
+  "G7372",
+  "G7382",
+  "G7392",
+  "G7393",
+  "G7394",
+  "G7396",
   "G7391",
   "P940",
   "S760",
@@ -1423,7 +1519,7 @@ export default function Home() {
                         {filter === "Womens" ? "Women's" : filter}
                       </button>
                     ))}
-                    {(["Powerblend", "Tees", "Reverse Weave"] as InventoryProductFilter[]).map((filter) => (
+                    {(["Fleece", "Tees", "Reverse Weave"] as InventoryProductFilter[]).map((filter) => (
                       <button
                         className={inventoryProductFilter === filter ? "active" : ""}
                         key={filter}
@@ -2963,10 +3059,15 @@ function inventoryAudienceName(record: MerchandiseRecord): InventoryAudience {
 }
 
 function inventoryProductCategory(style: string): InventoryProductCategory {
-  if (INVENTORY_POWERBLEND_STYLES.has(style)) return "Powerblend";
+  if (inventoryStyleMatches(style, INVENTORY_FLEECE_STYLES, INVENTORY_FLEECE_STYLE_PREFIXES)) return "Fleece";
   if (INVENTORY_REVERSE_WEAVE_STYLES.has(style)) return "Reverse Weave";
-  if (INVENTORY_TEE_STYLES.has(style)) return "Tees";
+  if (inventoryStyleMatches(style, INVENTORY_TEE_STYLES, INVENTORY_TEE_STYLE_PREFIXES)) return "Tees";
   return "Other";
+}
+
+function inventoryStyleMatches(style: string, exactStyles: Set<string>, prefixes: string[]) {
+  const normalized = style.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return exactStyles.has(normalized) || prefixes.some((prefix) => normalized.startsWith(prefix));
 }
 
 function inventoryAudienceMatches(row: InventoryTrackerItem, filter: InventoryAudienceFilter) {
