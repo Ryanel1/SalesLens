@@ -140,7 +140,7 @@ type InventoryTrackerItem = {
   parentSku: string | null;
   sku: string | null;
   ytdUnits: number;
-  priorYtdUnits: number;
+  priorYearUnits: number;
   recentSixMonthUnits: number;
   inventoryUnits: number;
   imageUrl: string | null;
@@ -446,6 +446,10 @@ export default function Home() {
     () => (priorYearMonth ? currentYearRecords(recordsForCustomer, priorYearMonth) : []),
     [priorYearMonth, recordsForCustomer],
   );
+  const priorYearRecords = useMemo(
+    () => (selectedYear ? recordsForYear(recordsForCustomer, selectedYear - 1) : []),
+    [recordsForCustomer, selectedYear],
+  );
   const ytdInsights = useMemo(
     () => ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
     [periodEndMonth, ytdCurrentRecords, ytdPriorRecords],
@@ -462,8 +466,8 @@ export default function Home() {
     [inventoryRecordsForCustomer, periodEndMonth, periodRecords, recordsForCustomer],
   );
   const inventoryTracker = useMemo(
-    () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, ytdPriorRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer),
-    [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, recordsForCustomer, ytdCurrentRecords, ytdPriorRecords],
+    () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer),
+    [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, priorYearRecords, recordsForCustomer, ytdCurrentRecords],
   );
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
   const imagePrefetchCandidates = useMemo(
@@ -1364,7 +1368,7 @@ export default function Home() {
                       <span>{row.style} | {row.color}</span>
                       <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                       <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
-                      <span>LY YTD Sold: {numberText(row.priorYtdUnits)} Units</span>
+                      <span>LY Sold: {numberText(row.priorYearUnits)} Units</span>
                     </div>
                   </article>
                 ))}
@@ -2048,6 +2052,7 @@ function buildReportPayload({
   const priorPeriodRecords = recordsForPriorPeriod(filteredRecords, period);
   const ytdCurrentRecords = currentYearRecords(filteredRecords, periodEndMonth);
   const ytdPriorRecords = priorYearMonth ? currentYearRecords(filteredRecords, priorYearMonth) : [];
+  const priorYearRecords = recordsForYear(filteredRecords, period.year - 1);
   const currentMetrics = metricSet(periodRecords);
   const priorMetrics = metricSet(priorPeriodRecords);
   const selectedPeriodTitle = periodTitle(period, periodEndMonth);
@@ -2075,7 +2080,7 @@ function buildReportPayload({
     weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth, filteredRecords),
     inventoryTrackerSort: inventorySort,
-    inventoryTracker: inventoryTrackerRows(periodRecords, ytdCurrentRecords, ytdPriorRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort, filteredRecords),
+    inventoryTracker: inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort, filteredRecords),
     salesMix: salesMixSlices(periodRecords),
     bestDay: {
       date: bestDay.date,
@@ -3046,7 +3051,7 @@ function monthlyInventoryPoints(
 function inventoryTrackerRows(
   records: SalesRecord[],
   ytdRecords: SalesRecord[],
-  priorYtdRecords: SalesRecord[],
+  priorYearRecords: SalesRecord[],
   standaloneInventoryRecords: InventoryRecord[] = [],
   periodEndMonth: string | null,
   images: ProductImage[],
@@ -3055,10 +3060,10 @@ function inventoryTrackerRows(
 ) {
   const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
   const ytdGroups = groupBy(ytdRecords, (record) => artKey(record));
-  const priorYtdGroups = groupBy(priorYtdRecords, (record) => artKey(record));
+  const priorYearGroups = groupBy(priorYearRecords, (record) => artKey(record));
   const recentRecords = trailingSixMonthRecords(contextRecords.length ? contextRecords : [...records, ...ytdRecords], periodEndMonth);
   const recentGroups = groupBy(recentRecords, (record) => artKey(record));
-  const salesContextGroups = groupBy([...contextRecords, ...records, ...ytdRecords, ...priorYtdRecords], (record) => artKey(record));
+  const salesContextGroups = groupBy([...contextRecords, ...records, ...ytdRecords, ...priorYearRecords], (record) => artKey(record));
   const imageLookup = imageLookupMaps(images);
 
   return groupedRows(snapshotRecords, (record) => artKey(record))
@@ -3079,7 +3084,7 @@ function inventoryTrackerRows(
         parentSku: firstNonBlank([...group.map(recordParentSku), ...salesContext.map((record) => record.parent_sku)]),
         sku: firstNonBlank([...group.map(recordSku), ...salesContext.map((record) => record.sku)]),
         ytdUnits: sum((ytdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
-        priorYtdUnits: sum((priorYtdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
+        priorYearUnits: sum((priorYearGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         recentSixMonthUnits: sum((recentGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),

@@ -161,6 +161,7 @@ export type SnapshotInventoryTrackerItem = {
   color: string;
   artCode: string;
   ytdUnits?: number;
+  priorYearUnits?: number;
   priorYtdUnits?: number;
   recentSixMonthUnits?: number;
   inventoryUnits: number;
