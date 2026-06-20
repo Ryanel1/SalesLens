@@ -845,16 +845,6 @@ select {
   margin-bottom: 0.45rem;
 }
 
-.sectionTitle h2::after,
-.sectionTitle h3::after {
-  background: var(--steel);
-  content: "";
-  display: block;
-  height: 1px;
-  margin-top: 0.65rem;
-  width: 96px;
-}
-
 .sectionTitle p {
   color: var(--taupe);
   margin-bottom: 0;
@@ -893,13 +883,19 @@ select {
 }
 
 .inventoryControls {
-  align-items: center;
+  align-items: start;
   color: var(--taupe);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
   margin: -0.15rem 0 1.1rem;
   padding-top: 0.85rem;
+}
+
+.inventoryFilterStack {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
 }
 
 .inventoryControlGroup {
@@ -909,13 +905,6 @@ select {
   gap: 0.45rem;
 }
 
-.inventoryDivider {
-  color: rgba(113, 105, 96, 0.55);
-  font-size: 0.78rem;
-  font-weight: 900;
-  padding: 0 0.15rem;
-}
-
 .pagerControls {
   align-items: center;
   color: var(--taupe);
@@ -923,7 +912,7 @@ select {
   font-size: 0.78rem;
   font-weight: 900;
   gap: 0.55rem;
-  margin-left: auto;
+  justify-self: end;
 }
 
 .pagerControls button {
@@ -2443,11 +2432,12 @@ tbody tr:nth-child(even) {
 
   .inventoryControls {
     align-items: flex-start;
+    grid-template-columns: 1fr;
   }
 
   .pagerControls {
     flex-wrap: wrap;
-    margin-left: 0;
+    justify-self: start;
   }
 
   .changeBadge {

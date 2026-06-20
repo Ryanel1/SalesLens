@@ -1381,56 +1381,57 @@ export default function Home() {
                 </div>
               </div>
               <div className="inventoryControls">
-                <div className="inventoryControlGroup sortControls" aria-label="Inventory sort controls">
-                  <span>Sort by:</span>
-                  <button
-                    className={inventorySort === "highest" ? "active" : ""}
-                    type="button"
-                    onClick={() => setInventorySort("highest")}
-                  >
-                    Highest
-                  </button>
-                  <button
-                    className={inventorySort === "lowest" ? "active" : ""}
-                    type="button"
-                    onClick={() => setInventorySort("lowest")}
-                  >
-                    Lowest
-                  </button>
-                </div>
-                <span className="inventoryDivider" aria-hidden="true">|</span>
-                <div className="inventoryControlGroup inventoryFilters" aria-label="Inventory filters">
-                  <span>Filter:</span>
-                  <button
-                    className={inventoryAudienceFilter === "All" && inventoryProductFilter === "All" ? "active" : ""}
-                    type="button"
-                    onClick={() => {
-                      setInventoryAudienceFilter("All");
-                      setInventoryProductFilter("All");
-                    }}
-                  >
-                    All
-                  </button>
-                  {(["Unisex", "Womens", "Mens"] as InventoryAudienceFilter[]).map((filter) => (
+                <div className="inventoryFilterStack">
+                  <div className="inventoryControlGroup sortControls" aria-label="Inventory sort controls">
+                    <span>Sort by:</span>
                     <button
-                      className={inventoryAudienceFilter === filter ? "active" : ""}
-                      key={filter}
+                      className={inventorySort === "highest" ? "active" : ""}
                       type="button"
-                      onClick={() => setInventoryAudienceFilter((current) => current === filter ? "All" : filter)}
+                      onClick={() => setInventorySort("highest")}
                     >
-                      {filter === "Womens" ? "Women's" : filter}
+                      Highest
                     </button>
-                  ))}
-                  {(["Powerblend", "Reverse Weave", "Tees"] as InventoryProductFilter[]).map((filter) => (
                     <button
-                      className={inventoryProductFilter === filter ? "active" : ""}
-                      key={filter}
+                      className={inventorySort === "lowest" ? "active" : ""}
                       type="button"
-                      onClick={() => setInventoryProductFilter((current) => current === filter ? "All" : filter)}
+                      onClick={() => setInventorySort("lowest")}
                     >
-                      {filter}
+                      Lowest
                     </button>
-                  ))}
+                  </div>
+                  <div className="inventoryControlGroup inventoryFilters" aria-label="Inventory filters">
+                    <span>Filter:</span>
+                    <button
+                      className={inventoryAudienceFilter === "All" && inventoryProductFilter === "All" ? "active" : ""}
+                      type="button"
+                      onClick={() => {
+                        setInventoryAudienceFilter("All");
+                        setInventoryProductFilter("All");
+                      }}
+                    >
+                      All
+                    </button>
+                    {(["Unisex", "Womens", "Mens"] as InventoryAudienceFilter[]).map((filter) => (
+                      <button
+                        className={inventoryAudienceFilter === filter ? "active" : ""}
+                        key={filter}
+                        type="button"
+                        onClick={() => setInventoryAudienceFilter((current) => current === filter ? "All" : filter)}
+                      >
+                        {filter === "Womens" ? "Women's" : filter}
+                      </button>
+                    ))}
+                    {(["Powerblend", "Reverse Weave", "Tees"] as InventoryProductFilter[]).map((filter) => (
+                      <button
+                        className={inventoryProductFilter === filter ? "active" : ""}
+                        key={filter}
+                        type="button"
+                        onClick={() => setInventoryProductFilter((current) => current === filter ? "All" : filter)}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 {inventoryPageCount > 1 ? (
                   <div className="pagerControls" aria-label="Inventory page controls">
