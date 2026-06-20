@@ -158,7 +158,7 @@ type InventoryTrackerItem = {
 
 type InventorySort = "highest" | "lowest";
 type InventoryAudience = "Unisex" | "Womens" | "Mens" | "Youth";
-type InventoryAudienceFilter = "All" | "Unisex" | "Womens" | "Mens";
+type InventoryAudienceFilter = "All" | "Womens" | "Mens";
 type InventoryProductCategory = "Powerblend" | "Reverse Weave" | "Tees" | "Other";
 type InventoryProductFilter = "All" | "Powerblend" | "Reverse Weave" | "Tees";
 type TopArtSort = "units" | "dollars";
@@ -1411,7 +1411,7 @@ export default function Home() {
                     >
                       All
                     </button>
-                    {(["Unisex", "Womens", "Mens"] as InventoryAudienceFilter[]).map((filter) => (
+                    {(["Womens", "Mens"] as InventoryAudienceFilter[]).map((filter) => (
                       <button
                         className={inventoryAudienceFilter === filter ? "active" : ""}
                         key={filter}
