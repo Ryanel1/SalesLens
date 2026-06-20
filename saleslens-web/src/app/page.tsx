@@ -1324,7 +1324,7 @@ export default function Home() {
                 <div>
                   <h3>Inventory Tracker</h3>
                   <p>
-                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units, plus low-stock items selling more than 25 in 6 months |{" "}
+                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units, plus high-demand low-stock exceptions |{" "}
                     {numberText(sum(inventoryTracker.map((row) => row.inventoryUnits)))} Units
                   </p>
                 </div>
@@ -1364,7 +1364,7 @@ export default function Home() {
                       <span>{row.style} | {row.color}</span>
                       <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                       <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
-                      <span>LY Sold: {numberText(row.priorYtdUnits)} Units</span>
+                      <span>LY YTD Sold: {numberText(row.priorYtdUnits)} Units</span>
                     </div>
                   </article>
                 ))}
