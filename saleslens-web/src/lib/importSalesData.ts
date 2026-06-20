@@ -477,7 +477,7 @@ function parseStyleIdentifier(rawValue: string | null) {
   const knownStyle = [...KNOWN_STYLE_PREFIXES]
     .sort((left, right) => right.length - left.length)
     .find((style) => compactPrefix.startsWith(style));
-  const colorCode = splitColorCode(prefix);
+  const colorCode = splitColorCode(prefix, knownStyle);
   const styleNumber = knownStyle ?? (colorCode ? prefix.slice(0, -colorCode.length).replace(/[-\s]+$/g, "") : prefix.replace(/[-\s]+$/g, ""));
 
   return {
@@ -498,7 +498,13 @@ function parseVolshopSkuName(value: string | null) {
   };
 }
 
-function splitColorCode(prefix: string) {
+function splitColorCode(prefix: string, knownStyle?: string) {
+  const compactPrefix = prefix.replace(/[^A-Z0-9]/g, "");
+  if (knownStyle && compactPrefix.startsWith(knownStyle)) {
+    const colorMatch = compactPrefix.slice(knownStyle.length).match(/^(\d{3,4})/);
+    if (colorMatch) return colorMatch[1];
+  }
+
   const known = Object.keys(COLOR_NAMES_BY_CODE)
     .sort((left, right) => right.length - left.length)
     .find((code) => prefix.endsWith(code));

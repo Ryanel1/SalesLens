@@ -2853,7 +2853,7 @@ function artKey(record: MerchandiseRecord) {
 }
 
 function colorIdentityKey(record: MerchandiseRecord) {
-  return compactImagePart(record.color_code) || colorCodeFromStyleIdentifier(record) || compactImagePart(colorName(record));
+  return colorCodeFromStyleIdentifier(record) || compactImagePart(record.color_code) || compactImagePart(colorName(record));
 }
 
 function colorCodeFromStyleIdentifier(record: MerchandiseRecord) {
