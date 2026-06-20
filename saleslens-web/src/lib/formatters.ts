@@ -20,6 +20,13 @@ export function numberText(value: number) {
   return value.toLocaleString("en-US");
 }
 
+export function decimalText(value: number, fractionDigits = 1) {
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+}
+
 export function dateText(value: string | null) {
   if (!value) return "-";
   const date = new Date(`${value}T00:00:00`);

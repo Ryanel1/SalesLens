@@ -1363,6 +1363,13 @@ select {
   margin-bottom: 1px;
 }
 
+.monthlyDriverMetricsRow {
+  display: grid;
+  gap: 1px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .driverTile {
   background: rgba(255, 253, 248, 0.88);
   border: 1px solid rgba(231, 222, 209, 0.72);
@@ -2476,6 +2483,7 @@ tbody tr:nth-child(even) {
   .metricGrid.four,
   .insightGrid,
   .salesDriverGrid,
+  .monthlyDriverMetricsRow,
   .ytdInsightGrid,
   .ytdTrackerLayout,
   .ytdTrackerTiles,

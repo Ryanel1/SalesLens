@@ -94,6 +94,8 @@ export type SnapshotYtdInsights = {
 export type SnapshotMonthlyDrivers = {
   avgSalePerTransaction: number;
   priorAvgSalePerTransaction: number;
+  avgUnitsPerTransaction?: number;
+  priorAvgUnitsPerTransaction?: number;
   avgSalePerUnit: number;
   priorAvgSalePerUnit: number;
   stylesSold: number;

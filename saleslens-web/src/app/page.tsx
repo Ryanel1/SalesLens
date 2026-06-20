@@ -10,7 +10,7 @@ import {
   type SalesImportOptions,
 } from "@/lib/importSalesData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { currencyText, dateText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
+import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
 
@@ -1748,30 +1748,38 @@ function SalesDriverGrid({
         </div>
       </article>
       <TopSalesItemsCard bestDay={bestDay} periodTitle={periodTitle} />
-      <DriverTile
-        label="Transactions"
-        value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
-        details={[
-          `Change: ${changeText(current.transactions, prior.transactions)}`,
-          `Avg sale: ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY`,
-        ]}
-        tone={current.transactions - prior.transactions}
-      />
-      <DriverTile
-        label="Units"
-        value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
-        details={[
-          `Change: ${changeText(current.units, prior.units)}`,
-          `Avg $ / unit: ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY`,
-        ]}
-        tone={current.units - prior.units}
-      />
-      <DriverTile
-        label="Top Style Dependence"
-        value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
-        details={[`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`]}
-        tone={0}
-      />
+      <div className="monthlyDriverMetricsRow">
+        <DriverTile
+          label="Transactions"
+          value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+          details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
+          tone={current.transactions - prior.transactions}
+        />
+        <DriverTile
+          label="Units"
+          value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
+          details={[
+            `Change: ${changeText(current.units, prior.units)}`,
+            `Avg $ / unit: ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY`,
+          ]}
+          tone={current.units - prior.units}
+        />
+        <DriverTile
+          label="Avg Transaction"
+          value={currencyText(drivers.avgSalePerTransaction)}
+          details={[
+            `${decimalText(drivers.avgUnitsPerTransaction)} units / transaction`,
+            `LY: ${currencyText(drivers.priorAvgSalePerTransaction)} | ${decimalText(drivers.priorAvgUnitsPerTransaction)} units`,
+          ]}
+          tone={drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction}
+        />
+        <DriverTile
+          label="Top Style Dependence"
+          value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
+          details={[`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`]}
+          tone={0}
+        />
+      </div>
     </div>
   );
 }
@@ -2961,6 +2969,8 @@ function monthlyDriverMetrics(currentRecords: SalesRecord[], priorRecords: Sales
   return {
     avgSalePerTransaction: current.transactions ? current.sales / current.transactions : 0,
     priorAvgSalePerTransaction: prior.transactions ? prior.sales / prior.transactions : 0,
+    avgUnitsPerTransaction: current.transactions ? current.units / current.transactions : 0,
+    priorAvgUnitsPerTransaction: prior.transactions ? prior.units / prior.transactions : 0,
     avgSalePerUnit: current.units ? current.sales / current.units : 0,
     priorAvgSalePerUnit: prior.units ? prior.sales / prior.units : 0,
     stylesSold: currentBreadth.styles,
