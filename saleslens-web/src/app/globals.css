@@ -892,11 +892,28 @@ select {
   color: var(--paper);
 }
 
-.inventoryToolbar {
-  align-items: flex-end;
-  display: grid;
-  gap: 0.65rem;
-  justify-items: end;
+.inventoryControls {
+  align-items: center;
+  color: var(--taupe);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: -0.15rem 0 1.1rem;
+  padding-top: 0.85rem;
+}
+
+.inventoryControlGroup {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.inventoryDivider {
+  color: rgba(113, 105, 96, 0.55);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0 0.15rem;
 }
 
 .pagerControls {
@@ -906,6 +923,7 @@ select {
   font-size: 0.78rem;
   font-weight: 900;
   gap: 0.55rem;
+  margin-left: auto;
 }
 
 .pagerControls button {
@@ -920,16 +938,6 @@ select {
 
 .pagerControls button:disabled {
   opacity: 0.38;
-}
-
-.inventoryFilters {
-  align-items: center;
-  border-top: 1px solid rgba(216, 207, 193, 0.7);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin: -0.15rem 0 1.1rem;
-  padding-top: 0.85rem;
 }
 
 .inventoryFilters > span {
@@ -2433,12 +2441,13 @@ tbody tr:nth-child(even) {
     justify-self: start;
   }
 
-  .inventoryToolbar {
-    justify-items: start;
+  .inventoryControls {
+    align-items: flex-start;
   }
 
   .pagerControls {
     flex-wrap: wrap;
+    margin-left: 0;
   }
 
   .changeBadge {

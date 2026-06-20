@@ -1379,77 +1379,78 @@ export default function Home() {
                     {numberText(sum(filteredInventoryTracker.map((row) => row.inventoryUnits)))} Units
                   </p>
                 </div>
-                <div className="inventoryToolbar">
-                  <div className="sortControls" aria-label="Inventory sort controls">
-                    <span>Sort by:</span>
+              </div>
+              <div className="inventoryControls">
+                <div className="inventoryControlGroup sortControls" aria-label="Inventory sort controls">
+                  <span>Sort by:</span>
+                  <button
+                    className={inventorySort === "highest" ? "active" : ""}
+                    type="button"
+                    onClick={() => setInventorySort("highest")}
+                  >
+                    Highest
+                  </button>
+                  <button
+                    className={inventorySort === "lowest" ? "active" : ""}
+                    type="button"
+                    onClick={() => setInventorySort("lowest")}
+                  >
+                    Lowest
+                  </button>
+                </div>
+                <span className="inventoryDivider" aria-hidden="true">|</span>
+                <div className="inventoryControlGroup inventoryFilters" aria-label="Inventory filters">
+                  <span>Filter:</span>
+                  <button
+                    className={inventoryAudienceFilter === "All" && inventoryProductFilter === "All" ? "active" : ""}
+                    type="button"
+                    onClick={() => {
+                      setInventoryAudienceFilter("All");
+                      setInventoryProductFilter("All");
+                    }}
+                  >
+                    All
+                  </button>
+                  {(["Unisex", "Womens", "Mens"] as InventoryAudienceFilter[]).map((filter) => (
                     <button
-                      className={inventorySort === "highest" ? "active" : ""}
+                      className={inventoryAudienceFilter === filter ? "active" : ""}
+                      key={filter}
                       type="button"
-                      onClick={() => setInventorySort("highest")}
+                      onClick={() => setInventoryAudienceFilter((current) => current === filter ? "All" : filter)}
                     >
-                      Highest
+                      {filter === "Womens" ? "Women's" : filter}
                     </button>
+                  ))}
+                  {(["Powerblend", "Reverse Weave", "Tees"] as InventoryProductFilter[]).map((filter) => (
                     <button
-                      className={inventorySort === "lowest" ? "active" : ""}
+                      className={inventoryProductFilter === filter ? "active" : ""}
+                      key={filter}
                       type="button"
-                      onClick={() => setInventorySort("lowest")}
+                      onClick={() => setInventoryProductFilter((current) => current === filter ? "All" : filter)}
                     >
-                      Lowest
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+                {inventoryPageCount > 1 ? (
+                  <div className="pagerControls" aria-label="Inventory page controls">
+                    <button
+                      disabled={currentInventoryPage <= 1}
+                      type="button"
+                      onClick={() => setInventoryPage((page) => Math.max(1, page - 1))}
+                    >
+                      Prev
+                    </button>
+                    <span>Page {numberText(currentInventoryPage)} of {numberText(inventoryPageCount)}</span>
+                    <button
+                      disabled={currentInventoryPage >= inventoryPageCount}
+                      type="button"
+                      onClick={() => setInventoryPage((page) => Math.min(inventoryPageCount, page + 1))}
+                    >
+                      Next
                     </button>
                   </div>
-                  {inventoryPageCount > 1 ? (
-                    <div className="pagerControls" aria-label="Inventory page controls">
-                      <button
-                        disabled={currentInventoryPage <= 1}
-                        type="button"
-                        onClick={() => setInventoryPage((page) => Math.max(1, page - 1))}
-                      >
-                        Prev
-                      </button>
-                      <span>Page {numberText(currentInventoryPage)} of {numberText(inventoryPageCount)}</span>
-                      <button
-                        disabled={currentInventoryPage >= inventoryPageCount}
-                        type="button"
-                        onClick={() => setInventoryPage((page) => Math.min(inventoryPageCount, page + 1))}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-              <div className="inventoryFilters" aria-label="Inventory filters">
-                <span>Filter:</span>
-                <button
-                  className={inventoryAudienceFilter === "All" && inventoryProductFilter === "All" ? "active" : ""}
-                  type="button"
-                  onClick={() => {
-                    setInventoryAudienceFilter("All");
-                    setInventoryProductFilter("All");
-                  }}
-                >
-                  All
-                </button>
-                {(["Unisex", "Womens", "Mens"] as InventoryAudienceFilter[]).map((filter) => (
-                  <button
-                    className={inventoryAudienceFilter === filter ? "active" : ""}
-                    key={filter}
-                    type="button"
-                    onClick={() => setInventoryAudienceFilter((current) => current === filter ? "All" : filter)}
-                  >
-                    {filter === "Womens" ? "Women's" : filter}
-                  </button>
-                ))}
-                {(["Powerblend", "Reverse Weave", "Tees"] as InventoryProductFilter[]).map((filter) => (
-                  <button
-                    className={inventoryProductFilter === filter ? "active" : ""}
-                    key={filter}
-                    type="button"
-                    onClick={() => setInventoryProductFilter((current) => current === filter ? "All" : filter)}
-                  >
-                    {filter}
-                  </button>
-                ))}
+                ) : null}
               </div>
               {visibleInventoryTracker.length ? (
                 <div className="artGrid">
