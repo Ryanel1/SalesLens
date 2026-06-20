@@ -545,30 +545,38 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
 }
 
 function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay; periodTitle: string }) {
-  const maxUnits = Math.max(...bestDay.items.map((item) => item.units), 1);
   const hasDailySales = (bestDay.dayCount ?? 0) > 1;
+  const items = bestDay.items.slice(0, 3);
   return (
     <article className="insightCard topSalesItemsCard">
       <div className="cardHeading">
-        <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
+        <h4>{hasDailySales ? "Best Sales Day" : "Top 3 Sales Items"}</h4>
         <strong>{hasDailySales ? dateText(bestDay.date) : periodTitle}</strong>
       </div>
       <p className="compactLine">
         {currencyText(bestDay.sales)} | {numberText(bestDay.units)} units
         {hasDailySales ? ` | ${numberText(bestDay.transactions)} transactions` : ""}
       </p>
-      {bestDay.items.map((item) => (
-        <div className="bestRow" key={`${item.rank}-${item.style}-${item.artCode}`}>
-          <strong className="bestItem">
-            <span>
-              #{item.rank} {item.style}
-              <small>{numberText(item.units)} | {currencyText(item.sales)}</small>
-            </span>
-            <small>{item.artCode} | {item.color}</small>
-          </strong>
-          <span className="barTrack"><span style={{ width: `${(item.units / maxUnits) * 100}%` }} /></span>
+      {items.length ? (
+        <div className="topSalesProductList">
+          {items.map((item) => (
+            <div className="topSalesProduct" key={`${item.rank}-${item.style}-${item.artCode}`}>
+              {item.imageUrl ? (
+                <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} />
+              ) : (
+                <div className="weeklyTopProductPlaceholder">No Image</div>
+              )}
+              <div>
+                <strong>#{item.rank} {item.artCode}</strong>
+                <em>{item.style} | {item.color}</em>
+                <small>{numberText(item.units)} units | {currencyText(item.sales)}</small>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <strong>No sales</strong>
+      )}
     </article>
   );
 }

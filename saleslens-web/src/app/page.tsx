@@ -604,7 +604,7 @@ export default function Home() {
   );
   const inventoryPageStart = filteredInventoryTracker.length ? (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE + 1 : 0;
   const inventoryPageEnd = Math.min(currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE, filteredInventoryTracker.length);
-  const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
+  const bestDay = useMemo(() => bestSalesDay(periodRecords, dashboardData.images), [dashboardData.images, periodRecords]);
   const imagePrefetchCandidates = useMemo(
     () => productImageCandidates({
       bestDayItems: bestDay.items,
@@ -1937,30 +1937,38 @@ function InventoryLineChart({ line }: { line: InventoryLine }) {
 }
 
 function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: ReturnType<typeof bestSalesDay>; periodTitle: string }) {
-  const maxUnits = Math.max(...bestDay.items.map((item) => item.units), 1);
   const hasDailySales = bestDay.dayCount > 1;
+  const items = bestDay.items.slice(0, 3);
   return (
     <article className="insightCard topSalesItemsCard">
       <div className="cardHeading">
-        <h4>{hasDailySales ? "Best Sales Day" : "Top Sales Items"}</h4>
+        <h4>{hasDailySales ? "Best Sales Day" : "Top 3 Sales Items"}</h4>
         <strong>{hasDailySales ? dateText(bestDay.date) : periodTitle}</strong>
       </div>
       <p className="compactLine">
         {currencyText(bestDay.sales)} | {numberText(bestDay.units)} units
         {hasDailySales ? ` | ${numberText(bestDay.transactions)} transactions` : ""}
       </p>
-      {bestDay.items.map((item) => (
-        <div className="bestRow" key={`${item.style}-${item.artCode}-${item.color}`}>
-          <strong className="bestItem">
-            <span>
-              #{item.rank} {item.style}
-              <small>{numberText(item.units)} | {currencyText(item.sales)}</small>
-            </span>
-            <small>{item.artCode} | {item.color}</small>
-          </strong>
-          <span className="barTrack"><span style={{ width: `${(item.units / maxUnits) * 100}%` }} /></span>
+      {items.length ? (
+        <div className="topSalesProductList">
+          {items.map((item) => (
+            <div className="topSalesProduct" key={`${item.style}-${item.artCode}-${item.color}`}>
+              {item.imageUrl ? (
+                <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} />
+              ) : (
+                <div className="weeklyTopProductPlaceholder">No Image</div>
+              )}
+              <div>
+                <strong>#{item.rank} {item.artCode}</strong>
+                <em>{item.style} | {item.color}</em>
+                <small>{numberText(item.units)} units | {currencyText(item.sales)}</small>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <strong>No sales</strong>
+      )}
     </article>
   );
 }
@@ -2275,7 +2283,7 @@ function buildReportPayload({
   const priorMetrics = metricSet(priorPeriodRecords);
   const selectedPeriodTitle = periodTitle(period, periodEndMonth);
   const priorPeriodTitle = priorTitle(period, periodEndMonth);
-  const bestDay = bestSalesDay(periodRecords);
+  const bestDay = bestSalesDay(periodRecords, images);
   const ytdStyleStudy = topStyleRows(ytdCurrentRecords, ytdPriorRecords);
 
   return {
@@ -2863,7 +2871,8 @@ function salesMixSlices(records: SalesRecord[]) {
     .filter((slice) => slice.units > 0);
 }
 
-function bestSalesDay(records: SalesRecord[]) {
+function bestSalesDay(records: SalesRecord[], images: ProductImage[] = []) {
+  const imageLookup = imageLookupMaps(images);
   const sortedDays = groupedRows(records, (record) => record.transaction_date).sort((left, right) => {
       const salesDelta = sum(right[1].map(amountValue)) - sum(left[1].map(amountValue));
       return salesDelta || sum(right[1].map((record) => record.units ?? 0)) - sum(left[1].map((record) => record.units ?? 0));
@@ -2873,15 +2882,22 @@ function bestSalesDay(records: SalesRecord[]) {
   const dayRecords = best?.[1] ?? [];
 
   const topItems = groupedRows(dayRecords, artKey)
-    .map(([_key, group]) => ({
-      rank: 0,
-      style: normalizedStyle(group[0]),
-      color: colorName(group[0]),
-      artCode: clean(group[0].art_code) || "-",
-      sales: sum(group.map(amountValue)),
-      units: sum(group.map((record) => record.units ?? 0)),
-      transactions: group.length,
-    }))
+    .map(([_key, group]) => {
+      const first = group[0];
+      const style = normalizedStyle(first);
+      const color = colorName(first);
+      const artCode = displayArtCode(first);
+      return {
+        rank: 0,
+        style,
+        color,
+        artCode,
+        sales: sum(group.map(amountValue)),
+        units: sum(group.map((record) => record.units ?? 0)),
+        transactions: group.length,
+        imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
+      };
+    })
     .sort(sortBySales)
     .slice(0, 5)
     .map((item, index) => ({ ...item, rank: index + 1 }));

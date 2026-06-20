@@ -1556,7 +1556,7 @@ select {
 .monthlySalesCard {
   align-content: start;
   gap: 1rem;
-  grid-column: span 2;
+  grid-column: span 1;
 }
 
 .monthlySalesHeader {
@@ -1616,7 +1616,55 @@ select {
 }
 
 .topSalesItemsCard {
+  grid-column: span 2;
   min-height: 176px;
+}
+
+.topSalesProductList {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.topSalesProduct {
+  align-items: center;
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 78px minmax(0, 1fr);
+  min-width: 0;
+  padding: 0.7rem;
+}
+
+.topSalesProduct img,
+.topSalesProduct .weeklyTopProductPlaceholder {
+  aspect-ratio: 1;
+  background: rgba(231, 222, 209, 0.35);
+  border: var(--hairline);
+  height: 78px;
+  object-fit: contain;
+  width: 78px;
+}
+
+.topSalesProduct > div:not(.weeklyTopProductPlaceholder) {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.topSalesProduct strong {
+  color: var(--soft-black);
+  font-size: clamp(1rem, 1.35vw, 1.25rem);
+  line-height: 1.05;
+}
+
+.topSalesProduct em,
+.topSalesProduct small {
+  color: var(--taupe);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.2;
 }
 
 .featureInsight {
@@ -2460,8 +2508,13 @@ tbody tr:nth-child(even) {
     grid-column: span 1;
   }
 
+  .topSalesItemsCard {
+    grid-column: span 1;
+  }
+
   .monthlySalesStory,
   .monthlySalesPair,
+  .topSalesProductList,
   .weeklyTopProductList,
   .weeklyMetrics {
     grid-template-columns: 1fr;

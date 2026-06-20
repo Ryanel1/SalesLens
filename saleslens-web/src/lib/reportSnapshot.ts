@@ -18,6 +18,7 @@ export type SnapshotBestDayItem = {
   sales: number;
   units: number;
   transactions: number;
+  imageUrl?: string | null;
 };
 
 export type SnapshotBestDay = {
