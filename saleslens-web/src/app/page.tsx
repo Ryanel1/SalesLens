@@ -245,7 +245,7 @@ const IMAGE_PREFETCH_LIMIT = 300;
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
-const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
+const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 const INVENTORY_POWERBLEND_STYLES = new Set(["CS1220", "CS2070", "CS2071", "CP2028", "CP2071", "CP2081"]);
 const INVENTORY_REVERSE_WEAVE_STYLES = new Set(["CS3050", "CS3051"]);
 const INVENTORY_TEE_STYLES = new Set(["CT1000", "CT1081", "CT1730", "C6039", "C6047", "C6048", "C6054", "C7006"]);
@@ -2610,6 +2610,7 @@ function cachedImageUrlAllowedForColor(value: string, color: string, style: stri
 
   const isAllowedDefault = compactImagePart(color) === "WHITE"
     || compactImagePart(style) === "CBRZU0Z"
+    || isGearStyle(style)
     || Boolean(knownProductImageUrl(style, artCode, color));
   return imageUrlMatchesColor(value, color) || (isAllowedDefault && imageColorToken(value) === "DEFAULT");
 }
@@ -2931,10 +2932,16 @@ function groupBy<T>(items: T[], keyForItem: (item: T) => string) {
 
 function brandName(record: MerchandiseRecord) {
   const style = normalizedStyle(record);
+  if (style.startsWith("CBR")) return "Champion";
   const classText = `${record.product_class ?? ""} ${record.master_style ?? ""}`.toUpperCase();
   if (classText.includes("GEAR") || classText.includes("COMFORT WASH")) return "Gear";
-  if (GEAR_STYLE_PREFIXES.some((prefix) => style.startsWith(prefix))) return "Gear";
+  if (isGearStyle(style)) return "Gear";
   return "Champion";
+}
+
+function isGearStyle(style: string) {
+  const normalized = compactImagePart(style);
+  return GEAR_STYLE_PREFIXES.some((prefix) => normalized.startsWith(prefix));
 }
 
 function audienceName(record: MerchandiseRecord) {

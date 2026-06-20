@@ -32,6 +32,7 @@ type ProductImageMatch = {
 const REBEL_RAGS_BASE_URL = "https://www.rebelrags.net";
 const VOLSHOP_BASE_URL = "https://www.utvolshop.com";
 const MAX_LOOKUPS = 30;
+const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 
 export async function POST(request: NextRequest) {
   const config = getSupabaseConfig();
@@ -429,7 +430,13 @@ function colorSearchTerms(colorName: string) {
 function allowsDefaultImage(item: ImageRequestItem) {
   return normalized(item.color) === "WHITE"
     || normalized(item.style) === "CBRZU0Z"
+    || isGearStyle(item.style)
     || isKnownDefaultImageMatch(item);
+}
+
+function isGearStyle(style: string | null | undefined) {
+  const normalizedStyle = normalized(style);
+  return GEAR_STYLE_PREFIXES.some((prefix) => normalizedStyle.startsWith(prefix));
 }
 
 function preferLargeImageUrl(value: string) {

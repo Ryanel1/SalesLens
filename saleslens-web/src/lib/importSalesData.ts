@@ -68,7 +68,7 @@ const COLOR_NAMES_BY_CODE: Record<string, string> = {
   "1616": "Light Blue",
 };
 
-const REBEL_RAGS_GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
+const REBEL_RAGS_GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
   "CT1000",
@@ -548,10 +548,12 @@ function normalizedInventoryArtCode(value: string | null) {
 }
 
 function normalizedInventoryBrandClass(value: string | null, styleNumber: string | null, customerName: string) {
+  const style = styleNumber?.toUpperCase() ?? "";
+  if (style.startsWith("CBR")) return "Champion";
+
   const explicit = normalizedBrandClass(value);
   if (explicit) return explicit;
 
-  const style = styleNumber?.toUpperCase() ?? "";
   if (REBEL_RAGS_GEAR_STYLE_PREFIXES.some((prefix) => style.startsWith(prefix))) return "Gear";
   if (/rebel\s*rags/i.test(customerName)) return null;
   return normalizedBrandClass(customerName);
