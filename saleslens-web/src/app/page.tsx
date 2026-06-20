@@ -160,7 +160,7 @@ type InventorySort = "highest" | "lowest";
 type InventoryAudience = "Unisex" | "Womens" | "Mens" | "Youth";
 type InventoryAudienceFilter = "All" | "Mens" | "Womens" | "Youth";
 type InventoryProductCategory = "Fleece" | "Reverse Weave" | "Tees" | "Other";
-type InventoryProductFilter = "All" | "Fleece" | "Reverse Weave" | "Tees";
+type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees";
 type TopArtSort = "units" | "dollars";
 
 type TopStyle = MetricSet & {
@@ -245,6 +245,8 @@ const IMAGE_PREFETCH_LIMIT = 300;
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
+const INVENTORY_AUDIENCE_FILTERS: InventoryAudienceFilter[] = ["Mens", "Womens", "Youth"];
+const INVENTORY_PRODUCT_FILTERS: InventoryProductFilter[] = ["Fleece", "Tees", "Reverse Weave"];
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 const INVENTORY_FLEECE_STYLES = new Set([
   "CS1220",
@@ -393,7 +395,7 @@ export default function Home() {
   const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
   const [inventoryPage, setInventoryPage] = useState(1);
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
-  const [inventoryProductFilter, setInventoryProductFilter] = useState<InventoryProductFilter>("All");
+  const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -588,9 +590,9 @@ export default function Home() {
   const filteredInventoryTracker = useMemo(
     () => inventoryTracker.filter((row) => (
       inventoryAudienceMatches(row, inventoryAudienceFilter) &&
-      inventoryProductMatches(row, inventoryProductFilter)
+      inventoryProductMatches(row, inventoryProductFilters)
     )),
-    [inventoryAudienceFilter, inventoryProductFilter, inventoryTracker],
+    [inventoryAudienceFilter, inventoryProductFilters, inventoryTracker],
   );
   const inventoryPageCount = Math.max(1, Math.ceil(filteredInventoryTracker.length / INVENTORY_TRACKER_PAGE_SIZE));
   const currentInventoryPage = Math.min(inventoryPage, inventoryPageCount);
@@ -627,7 +629,7 @@ export default function Home() {
 
   useEffect(() => {
     setInventoryPage(1);
-  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilter, inventorySort, selectedCustomerId, selectedPeriod]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, selectedCustomerId, selectedPeriod]);
 
   useEffect(() => {
     if (inventoryPage > inventoryPageCount) setInventoryPage(inventoryPageCount);
@@ -1479,57 +1481,77 @@ export default function Home() {
                 </div>
               </div>
               <div className="inventoryControls">
-                <div className="inventoryFilterStack">
-                  <div className="inventoryControlGroup sortControls" aria-label="Inventory sort controls">
-                    <span>Sort by:</span>
-                    <button
-                      className={inventorySort === "highest" ? "active" : ""}
-                      type="button"
-                      onClick={() => setInventorySort("highest")}
-                    >
-                      Highest
-                    </button>
-                    <button
-                      className={inventorySort === "lowest" ? "active" : ""}
-                      type="button"
-                      onClick={() => setInventorySort("lowest")}
-                    >
-                      Lowest
-                    </button>
-                  </div>
-                  <div className="inventoryControlGroup inventoryFilters" aria-label="Inventory filters">
-                    <span>Filter:</span>
-                    <button
-                      className={inventoryAudienceFilter === "All" && inventoryProductFilter === "All" ? "active" : ""}
-                      type="button"
-                      onClick={() => {
-                        setInventoryAudienceFilter("All");
-                        setInventoryProductFilter("All");
-                      }}
-                    >
-                      All
-                    </button>
-                    {(["Mens", "Womens", "Youth"] as InventoryAudienceFilter[]).map((filter) => (
+                <div className="inventoryDropdownControls">
+                  <details className="inventoryDropdown">
+                    <summary>
+                      <span>Sort by</span>
+                      <strong>{inventorySort === "highest" ? "Highest" : "Lowest"}</strong>
+                    </summary>
+                    <div className="inventoryDropdownMenu">
+                      {(["highest", "lowest"] as InventorySort[]).map((sort) => (
+                        <label className="inventoryOption" key={sort}>
+                          <input
+                            checked={inventorySort === sort}
+                            name="inventory-sort"
+                            type="radio"
+                            onChange={() => setInventorySort(sort)}
+                          />
+                          <span>{sort === "highest" ? "Highest" : "Lowest"}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </details>
+                  <details className="inventoryDropdown">
+                    <summary>
+                      <span>Filter</span>
+                      <strong>{inventoryFilterSummary(inventoryAudienceFilter, inventoryProductFilters)}</strong>
+                    </summary>
+                    <div className="inventoryDropdownMenu wide">
                       <button
-                        className={inventoryAudienceFilter === filter ? "active" : ""}
-                        key={filter}
+                        className="inventoryResetOption"
                         type="button"
-                        onClick={() => setInventoryAudienceFilter((current) => current === filter ? "All" : filter)}
+                        onClick={() => {
+                          setInventoryAudienceFilter("All");
+                          setInventoryProductFilters([]);
+                        }}
                       >
-                        {filter === "Womens" ? "Women's" : filter}
+                        Clear filters
                       </button>
-                    ))}
-                    {(["Fleece", "Tees", "Reverse Weave"] as InventoryProductFilter[]).map((filter) => (
-                      <button
-                        className={inventoryProductFilter === filter ? "active" : ""}
-                        key={filter}
-                        type="button"
-                        onClick={() => setInventoryProductFilter((current) => current === filter ? "All" : filter)}
-                      >
-                        {filter}
-                      </button>
-                    ))}
-                  </div>
+                      <div className="inventoryOptionGroup">
+                        <p>Audience</p>
+                        {(["All", ...INVENTORY_AUDIENCE_FILTERS] as InventoryAudienceFilter[]).map((filter) => (
+                          <label className="inventoryOption" key={filter}>
+                            <input
+                              checked={inventoryAudienceFilter === filter}
+                              name="inventory-audience-filter"
+                              type="radio"
+                              onChange={() => setInventoryAudienceFilter(filter)}
+                            />
+                            <span>{inventoryAudienceFilterLabel(filter)}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="inventoryOptionGroup">
+                        <p>Product Type</p>
+                        {INVENTORY_PRODUCT_FILTERS.map((filter) => (
+                          <label className="inventoryOption" key={filter}>
+                            <input
+                              checked={inventoryProductFilters.includes(filter)}
+                              type="checkbox"
+                              onChange={() => {
+                                setInventoryProductFilters((current) => (
+                                  current.includes(filter)
+                                    ? current.filter((item) => item !== filter)
+                                    : [...current, filter]
+                                ));
+                              }}
+                            />
+                            <span>{filter}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </details>
                 </div>
                 {inventoryPageCount > 1 ? (
                   <div className="pagerControls" aria-label="Inventory page controls">
@@ -3074,8 +3096,23 @@ function inventoryAudienceMatches(row: InventoryTrackerItem, filter: InventoryAu
   return filter === "All" || row.audience === filter;
 }
 
-function inventoryProductMatches(row: InventoryTrackerItem, filter: InventoryProductFilter) {
-  return filter === "All" || row.productCategory === filter;
+function inventoryProductMatches(row: InventoryTrackerItem, filters: InventoryProductFilter[]) {
+  return filters.length === 0 || filters.includes(row.productCategory as InventoryProductFilter);
+}
+
+function inventoryAudienceFilterLabel(filter: InventoryAudienceFilter) {
+  if (filter === "Womens") return "Women's";
+  return filter;
+}
+
+function inventoryFilterSummary(audienceFilter: InventoryAudienceFilter, productFilters: InventoryProductFilter[]) {
+  const parts = [
+    audienceFilter === "All" ? null : inventoryAudienceFilterLabel(audienceFilter),
+    ...productFilters,
+  ].filter((part): part is string => Boolean(part));
+  if (!parts.length) return "All";
+  if (parts.length === 1) return parts[0];
+  return `${parts.length} selected`;
 }
 
 function normalizedStyle(record: MerchandiseRecord) {
