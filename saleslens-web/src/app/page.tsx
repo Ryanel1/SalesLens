@@ -1329,8 +1329,8 @@ export default function Home() {
                         <strong>{row.artCode}</strong>
                       )}
                       <span>{row.style} | {row.color}</span>
-                      <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
                       <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
+                      <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
                     </div>
                   </article>
                 ))}
