@@ -147,7 +147,7 @@ type InventoryTrackerItem = {
   parentSku: string | null;
   sku: string | null;
   ytdUnits: number;
-  priorYearUnits: number;
+  priorYearUnits: number | null;
   recentSixMonthUnits: number;
   inventoryUnits: number;
   imageUrl: string | null;
@@ -1375,7 +1375,7 @@ export default function Home() {
                       <span>{row.style} | {row.color}</span>
                       <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                       <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
-                      <span>LY Sold: {numberText(row.priorYearUnits)} Units</span>
+                      <span>LY Sold: {inventoryPriorYearSoldText(row.priorYearUnits)}</span>
                     </div>
                   </article>
                 ))}
@@ -2830,13 +2830,16 @@ function audienceName(record: MerchandiseRecord) {
 }
 
 function normalizedStyle(record: MerchandiseRecord) {
+  const sortedPrefixes = [...KNOWN_STYLE_PREFIXES].sort((left, right) => right.length - left.length);
+  for (const rawValue of [record.style_number, record.raw_style_identifier]) {
+    const upper = clean(rawValue)?.toUpperCase().replace(/[^A-Z0-9]/g, "") ?? "";
+    const knownPrefix = sortedPrefixes.find((prefix) => upper.startsWith(prefix));
+    if (knownPrefix) return knownPrefix;
+  }
+
   const raw = clean(record.style_number) || clean(record.raw_style_identifier) || "-";
-  const upper = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const knownPrefix = [...KNOWN_STYLE_PREFIXES]
-    .sort((left, right) => right.length - left.length)
-    .find((prefix) => upper.startsWith(prefix));
-  if (knownPrefix) return knownPrefix;
-  return raw.toUpperCase().replace(/[^A-Z0-9]+$/g, "") || "-";
+  const fallback = raw.toUpperCase().replace(/[^A-Z0-9]+$/g, "") || "-";
+  return STYLE_NUMBER_ALIASES[fallback] ?? fallback;
 }
 
 function styleKey(record: MerchandiseRecord) {
@@ -2907,6 +2910,11 @@ function compactImagePart(value: string | null | undefined) {
 function colorName(record: MerchandiseRecord) {
   return displayColorName(clean(record.catalog_color_name) || clean(record.color)) || "-";
 }
+
+const STYLE_NUMBER_ALIASES: Record<string, string> = {
+  CS122: "CS1220",
+  CS207: "CS2071",
+};
 
 function displayColorName(value: string) {
   const spaced = clean(value).replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
@@ -3099,6 +3107,7 @@ function inventoryTrackerRows(
     .map<InventoryTrackerItem>(([key, group]) => {
       const first = group[0];
       const salesContext = salesContextGroups.get(key) ?? [];
+      const priorYearMatches = priorYearGroups.get(key);
       const style = normalizedStyle(first);
       const artCode = displayArtCode(first);
       const color = colorName(first);
@@ -3113,7 +3122,7 @@ function inventoryTrackerRows(
         parentSku: firstNonBlank([...group.map(recordParentSku), ...salesContext.map((record) => record.parent_sku)]),
         sku: firstNonBlank([...group.map(recordSku), ...salesContext.map((record) => record.sku)]),
         ytdUnits: sum((ytdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
-        priorYearUnits: sum((priorYearGroups.get(key) ?? []).map((record) => record.units ?? 0)),
+        priorYearUnits: priorYearMatches?.length ? sum(priorYearMatches.map((record) => record.units ?? 0)) : null,
         recentSixMonthUnits: sum((recentGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
@@ -3319,6 +3328,10 @@ function ytdTitle(month: string | null) {
 
 function countText(value: number, singular: string, plural: string) {
   return `${numberText(value)} ${value === 1 ? singular : plural}`;
+}
+
+function inventoryPriorYearSoldText(value: number | null | undefined) {
+  return value == null ? "NA" : `${numberText(value)} Units`;
 }
 
 function createReportToken() {

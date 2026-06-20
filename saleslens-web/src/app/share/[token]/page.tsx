@@ -281,7 +281,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                     <span>{row.style} | {row.color}</span>
                     <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                     <span>YTD Sold: {numberText(row.ytdUnits ?? 0)} Units</span>
-                    <span>LY Sold: {numberText(row.priorYearUnits ?? row.priorYtdUnits ?? 0)} Units</span>
+                    <span>LY Sold: {inventoryPriorYearSoldText(row)}</span>
                   </div>
                 </article>
               ))}
@@ -835,6 +835,11 @@ function sum(values: number[]) {
 
 function countText(value: number, singular: string, plural: string) {
   return `${numberText(value)} ${value === 1 ? singular : plural}`;
+}
+
+function inventoryPriorYearSoldText(row: { priorYearUnits?: number | null; priorYtdUnits?: number | null }) {
+  const value = Object.prototype.hasOwnProperty.call(row, "priorYearUnits") ? row.priorYearUnits : row.priorYtdUnits;
+  return value == null ? "NA" : `${numberText(value)} Units`;
 }
 
 function inventoryPositionFallback(
