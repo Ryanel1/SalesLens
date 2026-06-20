@@ -1565,7 +1565,7 @@ select {
 .monthlySalesCard {
   align-content: start;
   gap: 1rem;
-  grid-column: span 1;
+  grid-column: span 2;
 }
 
 .monthlySalesHeader {
@@ -1629,14 +1629,14 @@ select {
   align-content: start;
   display: grid;
   gap: 0.9rem;
-  grid-column: span 2;
-  min-height: 214px;
+  grid-column: span 1;
+  min-height: 330px;
 }
 
 .topSalesProductList {
   display: grid;
   gap: 0.7rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .topSalesProduct {
