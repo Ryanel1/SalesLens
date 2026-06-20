@@ -561,13 +561,14 @@ function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay;
         <div className="topSalesProductList">
           {items.map((item) => (
             <div className="topSalesProduct" key={`${item.rank}-${item.style}-${item.artCode}`}>
+              <span className="topSalesRank">#{item.rank}</span>
               {item.imageUrl ? (
                 <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} />
               ) : (
                 <div className="weeklyTopProductPlaceholder">No Image</div>
               )}
-              <div>
-                <strong>#{item.rank} {item.artCode}</strong>
+              <div className="topSalesProductText">
+                <strong>{item.artCode}</strong>
                 <em>{item.style} | {item.color}</em>
                 <small>{numberText(item.units)} units | {currencyText(item.sales)}</small>
               </div>

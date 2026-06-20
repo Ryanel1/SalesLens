@@ -1612,17 +1612,21 @@ select {
 }
 
 .monthlySalesPair strong {
-  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+  white-space: nowrap;
 }
 
 .topSalesItemsCard {
+  align-content: start;
+  display: grid;
+  gap: 0.9rem;
   grid-column: span 2;
-  min-height: 176px;
+  min-height: 214px;
 }
 
 .topSalesProductList {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.7rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -1630,10 +1634,21 @@ select {
   align-items: center;
   border: 1px solid rgba(231, 222, 209, 0.72);
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 0.6rem;
+  grid-template-columns: auto 72px minmax(0, 1fr);
   min-width: 0;
-  padding: 0.7rem;
+  padding: 0.65rem;
+}
+
+.topSalesRank {
+  align-self: start;
+  background: var(--soft-black);
+  color: #fffdf8;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 950;
+  line-height: 1;
+  padding: 0.38rem 0.42rem;
 }
 
 .topSalesProduct img,
@@ -1641,20 +1656,20 @@ select {
   aspect-ratio: 1;
   background: rgba(231, 222, 209, 0.35);
   border: var(--hairline);
-  height: 78px;
+  height: 72px;
   object-fit: contain;
-  width: 78px;
+  width: 72px;
 }
 
-.topSalesProduct > div:not(.weeklyTopProductPlaceholder) {
+.topSalesProductText {
   display: grid;
-  gap: 0.28rem;
+  gap: 0.22rem;
   min-width: 0;
 }
 
 .topSalesProduct strong {
   color: var(--soft-black);
-  font-size: clamp(1rem, 1.35vw, 1.25rem);
+  font-size: clamp(0.96rem, 1.25vw, 1.12rem);
   line-height: 1.05;
 }
 
