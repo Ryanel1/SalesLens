@@ -1419,7 +1419,7 @@ select {
   border: var(--hairline);
   display: grid;
   gap: 1px;
-  grid-template-columns: minmax(128px, 0.55fr) minmax(180px, 0.8fr) minmax(260px, 1.25fr) minmax(420px, 2fr);
+  grid-template-columns: minmax(128px, 0.55fr) minmax(180px, 0.8fr) minmax(220px, 0.8fr) minmax(540px, 2.6fr);
   min-height: 148px;
 }
 
@@ -1481,7 +1481,7 @@ select {
 .weeklyMetrics {
   align-content: stretch;
   gap: 1px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 0;
 }
 
@@ -1520,8 +1520,8 @@ select {
 .weeklyTopProduct {
   align-items: center;
   display: grid;
-  gap: 0.55rem;
-  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 0.68rem;
+  grid-template-columns: 64px minmax(0, 1fr);
   min-width: 0;
 }
 
@@ -1536,9 +1536,9 @@ select {
   aspect-ratio: 1;
   background: rgba(231, 222, 209, 0.35);
   border: var(--hairline);
-  height: 54px;
+  height: 64px;
   object-fit: contain;
-  width: 54px;
+  width: 64px;
 }
 
 .weeklyTopProductPlaceholder {

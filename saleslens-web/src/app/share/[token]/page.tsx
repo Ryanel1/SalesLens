@@ -512,11 +512,6 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
                 <strong>{numberText(row.current.transactions)}</strong>
                 <small className={changeClass(transactionDelta)}>{signedNumberText(transactionDelta)} vs LY</small>
               </span>
-              <span>
-                <em>Avg Sale</em>
-                <strong>{currencyText(row.avgSalePerTransaction)}</strong>
-                <small>per transaction</small>
-              </span>
             </div>
 
             <div className="weeklyTopProducts">
