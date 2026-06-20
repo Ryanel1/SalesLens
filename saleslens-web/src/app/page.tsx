@@ -241,7 +241,7 @@ type InventorySnapshot = {
 
 const PAGE_SIZE = 1000;
 const IMAGE_FETCH_BATCH_SIZE = 30;
-const IMAGE_PREFETCH_LIMIT = 180;
+const IMAGE_PREFETCH_LIMIT = 300;
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
@@ -511,13 +511,15 @@ export default function Home() {
   const imagePrefetchCandidates = useMemo(
     () => productImageCandidates({
       bestDayItems: bestDay.items,
+      filteredInventoryTracker,
       images: dashboardData.images,
       inventoryTracker,
       records: [...periodRecords, ...ytdCurrentRecords],
       topArt,
+      visibleInventoryTracker,
       weeklyScorecards,
     }),
-    [bestDay.items, dashboardData.images, inventoryTracker, periodRecords, topArt, weeklyScorecards, ytdCurrentRecords],
+    [bestDay.items, dashboardData.images, filteredInventoryTracker, inventoryTracker, periodRecords, topArt, visibleInventoryTracker, weeklyScorecards, ytdCurrentRecords],
   );
   const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, periodEndMonth), [recordsForCustomer, periodEndMonth]);
   const lastUploaded = latestDate(recordsForCustomer);
@@ -2488,17 +2490,21 @@ function legacyProductPageUrl(
 
 function productImageCandidates({
   bestDayItems,
+  filteredInventoryTracker,
   images,
   inventoryTracker,
   records,
   topArt,
+  visibleInventoryTracker,
   weeklyScorecards,
 }: {
   bestDayItems: Array<{ style: string; artCode: string; color: string }>;
+  filteredInventoryTracker: InventoryTrackerItem[];
   images: ProductImage[];
   inventoryTracker: InventoryTrackerItem[];
   records: SalesRecord[];
   topArt: TopArt[];
+  visibleInventoryTracker: InventoryTrackerItem[];
   weeklyScorecards: WeeklyScorecardRow[];
 }) {
   const imageLookup = imageLookupMaps(images);
@@ -2530,6 +2536,8 @@ function productImageCandidates({
   }
 
   topArt.forEach((row) => addCandidate(row));
+  visibleInventoryTracker.forEach((row) => addCandidate(row));
+  filteredInventoryTracker.forEach((row) => addCandidate(row));
   inventoryTracker.forEach((row) => addCandidate(row));
   weeklyScorecards.forEach((row) => row.topItems.forEach((item) => addCandidate({
     ...item,
@@ -2663,9 +2671,18 @@ function colorSearchTerms(color: string) {
   const terms = [normalizedColor];
   if (normalizedColor === "LIGHTBLUE") terms.push("LTBLUE");
   if (normalizedColor === "GRAYCAROLINABLUE") terms.push("LIGHTBLUE", "LTBLUE", "CAROLINABLUE");
+  if (normalizedColor === "GREY") terms.push("GRAY");
+  if (normalizedColor === "GRAY") terms.push("GREY");
   if (normalizedColor === "HEATHERGREY") terms.push("HEATHERGRAY");
+  if (normalizedColor === "HEATHERGRAY") terms.push("HEATHERGREY");
+  if (normalizedColor === "OXFORDGREY") terms.push("OXFORDGRAY");
+  if (normalizedColor === "OXFORDGRAY") terms.push("OXFORDGREY");
   if (normalizedColor === "SILVERGREY") terms.push("SILVERGRAY");
+  if (normalizedColor === "SILVERGRAY") terms.push("SILVERGREY");
   if (normalizedColor === "NAVY") terms.push("MIDNIGHTNAVY");
+  if (normalizedColor === "MIDNIGHTNAVY") terms.push("NAVY");
+  if (normalizedColor === "SCARLET") terms.push("RED");
+  if (normalizedColor === "RED") terms.push("SCARLET");
   return terms;
 }
 

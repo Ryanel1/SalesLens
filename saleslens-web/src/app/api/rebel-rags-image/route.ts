@@ -258,6 +258,8 @@ async function productDetailUrlsForItem(item: ImageRequestItem, lookupArtCode: s
   const urls = [
     ...await productDetailUrlsForKeyword(lookupArtCode),
     ...await productDetailUrlsForDecoratedArtCode(lookupArtCode),
+    ...await productDetailUrlsForKeyword(clean(item.styleName)),
+    ...await productDetailUrlsForKeyword([clean(item.style), clean(item.color)].filter(Boolean).join(" ")),
     ...await productDetailUrlsForKeyword(clean(item.style)),
   ];
   const seen = new Set<string>();
@@ -409,9 +411,18 @@ function colorSearchTerms(colorName: string) {
   const terms = [color];
   if (color === "LIGHTBLUE") terms.push("LTBLUE");
   if (color === "GRAYCAROLINABLUE") terms.push("LIGHTBLUE", "LTBLUE", "CAROLINABLUE");
+  if (color === "GREY") terms.push("GRAY");
+  if (color === "GRAY") terms.push("GREY");
   if (color === "HEATHERGREY") terms.push("HEATHERGRAY");
+  if (color === "HEATHERGRAY") terms.push("HEATHERGREY");
+  if (color === "OXFORDGREY") terms.push("OXFORDGRAY");
+  if (color === "OXFORDGRAY") terms.push("OXFORDGREY");
   if (color === "SILVERGREY") terms.push("SILVERGRAY");
+  if (color === "SILVERGRAY") terms.push("SILVERGREY");
   if (color === "NAVY") terms.push("MIDNIGHTNAVY");
+  if (color === "MIDNIGHTNAVY") terms.push("NAVY");
+  if (color === "SCARLET") terms.push("RED");
+  if (color === "RED") terms.push("SCARLET");
   return terms;
 }
 
