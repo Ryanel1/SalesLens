@@ -31,6 +31,7 @@ type SalesRecord = {
   catalog_color_name: string | null;
   style_number: string | null;
   raw_style_identifier: string | null;
+  color_code: string | null;
   art_code: string | null;
   inventory_units: number | null;
   year_to_date_amount: number | string | null;
@@ -55,10 +56,16 @@ type InventoryRecord = {
   current_retail: number | string | null;
 };
 
-type MerchandiseRecord = Pick<
-  SalesRecord,
-  "product_class" | "master_style" | "style_number" | "raw_style_identifier" | "catalog_color_name" | "color" | "art_code"
->;
+type MerchandiseRecord = {
+  product_class: string | null;
+  master_style: string | null;
+  style_number: string | null;
+  raw_style_identifier: string | null;
+  catalog_color_name: string | null;
+  color: string | null;
+  color_code?: string | null;
+  art_code: string | null;
+};
 
 type ProductImage = {
   style_number: string;
@@ -1981,7 +1988,7 @@ async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await client
       .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,inventory_units,year_to_date_amount,year_to_date_units")
+      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,color_code,art_code,inventory_units,year_to_date_amount,year_to_date_units")
       .eq("customer_id", customerId)
       .order("transaction_date", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -2841,8 +2848,30 @@ function artKey(record: MerchandiseRecord) {
     compactImagePart(brandName(record)),
     normalizedStyle(record),
     compactImagePart(displayArtCode(record)),
-    compactImagePart(colorName(record)),
+    colorIdentityKey(record),
   ].join("|");
+}
+
+function colorIdentityKey(record: MerchandiseRecord) {
+  return compactImagePart(record.color_code) || colorCodeFromStyleIdentifier(record) || compactImagePart(colorName(record));
+}
+
+function colorCodeFromStyleIdentifier(record: MerchandiseRecord) {
+  const style = normalizedStyle(record);
+  if (!style || style === "-") return "";
+
+  for (const value of [record.raw_style_identifier, record.style_number]) {
+    const compact = compactImagePart(value);
+    if (!compact.startsWith(style)) continue;
+
+    const afterStyle = compact.slice(style.length);
+    const artIndex = afterStyle.search(/(?:APC|APO|AEC|AE|AP)[A-Z0-9]+/);
+    const beforeArt = artIndex >= 0 ? afterStyle.slice(0, artIndex) : afterStyle;
+    const colorMatch = beforeArt.match(/^(\d{3,4})/);
+    if (colorMatch) return colorMatch[1];
+  }
+
+  return "";
 }
 
 function displayArtCode(record: MerchandiseRecord) {
