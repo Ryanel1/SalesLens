@@ -204,7 +204,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </ReportSection>
         ) : null}
 
-        <ReportSection title="Top Performing Styles" subtitle="Style-level units, sales, colors, and artwork breadth.">
+        <ReportSection title="Style Comparison" subtitle="Style-level units, sales, colors, and artwork breadth.">
           <StyleStudyTabs
             monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
             ytdStyles={payload.styleStudyYtd ?? payload.topStyles}
@@ -216,8 +216,8 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         </ReportSection>
 
         <ReportSection
-          title="Top Performing Arts"
-          subtitle={`${payload.periodTitle} Top 30 Total: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
+          title="Top Performing Styles"
+          subtitle={`${payload.periodTitle} Top 30 by ${payload.topArtSort === "dollars" ? "Dollars" : "Units"}: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
         >
           <div className="artGrid">
             {payload.topArt.map((row) => (

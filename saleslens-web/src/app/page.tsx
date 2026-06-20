@@ -146,6 +146,7 @@ type InventoryTrackerItem = {
 };
 
 type InventorySort = "highest" | "lowest";
+type TopArtSort = "units" | "dollars";
 
 type TopStyle = MetricSet & {
   rank: number;
@@ -274,6 +275,7 @@ export default function Home() {
   const [brandFilter, setBrandFilter] = useState("All");
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
+  const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
@@ -446,8 +448,8 @@ export default function Home() {
     [periodEndMonth, ytdCurrentRecords, ytdPriorRecords],
   );
   const topArt = useMemo(
-    () => topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images, inventoryRecordsForCustomer),
-    [dashboardData.images, inventoryRecordsForCustomer, periodRecords, ytdCurrentRecords],
+    () => topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images, inventoryRecordsForCustomer, topArtSort),
+    [dashboardData.images, inventoryRecordsForCustomer, periodRecords, topArtSort, ytdCurrentRecords],
   );
   const periodStyleStudy = useMemo(() => topStyleRows(periodRecords, comparisonRecords), [periodRecords, comparisonRecords]);
   const ytdStyleStudy = useMemo(() => topStyleRows(ytdCurrentRecords, ytdPriorRecords), [ytdCurrentRecords, ytdPriorRecords]);
@@ -625,6 +627,7 @@ export default function Home() {
           inventorySort,
           period: activePeriod,
           records: dashboardData.records,
+          topArtSort,
         });
       }
 
@@ -642,6 +645,7 @@ export default function Home() {
         inventorySort,
         period: activePeriod,
         records: recordsResult.records,
+        topArtSort,
       });
     }
 
@@ -1219,7 +1223,7 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Top Performing Styles</h3>
+                <h3>Style Comparison</h3>
                 <p>
                   {styleStudyMode === "month"
                     ? `Top 10 Styles: ${selectedPeriodTitle} vs ${priorPeriodTitle}`
@@ -1245,11 +1249,28 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Top Performing Arts</h3>
+                <h3>Top Performing Styles</h3>
                 <p>
-                  {selectedPeriodTitle} Top 30 Total: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
+                  {selectedPeriodTitle} Top 30 by {topArtSort === "units" ? "Units" : "Dollars"}: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
                   {currencyText(sum(topArt.map((row) => row.sales)))}
                 </p>
+              </div>
+              <div className="sortControls" aria-label="Top performing styles sort controls">
+                <span>Sort by:</span>
+                <button
+                  className={topArtSort === "units" ? "active" : ""}
+                  type="button"
+                  onClick={() => setTopArtSort("units")}
+                >
+                  Units
+                </button>
+                <button
+                  className={topArtSort === "dollars" ? "active" : ""}
+                  type="button"
+                  onClick={() => setTopArtSort("dollars")}
+                >
+                  Dollars
+                </button>
               </div>
             </div>
             <div className="artGrid">
@@ -2003,6 +2024,7 @@ function buildReportPayload({
   inventorySort = "highest",
   period,
   records,
+  topArtSort = "units",
 }: {
   accountName: string;
   brandFilter: string;
@@ -2012,6 +2034,7 @@ function buildReportPayload({
   inventorySort?: InventorySort;
   period: PeriodSelection;
   records: SalesRecord[];
+  topArtSort?: TopArtSort;
 }): ReportSnapshotPayload {
   const filteredRecords = records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
   const filteredInventoryRecords = inventoryRecords.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
@@ -2038,6 +2061,7 @@ function buildReportPayload({
     periodTitle: selectedPeriodTitle,
     priorPeriodTitle,
     previousMonthTitle: priorPeriodTitle,
+    topArtSort,
     lastUploaded: latestDate(filteredRecords),
     currentMetrics,
     priorMetrics,
@@ -2060,7 +2084,7 @@ function buildReportPayload({
     topStyles: ytdStyleStudy,
     styleStudyMonthly: topStyleRows(periodRecords, priorPeriodRecords),
     styleStudyYtd: ytdStyleStudy,
-    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords),
+    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords, topArtSort),
   };
 }
 
@@ -2171,6 +2195,7 @@ function topArtRows(
   ytdRecords: SalesRecord[],
   images: ProductImage[],
   inventoryRecords: InventoryRecord[] = [],
+  sort: TopArtSort = "units",
 ): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
   const imageLookup = imageLookupMaps(images);
@@ -2207,7 +2232,7 @@ function topArtRows(
         productUrl: findProductPageUrl(imageLookup, style, artCode, color),
       };
     })
-    .sort(sortByUnits)
+    .sort(sort === "dollars" ? sortBySales : sortByUnits)
     .slice(0, 30)
     .map((row, index) => ({ ...row, rank: index + 1 }));
 }
