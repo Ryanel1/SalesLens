@@ -555,7 +555,6 @@ export default function Home() {
     () => weeklyScorecardRows(recordsForCustomer, periodEndMonth, dashboardData.images),
     [dashboardData.images, periodEndMonth, recordsForCustomer],
   );
-  const totalRecordsMetrics = useMemo(() => metricSet(recordsForCustomer), [recordsForCustomer]);
   const ytdCurrentRecords = useMemo(
     () => currentYearRecords(recordsForCustomer, periodEndMonth),
     [recordsForCustomer, periodEndMonth],
@@ -1603,10 +1602,7 @@ export default function Home() {
             </section>
           ) : null}
 
-          <p className="dataFootnote">
-            All imported records for this account/filter: {numberText(totalRecordsMetrics.transactions)} transactions,{" "}
-            {numberText(totalRecordsMetrics.units)} units, {currencyText(totalRecordsMetrics.sales)}.
-          </p>
+          <p className="siteCopyright">Copyright Lester Sales {new Date().getFullYear()}</p>
         </section>
       </main>
     );

@@ -2192,10 +2192,14 @@ tbody tr:nth-child(even) {
   background: rgba(231, 222, 209, 0.28);
 }
 
-.dataFootnote {
+.siteCopyright {
   color: var(--taupe);
-  font-size: 0.88rem;
-  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  margin: 2.2rem 0 0;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .publicShell {
