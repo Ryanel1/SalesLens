@@ -216,7 +216,7 @@ type InventorySnapshot = {
 
 const PAGE_SIZE = 1000;
 const IMAGE_FETCH_BATCH_SIZE = 30;
-const IMAGE_PREFETCH_LIMIT = 120;
+const IMAGE_PREFETCH_LIMIT = 180;
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
@@ -448,8 +448,8 @@ export default function Home() {
     [inventoryRecordsForCustomer, periodEndMonth, periodRecords, recordsForCustomer],
   );
   const inventoryTracker = useMemo(
-    () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort),
-    [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, ytdCurrentRecords],
+    () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer),
+    [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, recordsForCustomer, ytdCurrentRecords],
   );
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
   const imagePrefetchCandidates = useMemo(
@@ -2027,7 +2027,7 @@ function buildReportPayload({
     weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth, filteredRecords),
     inventoryTrackerSort: inventorySort,
-    inventoryTracker: inventoryTrackerRows(periodRecords, ytdCurrentRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort),
+    inventoryTracker: inventoryTrackerRows(periodRecords, ytdCurrentRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort, filteredRecords),
     salesMix: salesMixSlices(periodRecords),
     bestDay: {
       date: bestDay.date,
@@ -2904,14 +2904,17 @@ function inventoryTrackerRows(
   periodEndMonth: string | null,
   images: ProductImage[],
   sort: InventorySort = "highest",
+  contextRecords: SalesRecord[] = [],
 ) {
   const snapshotRecords = latestInventoryRecords(records, standaloneInventoryRecords, periodEndMonth);
   const ytdGroups = groupBy(ytdRecords, (record) => artKey(record));
+  const salesContextGroups = groupBy([...contextRecords, ...records, ...ytdRecords], (record) => artKey(record));
   const imageLookup = imageLookupMaps(images);
 
   return groupedRows(snapshotRecords, (record) => artKey(record))
     .map<InventoryTrackerItem>(([key, group]) => {
       const first = group[0];
+      const salesContext = salesContextGroups.get(key) ?? [];
       const style = normalizedStyle(first);
       const artCode = displayArtCode(first);
       const color = colorName(first);
@@ -2920,11 +2923,11 @@ function inventoryTrackerRows(
         key,
         style,
         brand: brandName(first),
-        styleName: clean(first.master_style),
+        styleName: clean(first.master_style) || firstNonBlank(salesContext.map((record) => record.master_style)) || "",
         color,
         artCode,
-        parentSku: firstNonBlank(group.map(recordParentSku)),
-        sku: firstNonBlank(group.map(recordSku)),
+        parentSku: firstNonBlank([...group.map(recordParentSku), ...salesContext.map((record) => record.parent_sku)]),
+        sku: firstNonBlank([...group.map(recordSku), ...salesContext.map((record) => record.sku)]),
         ytdUnits: sum((ytdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
