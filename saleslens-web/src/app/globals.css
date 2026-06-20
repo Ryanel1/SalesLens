@@ -922,6 +922,50 @@ select {
   opacity: 0.38;
 }
 
+.inventoryFilters {
+  align-items: center;
+  border-top: 1px solid rgba(216, 207, 193, 0.7);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: -0.15rem 0 1.1rem;
+  padding-top: 0.85rem;
+}
+
+.inventoryFilters > span {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  margin-right: 0.15rem;
+  text-transform: uppercase;
+}
+
+.inventoryFilters button {
+  background: rgba(255, 253, 248, 0.55);
+  border: 1px solid rgba(113, 105, 96, 0.34);
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  padding: 0.34rem 0.68rem;
+  text-transform: uppercase;
+}
+
+.inventoryFilters button.active {
+  background: rgba(36, 35, 33, 0.9);
+  border-color: rgba(36, 35, 33, 0.9);
+  color: var(--paper);
+}
+
+.emptyNotice {
+  border: 1px solid rgba(216, 207, 193, 0.82);
+  color: var(--taupe);
+  font-weight: 800;
+  margin: 0;
+  padding: 1.2rem;
+}
+
 .changeBadge {
   align-self: start;
   background: rgba(255, 253, 248, 0.9);

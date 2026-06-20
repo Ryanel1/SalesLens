@@ -146,6 +146,8 @@ type InventoryTrackerItem = {
   artCode: string;
   parentSku: string | null;
   sku: string | null;
+  audience: InventoryAudience;
+  productCategory: InventoryProductCategory;
   ytdUnits: number;
   priorYearUnits: number | null;
   recentSixMonthUnits: number;
@@ -155,6 +157,10 @@ type InventoryTrackerItem = {
 };
 
 type InventorySort = "highest" | "lowest";
+type InventoryAudience = "Unisex" | "Womens" | "Mens" | "Youth";
+type InventoryAudienceFilter = "All" | "Unisex" | "Womens" | "Mens";
+type InventoryProductCategory = "Fleece" | "Tees" | "Other";
+type InventoryProductFilter = "All" | "Fleece" | "Tees";
 type TopArtSort = "units" | "dollars";
 
 type TopStyle = MetricSet & {
@@ -240,6 +246,8 @@ const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
+const INVENTORY_FLEECE_STYLES = new Set(["CS1220", "CS2070", "CS2071", "CP2028", "CP2071", "CP2081"]);
+const INVENTORY_TEE_STYLES = new Set(["CT1000", "CT1081", "CT1730", "C6039", "C6047", "C6048", "C6054", "C7006"]);
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
   "CT1000",
@@ -287,6 +295,8 @@ export default function Home() {
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
   const [inventoryPage, setInventoryPage] = useState(1);
+  const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
+  const [inventoryProductFilter, setInventoryProductFilter] = useState<InventoryProductFilter>("All");
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -478,17 +488,24 @@ export default function Home() {
     () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer),
     [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, priorYearRecords, recordsForCustomer, ytdCurrentRecords],
   );
-  const inventoryPageCount = Math.max(1, Math.ceil(inventoryTracker.length / INVENTORY_TRACKER_PAGE_SIZE));
+  const filteredInventoryTracker = useMemo(
+    () => inventoryTracker.filter((row) => (
+      inventoryAudienceMatches(row, inventoryAudienceFilter) &&
+      inventoryProductMatches(row, inventoryProductFilter)
+    )),
+    [inventoryAudienceFilter, inventoryProductFilter, inventoryTracker],
+  );
+  const inventoryPageCount = Math.max(1, Math.ceil(filteredInventoryTracker.length / INVENTORY_TRACKER_PAGE_SIZE));
   const currentInventoryPage = Math.min(inventoryPage, inventoryPageCount);
   const visibleInventoryTracker = useMemo(
-    () => inventoryTracker.slice(
+    () => filteredInventoryTracker.slice(
       (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE,
       currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE,
     ),
-    [currentInventoryPage, inventoryTracker],
+    [currentInventoryPage, filteredInventoryTracker],
   );
-  const inventoryPageStart = inventoryTracker.length ? (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE + 1 : 0;
-  const inventoryPageEnd = Math.min(currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE, inventoryTracker.length);
+  const inventoryPageStart = filteredInventoryTracker.length ? (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE + 1 : 0;
+  const inventoryPageEnd = Math.min(currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE, filteredInventoryTracker.length);
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
   const imagePrefetchCandidates = useMemo(
     () => productImageCandidates({
@@ -511,7 +528,7 @@ export default function Home() {
 
   useEffect(() => {
     setInventoryPage(1);
-  }, [brandFilter, inventorySort, selectedCustomerId, selectedPeriod]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilter, inventorySort, selectedCustomerId, selectedPeriod]);
 
   useEffect(() => {
     if (inventoryPage > inventoryPageCount) setInventoryPage(inventoryPageCount);
@@ -1356,9 +1373,9 @@ export default function Home() {
                 <div>
                   <h3>Inventory Tracker</h3>
                   <p>
-                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units, plus high-demand low-stock exceptions. Showing{" "}
+                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(filteredInventoryTracker.length)} current on-hand items with 5+ units, plus high-demand low-stock exceptions. Showing{" "}
                     {numberText(inventoryPageStart)}-{numberText(inventoryPageEnd)} |{" "}
-                    {numberText(sum(inventoryTracker.map((row) => row.inventoryUnits)))} Units
+                    {numberText(sum(filteredInventoryTracker.map((row) => row.inventoryUnits)))} Units
                   </p>
                 </div>
                 <div className="inventoryToolbar">
@@ -1400,29 +1417,66 @@ export default function Home() {
                   ) : null}
                 </div>
               </div>
-              <div className="artGrid">
-                {visibleInventoryTracker.map((row) => (
-                  <article className="artCard" key={row.key}>
-                    <div className="artImage">
-                      <b>#{row.rank}</b>
-                      {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
-                    </div>
-                    <div className="artMeta">
-                      {row.productUrl ? (
-                        <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                          {row.artCode}
-                        </a>
-                      ) : (
-                        <strong>{row.artCode}</strong>
-                      )}
-                      <span>{row.style} | {row.color}</span>
-                      <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
-                      <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
-                      <span>LY Sold: {inventoryPriorYearSoldText(row.priorYearUnits)}</span>
-                    </div>
-                  </article>
+              <div className="inventoryFilters" aria-label="Inventory filters">
+                <span>Filter:</span>
+                <button
+                  className={inventoryAudienceFilter === "All" && inventoryProductFilter === "All" ? "active" : ""}
+                  type="button"
+                  onClick={() => {
+                    setInventoryAudienceFilter("All");
+                    setInventoryProductFilter("All");
+                  }}
+                >
+                  All
+                </button>
+                {(["Unisex", "Womens", "Mens"] as InventoryAudienceFilter[]).map((filter) => (
+                  <button
+                    className={inventoryAudienceFilter === filter ? "active" : ""}
+                    key={filter}
+                    type="button"
+                    onClick={() => setInventoryAudienceFilter((current) => current === filter ? "All" : filter)}
+                  >
+                    {filter === "Womens" ? "Women's" : filter}
+                  </button>
+                ))}
+                {(["Fleece", "Tees"] as InventoryProductFilter[]).map((filter) => (
+                  <button
+                    className={inventoryProductFilter === filter ? "active" : ""}
+                    key={filter}
+                    type="button"
+                    onClick={() => setInventoryProductFilter((current) => current === filter ? "All" : filter)}
+                  >
+                    {filter}
+                  </button>
                 ))}
               </div>
+              {visibleInventoryTracker.length ? (
+                <div className="artGrid">
+                  {visibleInventoryTracker.map((row) => (
+                    <article className="artCard" key={row.key}>
+                      <div className="artImage">
+                        <b>#{row.rank}</b>
+                        {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
+                      </div>
+                      <div className="artMeta">
+                        {row.productUrl ? (
+                          <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                            {row.artCode}
+                          </a>
+                        ) : (
+                          <strong>{row.artCode}</strong>
+                        )}
+                        <span>{row.style} | {row.color}</span>
+                        <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
+                        <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
+                        <span>LY Sold: {inventoryPriorYearSoldText(row.priorYearUnits)}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="emptyNotice">No inventory items match the selected filters.</p>
+              )}
             </section>
           ) : null}
 
@@ -2872,6 +2926,29 @@ function audienceName(record: MerchandiseRecord) {
   return "Unisex";
 }
 
+function inventoryAudienceName(record: MerchandiseRecord): InventoryAudience {
+  const text = `${record.product_class ?? ""} ${record.master_style ?? ""} ${record.style_number ?? ""}`.toUpperCase();
+  const style = normalizedStyle(record);
+  if (text.includes("YOUTH") || text.includes("INFANT") || text.includes("TODDLER") || style === "CT1081") return "Youth";
+  if (text.includes("WOMEN") || text.includes("WMNS") || text.includes("W-S") || text.includes("LADY") || text.includes("LADIES")) return "Womens";
+  if (text.includes("MENS") || text.includes("MEN ") || text.startsWith("M-") || style === "CT1000") return "Mens";
+  return "Unisex";
+}
+
+function inventoryProductCategory(style: string): InventoryProductCategory {
+  if (INVENTORY_FLEECE_STYLES.has(style)) return "Fleece";
+  if (INVENTORY_TEE_STYLES.has(style)) return "Tees";
+  return "Other";
+}
+
+function inventoryAudienceMatches(row: InventoryTrackerItem, filter: InventoryAudienceFilter) {
+  return filter === "All" || row.audience === filter;
+}
+
+function inventoryProductMatches(row: InventoryTrackerItem, filter: InventoryProductFilter) {
+  return filter === "All" || row.productCategory === filter;
+}
+
 function normalizedStyle(record: MerchandiseRecord) {
   const sortedPrefixes = [...KNOWN_STYLE_PREFIXES].sort((left, right) => right.length - left.length);
   for (const rawValue of [record.style_number, record.raw_style_identifier]) {
@@ -3164,6 +3241,8 @@ function inventoryTrackerRows(
         artCode,
         parentSku: firstNonBlank([...group.map(recordParentSku), ...salesContext.map((record) => record.parent_sku)]),
         sku: firstNonBlank([...group.map(recordSku), ...salesContext.map((record) => record.sku)]),
+        audience: inventoryAudienceName(first),
+        productCategory: inventoryProductCategory(style),
         ytdUnits: sum((ytdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         priorYearUnits: priorYearMatches?.length ? sum(priorYearMatches.map((record) => record.units ?? 0)) : null,
         recentSixMonthUnits: sum((recentGroups.get(key) ?? []).map((record) => record.units ?? 0)),
