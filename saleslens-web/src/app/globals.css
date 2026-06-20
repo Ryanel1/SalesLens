@@ -892,6 +892,36 @@ select {
   color: var(--paper);
 }
 
+.inventoryToolbar {
+  align-items: flex-end;
+  display: grid;
+  gap: 0.65rem;
+  justify-items: end;
+}
+
+.pagerControls {
+  align-items: center;
+  color: var(--taupe);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 0.55rem;
+}
+
+.pagerControls button {
+  background: rgba(255, 253, 248, 0.96);
+  border: 1px solid rgba(113, 105, 96, 0.42);
+  color: var(--charcoal);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.42rem 0.68rem;
+  text-transform: uppercase;
+}
+
+.pagerControls button:disabled {
+  opacity: 0.38;
+}
+
 .changeBadge {
   align-self: start;
   background: rgba(255, 253, 248, 0.9);
@@ -2357,6 +2387,14 @@ tbody tr:nth-child(even) {
   .sortControls {
     flex-wrap: wrap;
     justify-self: start;
+  }
+
+  .inventoryToolbar {
+    justify-items: start;
+  }
+
+  .pagerControls {
+    flex-wrap: wrap;
   }
 
   .changeBadge {

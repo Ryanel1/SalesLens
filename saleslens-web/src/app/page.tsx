@@ -238,6 +238,7 @@ const IMAGE_FETCH_BATCH_SIZE = 30;
 const IMAGE_PREFETCH_LIMIT = 180;
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
+const INVENTORY_TRACKER_PAGE_SIZE = 50;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "CBR", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
   "CS1220",
@@ -285,6 +286,7 @@ export default function Home() {
   const [brandFilter, setBrandFilter] = useState("All");
   const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
+  const [inventoryPage, setInventoryPage] = useState(1);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -476,6 +478,17 @@ export default function Home() {
     () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer),
     [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, priorYearRecords, recordsForCustomer, ytdCurrentRecords],
   );
+  const inventoryPageCount = Math.max(1, Math.ceil(inventoryTracker.length / INVENTORY_TRACKER_PAGE_SIZE));
+  const currentInventoryPage = Math.min(inventoryPage, inventoryPageCount);
+  const visibleInventoryTracker = useMemo(
+    () => inventoryTracker.slice(
+      (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE,
+      currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE,
+    ),
+    [currentInventoryPage, inventoryTracker],
+  );
+  const inventoryPageStart = inventoryTracker.length ? (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE + 1 : 0;
+  const inventoryPageEnd = Math.min(currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE, inventoryTracker.length);
   const bestDay = useMemo(() => bestSalesDay(periodRecords), [periodRecords]);
   const imagePrefetchCandidates = useMemo(
     () => productImageCandidates({
@@ -495,6 +508,14 @@ export default function Home() {
     const options = [...new Set(dashboardData.records.map(brandName))].sort();
     return ["All", ...options];
   }, [dashboardData.records]);
+
+  useEffect(() => {
+    setInventoryPage(1);
+  }, [brandFilter, inventorySort, selectedCustomerId, selectedPeriod]);
+
+  useEffect(() => {
+    if (inventoryPage > inventoryPageCount) setInventoryPage(inventoryPageCount);
+  }, [inventoryPage, inventoryPageCount]);
 
   useEffect(() => {
     if (!supabase || !selectedCustomerId || !selectedCustomer || !supportsProductImageFetch(selectedCustomer.name)) return;
@@ -1335,30 +1356,52 @@ export default function Home() {
                 <div>
                   <h3>Inventory Tracker</h3>
                   <p>
-                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units, plus high-demand low-stock exceptions |{" "}
+                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTracker.length)} current on-hand items with 5+ units, plus high-demand low-stock exceptions. Showing{" "}
+                    {numberText(inventoryPageStart)}-{numberText(inventoryPageEnd)} |{" "}
                     {numberText(sum(inventoryTracker.map((row) => row.inventoryUnits)))} Units
                   </p>
                 </div>
-                <div className="sortControls" aria-label="Inventory sort controls">
-                  <span>Sort by:</span>
-                  <button
-                    className={inventorySort === "highest" ? "active" : ""}
-                    type="button"
-                    onClick={() => setInventorySort("highest")}
-                  >
-                    Highest
-                  </button>
-                  <button
-                    className={inventorySort === "lowest" ? "active" : ""}
-                    type="button"
-                    onClick={() => setInventorySort("lowest")}
-                  >
-                    Lowest
-                  </button>
+                <div className="inventoryToolbar">
+                  <div className="sortControls" aria-label="Inventory sort controls">
+                    <span>Sort by:</span>
+                    <button
+                      className={inventorySort === "highest" ? "active" : ""}
+                      type="button"
+                      onClick={() => setInventorySort("highest")}
+                    >
+                      Highest
+                    </button>
+                    <button
+                      className={inventorySort === "lowest" ? "active" : ""}
+                      type="button"
+                      onClick={() => setInventorySort("lowest")}
+                    >
+                      Lowest
+                    </button>
+                  </div>
+                  {inventoryPageCount > 1 ? (
+                    <div className="pagerControls" aria-label="Inventory page controls">
+                      <button
+                        disabled={currentInventoryPage <= 1}
+                        type="button"
+                        onClick={() => setInventoryPage((page) => Math.max(1, page - 1))}
+                      >
+                        Prev
+                      </button>
+                      <span>Page {numberText(currentInventoryPage)} of {numberText(inventoryPageCount)}</span>
+                      <button
+                        disabled={currentInventoryPage >= inventoryPageCount}
+                        type="button"
+                        onClick={() => setInventoryPage((page) => Math.min(inventoryPageCount, page + 1))}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <div className="artGrid">
-                {inventoryTracker.map((row) => (
+                {visibleInventoryTracker.map((row) => (
                   <article className="artCard" key={row.key}>
                     <div className="artImage">
                       <b>#{row.rank}</b>
@@ -3139,7 +3182,6 @@ function inventoryTrackerRows(
         : left.inventoryUnits - right.inventoryUnits;
       return unitDelta || left.style.localeCompare(right.style) || left.artCode.localeCompare(right.artCode);
     })
-    .slice(0, 100)
     .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
