@@ -57,6 +57,7 @@ const REBEL_RAGS_NAMEDROP_CT1000_LOOKUPS: Record<string, { productCode: string; 
   "03752042": namedropLookup("UNCLE-03503317-CT1000", "/champion/ss-script-ole-miss-uncle-basic-tee-22192"),
   "03804603": namedropLookup("DAD-03687242-CT1000", "/champion/script-ole-miss-dad-ss-tee-25814"),
   "03804605": namedropLookup("VB-03687276-CT1000", "/champion/script-ole-miss-volleyball-ss-basic-tee-22346"),
+  "03854968": namedropLookup("ALUMNI-03503432-CT1000", "/champion/script-ole-miss-alumni-ss-tee-25807"),
   "03884278": namedropLookup("03884278-CT1000", "/champion/script-ole-miss-soccer-ss-tee-27993"),
 };
 
@@ -475,7 +476,13 @@ function allowsDefaultImage(item: ImageRequestItem) {
   return normalized(item.color) === "WHITE"
     || normalized(item.style) === "CBRZU0Z"
     || isGearStyle(item.style)
+    || isMappedNamedropCt1000(item)
     || isKnownDefaultImageMatch(item);
+}
+
+function isMappedNamedropCt1000(item: ImageRequestItem) {
+  return normalized(item.style) === "CT1000"
+    && Boolean(REBEL_RAGS_NAMEDROP_CT1000_LOOKUPS[normalizedArtNumber(item.artCode)]);
 }
 
 function isGearStyle(style: string | null | undefined) {
