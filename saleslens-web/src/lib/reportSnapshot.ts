@@ -50,6 +50,8 @@ export type SnapshotTopArt = SnapshotMetricSet & {
   styleName: string;
   color: string;
   artCode: string;
+  parentSku?: string | null;
+  sku?: string | null;
   cySales: number;
   cyUnits: number;
   inventoryUnits?: number | null;
@@ -161,8 +163,13 @@ export type SnapshotInventoryTrackerItem = {
   key: string;
   style: string;
   brand: string;
+  styleName?: string;
   color: string;
   artCode: string;
+  parentSku?: string | null;
+  sku?: string | null;
+  audience?: "Unisex" | "Womens" | "Mens" | "Youth";
+  productCategory?: "Fleece" | "Reverse Weave" | "Tees" | "Other";
   ytdUnits?: number;
   priorYearUnits?: number | null;
   priorYtdUnits?: number | null;

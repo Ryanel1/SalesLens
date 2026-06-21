@@ -53,6 +53,11 @@ type DashboardCacheEntry = {
   data: DashboardData;
 };
 
+type ServerReportState = {
+  key: string;
+  payload: ReportSnapshotPayload;
+};
+
 type IdleWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
   cancelIdleCallback?: (handle: number) => void;
@@ -392,6 +397,8 @@ export default function Home() {
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
+  const [serverReport, setServerReport] = useState<ServerReportState | null>(null);
+  const [serverReportStatus, setServerReportStatus] = useState("");
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
   const [importRangeStart, setImportRangeStart] = useState("");
@@ -405,8 +412,6 @@ export default function Home() {
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
-  const [detailAnalysisReady, setDetailAnalysisReady] = useState(false);
-  const [inventoryAnalysisReady, setInventoryAnalysisReady] = useState(false);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -471,12 +476,16 @@ export default function Home() {
   useEffect(() => {
     if (!supabase || !selectedCustomerId) {
       setDashboardData({ records: [], inventoryRecords: [], images: [] });
+      setServerReport(null);
+      setServerReportStatus("");
       return;
     }
 
     const client = supabase;
     const customerId = selectedCustomerId;
     let isMounted = true;
+    setServerReport(null);
+    setServerReportStatus("");
     setDashboardData({ records: [], inventoryRecords: [], images: [] });
     setDashboardStatus("Loading cached dashboard...");
 
@@ -551,14 +560,11 @@ export default function Home() {
   const years = useMemo(() => availableYears(dashboardData.records), [dashboardData.records]);
   const periodOptions = useMemo(() => periodOptionGroups(months, years), [months, years]);
   const selectedPeriodValue = selectedPeriod ?? defaultPeriodValue(dashboardData.records);
-  const period = selectedPeriodValue ? parsePeriodValue(selectedPeriodValue) : null;
+  const period = useMemo(() => (selectedPeriodValue ? parsePeriodValue(selectedPeriodValue) : null), [selectedPeriodValue]);
 
   const recordsForCustomer = useMemo(() => {
     return dashboardData.records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
   }, [brandFilter, dashboardData.records]);
-  const inventoryRecordsForCustomer = useMemo(() => {
-    return dashboardData.inventoryRecords.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
-  }, [brandFilter, dashboardData.inventoryRecords]);
 
   const periodEndMonth = useMemo(() => {
     if (!period) return null;
@@ -570,6 +576,75 @@ export default function Home() {
   const selectedPeriodTitle = periodTitle(period, periodEndMonth);
   const priorPeriodTitle = priorTitle(period, periodEndMonth);
   const selectedPeriodKind = period?.kind ?? "month";
+  const reportRequestKey = useMemo(() => {
+    if (!selectedCustomerId || !period) return "";
+    return JSON.stringify({
+      brandFilter,
+      customerId: selectedCustomerId,
+      inventorySort,
+      period,
+      topArtSort,
+    });
+  }, [brandFilter, inventorySort, period, selectedCustomerId, topArtSort]);
+  const reportPayload = serverReport?.key === reportRequestKey ? serverReport.payload : null;
+
+  useEffect(() => {
+    if (!supabase || !user || !selectedCustomerId || !period || !reportRequestKey) {
+      setServerReport(null);
+      setServerReportStatus("");
+      return undefined;
+    }
+
+    let isMounted = true;
+    const client = supabase;
+    setServerReportStatus("Preparing report sections...");
+
+    async function loadServerReport() {
+      const { data } = await client.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        if (isMounted) setServerReportStatus("Sign in again to prepare report sections.");
+        return;
+      }
+
+      const response = await fetch("/api/report-payload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          brandFilter,
+          customerId: selectedCustomerId,
+          inventorySort,
+          period,
+          topArtSort,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as { report?: ReportSnapshotPayload; error?: string } | null;
+
+      if (!isMounted) return;
+      if (!response.ok || !payload?.report) {
+        setServerReport(null);
+        setServerReportStatus(payload?.error ?? "Unable to prepare report sections.");
+        return;
+      }
+
+      setServerReport({ key: reportRequestKey, payload: payload.report });
+      setServerReportStatus("");
+    }
+
+    loadServerReport().catch(() => {
+      if (isMounted) {
+        setServerReport(null);
+        setServerReportStatus("Unable to prepare report sections.");
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [brandFilter, inventorySort, period, reportRequestKey, selectedCustomerId, supabase, topArtSort, user]);
 
   const periodRecords = useMemo(() => {
     if (!period) return [];
@@ -581,14 +656,21 @@ export default function Home() {
     return recordsForPriorPeriod(recordsForCustomer, period);
   }, [period, recordsForCustomer]);
 
-  const comparisonRecords = priorPeriodRecords;
-
-  const currentMetrics = useMemo(() => metricSet(periodRecords), [periodRecords]);
-  const priorMetrics = useMemo(() => metricSet(priorPeriodRecords), [priorPeriodRecords]);
-  const monthlyDrivers = useMemo(() => monthlyDriverMetrics(periodRecords, priorPeriodRecords), [periodRecords, priorPeriodRecords]);
+  const currentMetrics = useMemo(
+    () => (reportPayload?.currentMetrics as MetricSet | undefined) ?? metricSet(periodRecords),
+    [periodRecords, reportPayload],
+  );
+  const priorMetrics = useMemo(
+    () => (reportPayload?.priorMetrics as MetricSet | undefined) ?? metricSet(priorPeriodRecords),
+    [priorPeriodRecords, reportPayload],
+  );
+  const monthlyDrivers = useMemo(
+    () => (reportPayload?.monthlyDrivers as ReturnType<typeof monthlyDriverMetrics> | undefined) ?? monthlyDriverMetrics(periodRecords, priorPeriodRecords),
+    [periodRecords, priorPeriodRecords, reportPayload],
+  );
   const weeklyScorecards = useMemo(
-    () => (detailAnalysisReady ? weeklyScorecardRows(recordsForCustomer, periodEndMonth, dashboardData.images) : []),
-    [dashboardData.images, detailAnalysisReady, periodEndMonth, recordsForCustomer],
+    () => (reportPayload?.weeklyScorecards ?? []) as WeeklyScorecardRow[],
+    [reportPayload],
   );
   const ytdCurrentRecords = useMemo(
     () => currentYearRecords(recordsForCustomer, periodEndMonth),
@@ -603,30 +685,22 @@ export default function Home() {
     [recordsForCustomer, selectedYear],
   );
   const ytdInsights = useMemo(
-    () => ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
-    [periodEndMonth, ytdCurrentRecords, ytdPriorRecords],
+    () => (reportPayload?.ytdInsights as ReturnType<typeof ytdInsightMetrics> | undefined) ?? ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
+    [periodEndMonth, reportPayload, ytdCurrentRecords, ytdPriorRecords],
   );
   const topArt = useMemo(
-    () => (detailAnalysisReady ? topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images, inventoryRecordsForCustomer, topArtSort) : []),
-    [dashboardData.images, detailAnalysisReady, inventoryRecordsForCustomer, periodRecords, topArtSort, ytdCurrentRecords],
+    () => (reportPayload?.topArt ?? []) as TopArt[],
+    [reportPayload],
   );
-  const periodStyleStudy = useMemo(() => (detailAnalysisReady ? topStyleRows(periodRecords, comparisonRecords) : []), [detailAnalysisReady, periodRecords, comparisonRecords]);
-  const ytdStyleStudy = useMemo(() => (detailAnalysisReady ? topStyleRows(ytdCurrentRecords, ytdPriorRecords) : []), [detailAnalysisReady, ytdCurrentRecords, ytdPriorRecords]);
-  const hasInventorySource = useMemo(
-    () => dashboardData.inventoryRecords.length > 0 || dashboardData.records.some((record) => record.inventory_units != null),
-    [dashboardData.inventoryRecords.length, dashboardData.records],
-  );
+  const periodStyleStudy = useMemo(() => (reportPayload?.styleStudyMonthly ?? []) as TopStyle[], [reportPayload]);
+  const ytdStyleStudy = useMemo(() => (reportPayload?.styleStudyYtd ?? []) as TopStyle[], [reportPayload]);
   const inventorySnapshot = useMemo(
-    () => (inventoryAnalysisReady ? inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth, recordsForCustomer) : null),
-    [inventoryAnalysisReady, inventoryRecordsForCustomer, periodEndMonth, periodRecords, recordsForCustomer],
+    () => (reportPayload?.inventorySnapshot ?? null) as InventorySnapshot,
+    [reportPayload],
   );
   const inventoryTracker = useMemo(
-    () => (
-      inventoryAnalysisReady
-        ? inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer)
-        : []
-    ),
-    [dashboardData.images, inventoryAnalysisReady, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, priorYearRecords, recordsForCustomer, ytdCurrentRecords],
+    () => (reportPayload?.inventoryTracker ?? []) as InventoryTrackerItem[],
+    [reportPayload],
   );
   const filteredInventoryTracker = useMemo(
     () => inventoryTracker.filter((row) => (
@@ -646,9 +720,12 @@ export default function Home() {
   );
   const inventoryPageStart = filteredInventoryTracker.length ? (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE + 1 : 0;
   const inventoryPageEnd = Math.min(currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE, filteredInventoryTracker.length);
-  const bestDay = useMemo(() => bestSalesDay(periodRecords, dashboardData.images), [dashboardData.images, periodRecords]);
+  const bestDay = useMemo(
+    () => (reportPayload?.bestDay as ReturnType<typeof bestSalesDay> | undefined) ?? bestSalesDay(periodRecords, dashboardData.images),
+    [dashboardData.images, periodRecords, reportPayload],
+  );
   const imagePrefetchCandidates = useMemo(
-    () => (detailAnalysisReady ? productImageCandidates({
+    () => (reportPayload ? productImageCandidates({
       bestDayItems: bestDay.items,
       images: dashboardData.images,
       records: [...periodRecords, ...ytdCurrentRecords],
@@ -656,27 +733,15 @@ export default function Home() {
       visibleInventoryTracker,
       weeklyScorecards,
     }) : []),
-    [bestDay.items, dashboardData.images, detailAnalysisReady, periodRecords, topArt, visibleInventoryTracker, weeklyScorecards, ytdCurrentRecords],
+    [bestDay.items, dashboardData.images, periodRecords, reportPayload, topArt, visibleInventoryTracker, weeklyScorecards, ytdCurrentRecords],
   );
-  const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, periodEndMonth), [recordsForCustomer, periodEndMonth]);
-  const lastUploaded = latestDate(recordsForCustomer);
+  const ytdLine = useMemo(() => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth), [periodEndMonth, recordsForCustomer, reportPayload]);
+  const lastUploaded = reportPayload?.lastUploaded ?? latestDate(recordsForCustomer);
 
   const brandOptions = useMemo(() => {
     const options = [...new Set(dashboardData.records.map(brandName))].sort();
     return ["All", ...options];
   }, [dashboardData.records]);
-
-  useEffect(() => {
-    setDetailAnalysisReady(false);
-    if (!periodRecords.length) return undefined;
-    return scheduleDashboardIdle(() => setDetailAnalysisReady(true));
-  }, [brandFilter, dashboardData.records, periodEndMonth, periodRecords.length, selectedCustomerId, selectedPeriod, topArtSort]);
-
-  useEffect(() => {
-    setInventoryAnalysisReady(false);
-    if (!hasInventorySource) return undefined;
-    return scheduleDashboardIdle(() => setInventoryAnalysisReady(true));
-  }, [brandFilter, dashboardData.inventoryRecords, dashboardData.records, hasInventorySource, inventorySort, periodEndMonth, selectedCustomerId]);
 
   useEffect(() => {
     setInventoryPage(1);
@@ -1370,6 +1435,7 @@ export default function Home() {
           </section>
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
+          {!dashboardStatus && serverReportStatus ? <section className="notice">{serverReportStatus}</section> : null}
           {!dashboardStatus && periodRecords.length === 0 ? (
             <section className="notice">No records match the current account, period, and brand/class filters.</section>
           ) : null}
@@ -1513,10 +1579,6 @@ export default function Home() {
               ))}
             </div>
           </section>
-
-          {hasInventorySource && !inventoryAnalysisReady ? (
-            <section className="notice">Preparing inventory sections...</section>
-          ) : null}
 
           {inventorySnapshot ? (
             <section className="sectionBlock inventorySection">
