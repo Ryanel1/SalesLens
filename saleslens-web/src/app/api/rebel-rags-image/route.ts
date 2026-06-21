@@ -33,6 +33,32 @@ const REBEL_RAGS_BASE_URL = "https://www.rebelrags.net";
 const VOLSHOP_BASE_URL = "https://www.utvolshop.com";
 const MAX_LOOKUPS = 30;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
+const REBEL_RAGS_NAMEDROP_CT1000_LOOKUPS: Record<string, { productCode: string; productUrl: string }> = {
+  "03503316": namedropLookup("AUNT-03687238-CT1000", "/champion/script-ole-miss-aunt-ss-tee-25809"),
+  "03503317": namedropLookup("UNCLE-03503317-CT1000", "/champion/ss-script-ole-miss-uncle-basic-tee-22192"),
+  "03503347": namedropLookup("LAW-03503347-CT1000", "/champion/script-ole-miss-law-ss-tee-25888"),
+  "03503350": namedropLookup("SB-CT1000-03503350", "/champion/script-ole-miss-softball-basic-tee-22276"),
+  "03503351": namedropLookup("TEN-03503351-CT1000", "/champion/ss-script-ole-miss-tennis-basic-tee-22196"),
+  "03503432": namedropLookup("ALUMNI-03503432-CT1000", "/champion/script-ole-miss-alumni-ss-tee-25807"),
+  "03661320": namedropLookup("SIS-03661320-CT1000", "/champion/sister-ole-miss-script-ss-tee-24922"),
+  "03687238": namedropLookup("AUNT-03687238-CT1000", "/champion/script-ole-miss-aunt-ss-tee-25809"),
+  "03687242": namedropLookup("DAD-03687242-CT1000", "/champion/script-ole-miss-dad-ss-tee-25814"),
+  "03687254": namedropLookup("MOM-03687254-CT1000", "/champion/script-ole-miss-mom-ss-tee-25816"),
+  "03687256": namedropLookup("PHARM-03687256-CT1000", "/champion/script-ole-miss-pharmacy-ss-tee-25889"),
+  "03687276": namedropLookup("VB-03687276-CT1000", "/champion/script-ole-miss-volleyball-ss-basic-tee-22346"),
+  "03687288": namedropLookup("WBB-03687288-CT1000", "/champion/script-ole-miss-womens-basketball-ss-tee-25822"),
+  "03751856": namedropLookup("AUNT-03687238-CT1000", "/champion/script-ole-miss-aunt-ss-tee-25809"),
+  "03751860": namedropLookup("NURSE-03491635-CT1000", "/champion/ss-basic-ole-miss-script-nursing-tee-21820"),
+  "03751861": namedropLookup("PHARM-03687256-CT1000", "/champion/script-ole-miss-pharmacy-ss-tee-25889"),
+  "03751866": namedropLookup("SB-CT1000-03503350", "/champion/script-ole-miss-softball-basic-tee-22276"),
+  "03751911": namedropLookup("ED-03751911-CT1000", "/champion/script-ole-miss-education-ss-basic-tee-22179"),
+  "03751916": namedropLookup("GPA-03751916-CT1000", "/champion/ss-script-ole-miss-grandpa-tee-26938"),
+  "03751966": namedropLookup("HOCKEY-CT1000-03751966", "/champion/ss-script-ole-miss-hockey-tee-26919"),
+  "03752042": namedropLookup("UNCLE-03503317-CT1000", "/champion/ss-script-ole-miss-uncle-basic-tee-22192"),
+  "03804603": namedropLookup("DAD-03687242-CT1000", "/champion/script-ole-miss-dad-ss-tee-25814"),
+  "03804605": namedropLookup("VB-03687276-CT1000", "/champion/script-ole-miss-volleyball-ss-basic-tee-22346"),
+  "03884278": namedropLookup("03884278-CT1000", "/champion/script-ole-miss-soccer-ss-tee-27993"),
+};
 
 export async function POST(request: NextRequest) {
   const config = getSupabaseConfig();
@@ -88,13 +114,15 @@ async function matchingImage(item: ImageRequestItem, accountName: string): Promi
   }
 
   const lookup = imageLookup(item);
-  const productUrls = lookup.productUrl ? [lookup.productUrl] : await productDetailUrlsForItem(item, lookup.searchArtCode);
+  const fallbackProductUrls = await productDetailUrlsForItem(item, lookup.searchArtCode);
+  const productUrls = lookup.productUrl ? [lookup.productUrl, ...fallbackProductUrls] : fallbackProductUrls;
+  const manualProductUrl = lookup.productUrl;
 
   for (const productUrl of productUrls.slice(0, 50)) {
     const detailHtml = await fetchText(productUrl).catch(() => "");
     if (!detailHtml) continue;
 
-    if (!lookup.productUrl && !detailMatches(detailHtml, item, lookup.searchArtCode, productUrl)) {
+    if (productUrl !== manualProductUrl && !detailMatches(detailHtml, item, lookup.searchArtCode, productUrl)) {
       continue;
     }
 
@@ -319,6 +347,9 @@ function imageLookup(item: ImageRequestItem): ProductImageLookup {
     return { searchArtCode: "03479022", isManualOverride: true, productUrl: null };
   }
 
+  const namedrop = namedropCt1000Lookup(item);
+  if (namedrop) return namedrop;
+
   if (style === "CT1000" && artCode === "03456518") {
     return {
       searchArtCode: clean(item.artCode),
@@ -360,6 +391,19 @@ function imageLookup(item: ImageRequestItem): ProductImageLookup {
   }
 
   return { searchArtCode: clean(item.artCode), isManualOverride: false, productUrl: null };
+}
+
+function namedropCt1000Lookup(item: ImageRequestItem): ProductImageLookup | null {
+  if (normalized(item.style) !== "CT1000") return null;
+
+  const lookup = REBEL_RAGS_NAMEDROP_CT1000_LOOKUPS[normalizedArtNumber(item.artCode)];
+  if (!lookup) return null;
+
+  return {
+    searchArtCode: lookup.productCode,
+    isManualOverride: true,
+    productUrl: lookup.productUrl,
+  };
 }
 
 function detailMatches(html: string, item: ImageRequestItem, lookupArtCode: string, productUrl: string) {
@@ -486,6 +530,17 @@ function isKnownDefaultImageMatch(item: ImageRequestItem) {
 
 function imageKey(style: string, artCode: string, color: string) {
   return [normalized(style), normalized(artCode), normalized(color)].join("|");
+}
+
+function namedropLookup(productCode: string, productPath: string) {
+  return {
+    productCode,
+    productUrl: absoluteUrl(productPath),
+  };
+}
+
+function normalizedArtNumber(value: string | null | undefined) {
+  return normalized(value).replace(/^(?:APC|AEC|APO|AP)/, "");
 }
 
 function imageColorToken(value: string) {
