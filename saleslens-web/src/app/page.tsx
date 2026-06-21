@@ -103,6 +103,17 @@ type DashboardData = {
   images: ProductImage[];
 };
 
+type DashboardCacheEntry = {
+  customerId: string;
+  cachedAt: number;
+  data: DashboardData;
+};
+
+type IdleWindow = Window & {
+  requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
+
 type MetricSet = {
   sales: number;
   units: number;
@@ -243,6 +254,8 @@ const PAGE_SIZE = 1000;
 const IMAGE_FETCH_BATCH_SIZE = 30;
 const IMAGE_PREFETCH_LIMIT = 80;
 const IMAGE_PREFETCH_RECORD_GROUP_LIMIT = 80;
+const DASHBOARD_CACHE_DB = "saleslens-dashboard-cache";
+const DASHBOARD_CACHE_STORE = "dashboard-data";
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
@@ -449,6 +462,7 @@ export default function Home() {
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
+  const [inventoryAnalysisReady, setInventoryAnalysisReady] = useState(false);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -519,14 +533,23 @@ export default function Home() {
     const client = supabase;
     const customerId = selectedCustomerId;
     let isMounted = true;
-    setDashboardStatus("Loading sales records...");
+    setDashboardData({ records: [], inventoryRecords: [], images: [] });
+    setDashboardStatus("Loading cached dashboard...");
 
     async function loadDashboard() {
-      const [recordsResult, inventoryResult, imagesResult] = await Promise.all([
-        fetchAllRecords(client, customerId),
-        fetchInventoryRecords(client, customerId),
-        fetchProductImages(client, customerId),
-      ]);
+      const cached = await readDashboardCache(customerId);
+      if (cached && isMounted) {
+        setDashboardData(cached);
+        setSelectedPeriod((current) => current ?? defaultPeriodValue(cached.records));
+        setDashboardStatus("Refreshing latest data...");
+      } else if (isMounted) {
+        setDashboardStatus("Loading sales records...");
+      }
+
+      const recordsPromise = fetchAllRecords(client, customerId);
+      const imagesPromise = fetchProductImages(client, customerId);
+      const inventoryPromise = fetchInventoryRecords(client, customerId);
+      const [recordsResult, imagesResult] = await Promise.all([recordsPromise, imagesPromise]);
 
       if (!isMounted) return;
 
@@ -537,8 +560,24 @@ export default function Home() {
       }
 
       const records = recordsResult.records;
-      setDashboardData({ records, inventoryRecords: inventoryResult.records, images: imagesResult.images });
+      setDashboardData((current) => ({
+        records,
+        inventoryRecords: current.inventoryRecords,
+        images: imagesResult.images,
+      }));
       setSelectedPeriod((current) => current ?? defaultPeriodValue(records));
+      setDashboardStatus("Loading inventory records...");
+
+      const inventoryResult = await inventoryPromise;
+      if (!isMounted) return;
+
+      const nextData = {
+        records,
+        inventoryRecords: inventoryResult.records,
+        images: imagesResult.images,
+      };
+      setDashboardData(nextData);
+      writeDashboardCache(customerId, nextData).catch(() => undefined);
       setDashboardStatus(inventoryErrorMessage(inventoryResult.error));
     }
 
@@ -616,13 +655,21 @@ export default function Home() {
   const periodStyleStudy = useMemo(() => topStyleRows(periodRecords, comparisonRecords), [periodRecords, comparisonRecords]);
   const ytdStyleStudy = useMemo(() => topStyleRows(ytdCurrentRecords, ytdPriorRecords), [ytdCurrentRecords, ytdPriorRecords]);
   const salesMix = useMemo(() => salesMixSlices(periodRecords), [periodRecords]);
+  const hasInventorySource = useMemo(
+    () => dashboardData.inventoryRecords.length > 0 || dashboardData.records.some((record) => record.inventory_units != null),
+    [dashboardData.inventoryRecords.length, dashboardData.records],
+  );
   const inventorySnapshot = useMemo(
-    () => inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth, recordsForCustomer),
-    [inventoryRecordsForCustomer, periodEndMonth, periodRecords, recordsForCustomer],
+    () => (inventoryAnalysisReady ? inventorySnapshotForRecords(periodRecords, inventoryRecordsForCustomer, periodEndMonth, recordsForCustomer) : null),
+    [inventoryAnalysisReady, inventoryRecordsForCustomer, periodEndMonth, periodRecords, recordsForCustomer],
   );
   const inventoryTracker = useMemo(
-    () => inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer),
-    [dashboardData.images, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, priorYearRecords, recordsForCustomer, ytdCurrentRecords],
+    () => (
+      inventoryAnalysisReady
+        ? inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, inventoryRecordsForCustomer, periodEndMonth, dashboardData.images, inventorySort, recordsForCustomer)
+        : []
+    ),
+    [dashboardData.images, inventoryAnalysisReady, inventoryRecordsForCustomer, inventorySort, periodEndMonth, periodRecords, priorYearRecords, recordsForCustomer, ytdCurrentRecords],
   );
   const filteredInventoryTracker = useMemo(
     () => inventoryTracker.filter((row) => (
@@ -661,6 +708,12 @@ export default function Home() {
     const options = [...new Set(dashboardData.records.map(brandName))].sort();
     return ["All", ...options];
   }, [dashboardData.records]);
+
+  useEffect(() => {
+    setInventoryAnalysisReady(false);
+    if (!hasInventorySource) return undefined;
+    return scheduleDashboardIdle(() => setInventoryAnalysisReady(true));
+  }, [brandFilter, dashboardData.inventoryRecords, dashboardData.records, hasInventorySource, inventorySort, periodEndMonth, selectedCustomerId]);
 
   useEffect(() => {
     setInventoryPage(1);
@@ -742,10 +795,14 @@ export default function Home() {
 
       if (error || isCancelled) return;
 
-      setDashboardData((current) => ({
-        ...current,
-        images: mergeProductImages(current.images, matches),
-      }));
+      setDashboardData((current) => {
+        const next = {
+          ...current,
+          images: mergeProductImages(current.images, matches),
+        };
+        writeDashboardCache(customerId, next).catch(() => undefined);
+        return next;
+      });
     }
 
     fetchMissingImages().catch(() => undefined);
@@ -1489,6 +1546,10 @@ export default function Home() {
               ))}
             </div>
           </section>
+
+          {hasInventorySource && !inventoryAnalysisReady ? (
+            <section className="notice">Preparing inventory sections...</section>
+          ) : null}
 
           {inventorySnapshot ? (
             <section className="sectionBlock inventorySection">
@@ -2245,6 +2306,81 @@ function dateRangeText(startDate: Date, endDate: Date) {
   const yearText = new Intl.DateTimeFormat("en-US", { year: "numeric", timeZone: "UTC" }).format(endDate);
   if (start === end) return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(startDate);
   return `${startText}-${endText}, ${yearText}`;
+}
+
+function scheduleDashboardIdle(callback: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  const idleWindow = window as IdleWindow;
+
+  if (idleWindow.requestIdleCallback) {
+    const handle = idleWindow.requestIdleCallback(callback, { timeout: 1200 });
+    return () => idleWindow.cancelIdleCallback?.(handle);
+  }
+
+  const timeout = window.setTimeout(callback, 160);
+  return () => window.clearTimeout(timeout);
+}
+
+function openDashboardCache() {
+  return new Promise<IDBDatabase | null>((resolve) => {
+    if (typeof indexedDB === "undefined") {
+      resolve(null);
+      return;
+    }
+
+    const request = indexedDB.open(DASHBOARD_CACHE_DB, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(DASHBOARD_CACHE_STORE)) {
+        db.createObjectStore(DASHBOARD_CACHE_STORE, { keyPath: "customerId" });
+      }
+    };
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+function normalizeCachedDashboard(value: unknown): DashboardData | null {
+  const entry = value as Partial<DashboardCacheEntry> | null;
+  const data = entry?.data;
+  if (!data || !Array.isArray(data.records)) return null;
+  return {
+    records: data.records,
+    inventoryRecords: Array.isArray(data.inventoryRecords) ? data.inventoryRecords : [],
+    images: Array.isArray(data.images) ? data.images : [],
+  };
+}
+
+async function readDashboardCache(customerId: string) {
+  const db = await openDashboardCache();
+  if (!db) return null;
+
+  return new Promise<DashboardData | null>((resolve) => {
+    const transaction = db.transaction(DASHBOARD_CACHE_STORE, "readonly");
+    const request = transaction.objectStore(DASHBOARD_CACHE_STORE).get(customerId);
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => resolve(normalizeCachedDashboard(request.result));
+    transaction.oncomplete = () => db.close();
+    transaction.onerror = () => db.close();
+  });
+}
+
+async function writeDashboardCache(customerId: string, data: DashboardData) {
+  const db = await openDashboardCache();
+  if (!db) return;
+
+  return new Promise<void>((resolve) => {
+    const transaction = db.transaction(DASHBOARD_CACHE_STORE, "readwrite");
+    transaction.objectStore(DASHBOARD_CACHE_STORE).put({ customerId, cachedAt: Date.now(), data });
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      db.close();
+      resolve();
+    };
+  });
 }
 
 async function fetchAllRecords(client: SupabaseClient, customerId: string) {
