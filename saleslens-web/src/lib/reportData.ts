@@ -56,6 +56,10 @@ export type MerchandiseRecord = {
   art_code: string | null;
 };
 
+export type SalesShellRecord = MerchandiseRecord & {
+  transaction_date: string;
+};
+
 export type ProductImage = {
   style_number: string;
   art_code: string;
@@ -71,6 +75,27 @@ export type DashboardData = {
   inventoryRecords: InventoryRecord[];
   images: ProductImage[];
 };
+
+export type DashboardShell = {
+  records: SalesShellRecord[];
+};
+
+export async function fetchDashboardShell(client: SupabaseClient, customerId: string) {
+  const records: SalesShellRecord[] = [];
+  for (let from = 0; ; from += REPORT_DATA_PAGE_SIZE) {
+    const { data, error } = await client
+      .from("sales_records")
+      .select("transaction_date,product_class,master_style,style_number,raw_style_identifier,catalog_color_name,color,art_code")
+      .eq("customer_id", customerId)
+      .order("transaction_date", { ascending: true })
+      .range(from, from + REPORT_DATA_PAGE_SIZE - 1);
+
+    if (error) return { shell: { records: [] }, error: error.message };
+    records.push(...((data ?? []) as SalesShellRecord[]));
+    if (!data || data.length < REPORT_DATA_PAGE_SIZE) break;
+  }
+  return { shell: { records }, error: "" };
+}
 
 export async function fetchAllRecords(client: SupabaseClient, customerId: string) {
   const records: SalesRecord[] = [];

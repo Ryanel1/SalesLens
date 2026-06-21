@@ -10,16 +10,14 @@ import {
   type SalesImportOptions,
 } from "@/lib/importSalesData";
 import {
-  fetchAllRecords,
-  fetchInventoryRecords,
-  fetchProductImages,
+  fetchDashboardShell,
+  type DashboardShell,
   type DashboardData,
   type InventoryRecord,
   type MerchandiseRecord,
   type ProductImage,
   type SalesRecord,
 } from "@/lib/reportData";
-import { buildReportPayload as buildSharedReportPayload } from "@/lib/reportBuilder";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
@@ -396,9 +394,11 @@ export default function Home() {
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
+  const [dashboardShell, setDashboardShell] = useState<DashboardShell>({ records: [] });
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [serverReport, setServerReport] = useState<ServerReportState | null>(null);
   const [serverReportStatus, setServerReportStatus] = useState("");
+  const [reportRefreshKey, setReportRefreshKey] = useState(0);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
   const [importRangeStart, setImportRangeStart] = useState("");
@@ -475,6 +475,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!supabase || !selectedCustomerId) {
+      setDashboardShell({ records: [] });
       setDashboardData({ records: [], inventoryRecords: [], images: [] });
       setServerReport(null);
       setServerReportStatus("");
@@ -486,66 +487,24 @@ export default function Home() {
     let isMounted = true;
     setServerReport(null);
     setServerReportStatus("");
+    setDashboardShell({ records: [] });
     setDashboardData({ records: [], inventoryRecords: [], images: [] });
-    setDashboardStatus("Loading cached dashboard...");
+    setDashboardStatus("Loading dashboard...");
 
     async function loadDashboard() {
-      const cached = await readDashboardCache(customerId);
-      if (cached && isMounted) {
-        setDashboardData({
-          records: cached.records,
-          inventoryRecords: [],
-          images: cached.images,
-        });
-        setSelectedPeriod((current) => current ?? defaultPeriodValue(cached.records));
-        setDashboardStatus("Refreshing latest data...");
-        scheduleDashboardIdle(() => {
-          if (!isMounted) return;
-          setDashboardData((current) => ({
-            ...current,
-            inventoryRecords: cached.inventoryRecords,
-          }));
-        });
-      } else if (isMounted) {
-        setDashboardStatus("Loading sales records...");
-      }
-
-      const recordsPromise = fetchAllRecords(client, customerId);
-      const imagesPromise = fetchProductImages(client, customerId);
-      const [recordsResult, imagesResult] = await Promise.all([recordsPromise, imagesPromise]);
-
+      const shellResult = await fetchDashboardShell(client, customerId);
       if (!isMounted) return;
 
-      if (recordsResult.error) {
-        setDashboardStatus(recordsResult.error);
+      if (shellResult.error) {
+        setDashboardStatus(shellResult.error);
+        setDashboardShell({ records: [] });
         setDashboardData({ records: [], inventoryRecords: [], images: [] });
         return;
       }
 
-      const records = recordsResult.records;
-      setDashboardData((current) => ({
-        records,
-        inventoryRecords: current.inventoryRecords,
-        images: imagesResult.images,
-      }));
-      setSelectedPeriod((current) => current ?? defaultPeriodValue(records));
+      setDashboardShell(shellResult.shell);
+      setSelectedPeriod((current) => current ?? defaultPeriodValue(shellResult.shell.records));
       setDashboardStatus("");
-
-      scheduleDashboardIdle(async () => {
-        if (!isMounted) return;
-        setDashboardStatus("Loading inventory records...");
-        const inventoryResult = await fetchInventoryRecords(client, customerId);
-        if (!isMounted) return;
-
-        const nextData = {
-          records,
-          inventoryRecords: inventoryResult.records,
-          images: imagesResult.images,
-        };
-        setDashboardData(nextData);
-        writeDashboardCache(customerId, nextData).catch(() => undefined);
-        setDashboardStatus(inventoryErrorMessage(inventoryResult.error));
-      });
     }
 
     loadDashboard();
@@ -556,11 +515,15 @@ export default function Home() {
   }, [supabase, selectedCustomerId, reloadKey]);
 
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null;
-  const months = useMemo(() => availableMonths(dashboardData.records), [dashboardData.records]);
-  const years = useMemo(() => availableYears(dashboardData.records), [dashboardData.records]);
+  const months = useMemo(() => availableMonths(dashboardShell.records), [dashboardShell.records]);
+  const years = useMemo(() => availableYears(dashboardShell.records), [dashboardShell.records]);
   const periodOptions = useMemo(() => periodOptionGroups(months, years), [months, years]);
-  const selectedPeriodValue = selectedPeriod ?? defaultPeriodValue(dashboardData.records);
+  const selectedPeriodValue = selectedPeriod ?? defaultPeriodValue(dashboardShell.records);
   const period = useMemo(() => (selectedPeriodValue ? parsePeriodValue(selectedPeriodValue) : null), [selectedPeriodValue]);
+
+  const shellRecordsForCustomer = useMemo(() => {
+    return dashboardShell.records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
+  }, [brandFilter, dashboardShell.records]);
 
   const recordsForCustomer = useMemo(() => {
     return dashboardData.records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
@@ -569,8 +532,8 @@ export default function Home() {
   const periodEndMonth = useMemo(() => {
     if (!period) return null;
     if (period.kind === "month") return period.value;
-    return latestMonthForYear(recordsForCustomer, period.year);
-  }, [period, recordsForCustomer]);
+    return latestMonthForYear(shellRecordsForCustomer, period.year);
+  }, [period, shellRecordsForCustomer]);
   const selectedYear = period?.year ?? null;
   const priorYearMonth = periodEndMonth && selectedYear ? `${selectedYear - 1}${periodEndMonth.slice(4)}` : null;
   const selectedPeriodTitle = periodTitle(period, periodEndMonth);
@@ -583,9 +546,11 @@ export default function Home() {
       customerId: selectedCustomerId,
       inventorySort,
       period,
+      reloadKey,
+      reportRefreshKey,
       topArtSort,
     });
-  }, [brandFilter, inventorySort, period, selectedCustomerId, topArtSort]);
+  }, [brandFilter, inventorySort, period, reloadKey, reportRefreshKey, selectedCustomerId, topArtSort]);
   const reportPayload = serverReport?.key === reportRequestKey ? serverReport.payload : null;
 
   useEffect(() => {
@@ -650,6 +615,11 @@ export default function Home() {
     if (!period) return [];
     return recordsForSelectedPeriod(recordsForCustomer, period);
   }, [period, recordsForCustomer]);
+
+  const shellPeriodRecords = useMemo(() => {
+    if (!period) return [];
+    return recordsForSelectedPeriod(shellRecordsForCustomer, period);
+  }, [period, shellRecordsForCustomer]);
 
   const priorPeriodRecords = useMemo(() => {
     if (!period) return [];
@@ -728,20 +698,20 @@ export default function Home() {
     () => (reportPayload ? productImageCandidates({
       bestDayItems: bestDay.items,
       images: dashboardData.images,
-      records: [...periodRecords, ...ytdCurrentRecords],
+      records: [],
       topArt,
       visibleInventoryTracker,
       weeklyScorecards,
     }) : []),
-    [bestDay.items, dashboardData.images, periodRecords, reportPayload, topArt, visibleInventoryTracker, weeklyScorecards, ytdCurrentRecords],
+    [bestDay.items, dashboardData.images, reportPayload, topArt, visibleInventoryTracker, weeklyScorecards],
   );
   const ytdLine = useMemo(() => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth), [periodEndMonth, recordsForCustomer, reportPayload]);
-  const lastUploaded = reportPayload?.lastUploaded ?? latestDate(recordsForCustomer);
+  const lastUploaded = reportPayload?.lastUploaded ?? latestDate(shellRecordsForCustomer);
 
   const brandOptions = useMemo(() => {
-    const options = [...new Set(dashboardData.records.map(brandName))].sort();
+    const options = [...new Set(dashboardShell.records.map(brandName))].sort();
     return ["All", ...options];
-  }, [dashboardData.records]);
+  }, [dashboardShell.records]);
 
   useEffect(() => {
     setInventoryPage(1);
@@ -832,6 +802,7 @@ export default function Home() {
         writeDashboardCache(customerId, next).catch(() => undefined);
         return next;
       });
+      setReportRefreshKey((key) => key + 1);
     }
 
     const cancelFetch = scheduleDashboardIdle(() => {
@@ -879,7 +850,6 @@ export default function Home() {
   async function createShareLink(customerIds = selectedShareCustomerIds) {
     if (!supabase || !selectedCustomer || !user || !period || !customerIds.length) return;
     const client = supabase;
-    const activeCustomer = selectedCustomer;
     const activePeriod = period;
     const shareCustomers = customers.filter((customer) => customerIds.includes(customer.id));
     if (!shareCustomers.length) return;
@@ -892,41 +862,44 @@ export default function Home() {
 
     const token = createReportToken();
     const generatedAt = new Date().toISOString();
-
-    async function reportForCustomer(customer: Customer) {
-      if (customer.id === activeCustomer.id) {
-        return buildSharedReportPayload({
-          accountName: customer.name,
-          brandFilter,
-          generatedAt,
-          images: dashboardData.images,
-          inventoryRecords: dashboardData.inventoryRecords,
-          inventorySort,
-          period: activePeriod,
-          records: dashboardData.records,
-          topArtSort,
-        });
-      }
-
-      const [recordsResult, inventoryResult, imagesResult] = await Promise.all([
-        fetchAllRecords(client, customer.id),
-        fetchInventoryRecords(client, customer.id),
-        fetchProductImages(client, customer.id),
-      ]);
-      return buildSharedReportPayload({
-        accountName: customer.name,
-        brandFilter,
-        generatedAt,
-        images: imagesResult.images,
-        inventoryRecords: inventoryResult.records,
-        inventorySort,
-        period: activePeriod,
-        records: recordsResult.records,
-        topArtSort,
-      });
+    const { data } = await client.auth.getSession();
+    const sessionToken = data.session?.access_token;
+    if (!sessionToken) {
+      setShareStatus("Sign in again to generate a share link.");
+      return;
     }
 
-    const reports = await Promise.all(shareCustomers.map(reportForCustomer));
+    async function reportForCustomer(customer: Customer) {
+      const response = await fetch("/api/report-payload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionToken}`,
+        },
+        body: JSON.stringify({
+          brandFilter,
+          customerId: customer.id,
+          inventorySort,
+          period: activePeriod,
+          topArtSort,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as { report?: ReportSnapshotPayload; error?: string } | null;
+
+      if (!response.ok || !payload?.report) {
+        throw new Error(payload?.error ?? `Unable to build ${customer.name} report.`);
+      }
+
+      return { ...payload.report, generatedAt };
+    }
+
+    let reports: ReportSnapshotPayload[];
+    try {
+      reports = await Promise.all(shareCustomers.map(reportForCustomer));
+    } catch (error) {
+      setShareStatus(error instanceof Error ? error.message : "Unable to generate share link.");
+      return;
+    }
     const primaryReport = reports[0];
     if (!primaryReport) return;
     const title = isMultiAccount
@@ -1364,7 +1337,7 @@ export default function Home() {
                   setShareStatus("");
                   setShareUrl("");
                 }}
-                disabled={!periodRecords.length}
+                disabled={!shellPeriodRecords.length}
               >
                 Share Report
               </button>
@@ -1436,7 +1409,7 @@ export default function Home() {
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
           {!dashboardStatus && serverReportStatus ? <section className="notice">{serverReportStatus}</section> : null}
-          {!dashboardStatus && periodRecords.length === 0 ? (
+          {!dashboardStatus && shellPeriodRecords.length === 0 ? (
             <section className="notice">No records match the current account, period, and brand/class filters.</section>
           ) : null}
 
@@ -2412,19 +2385,23 @@ async function writeDashboardCache(customerId: string, data: DashboardData) {
   });
 }
 
-function availableMonths(records: SalesRecord[]) {
+type DatedRecord = {
+  transaction_date: string | null;
+};
+
+function availableMonths(records: DatedRecord[]) {
   return [...new Set(records.map((record) => monthKey(record.transaction_date)).filter((month): month is string => Boolean(month)))]
     .sort()
     .reverse();
 }
 
-function availableYears(records: SalesRecord[]) {
+function availableYears(records: DatedRecord[]) {
   return [...new Set(records.map((record) => monthKey(record.transaction_date)?.slice(0, 4)).filter((year): year is string => Boolean(year)))]
     .sort()
     .reverse();
 }
 
-function defaultPeriodValue(records: SalesRecord[]) {
+function defaultPeriodValue(records: DatedRecord[]) {
   const month = availableMonths(records)[0];
   return month ? `month:${month}` : null;
 }
@@ -2471,25 +2448,25 @@ function yearLabel(year: number, endMonth?: string | null) {
   return `${year} Full Year`;
 }
 
-function latestMonthForYear(records: SalesRecord[], year: number) {
+function latestMonthForYear(records: DatedRecord[], year: number) {
   return availableMonths(records).filter((month) => month.startsWith(`${year}-`))[0] ?? `${year}-12`;
 }
 
-function recordsForSelectedPeriod(records: SalesRecord[], period: PeriodSelection) {
+function recordsForSelectedPeriod<T extends DatedRecord>(records: T[], period: PeriodSelection) {
   if (period.kind === "month") return recordsForPeriod(records, period.value, "monthly");
   return recordsForYear(records, period.year);
 }
 
-function recordsForPriorPeriod(records: SalesRecord[], period: PeriodSelection) {
+function recordsForPriorPeriod<T extends DatedRecord>(records: T[], period: PeriodSelection) {
   if (period.kind === "month") return recordsForPeriod(records, `${period.year - 1}${period.value.slice(4)}`, "monthly");
   return recordsForYear(records, period.year - 1);
 }
 
-function recordsForYear(records: SalesRecord[], year: number) {
+function recordsForYear<T extends DatedRecord>(records: T[], year: number) {
   return records.filter((record) => monthKey(record.transaction_date)?.slice(0, 4) === String(year));
 }
 
-function recordsForPeriod(records: SalesRecord[], month: string, periodMode: "monthly" | "ytd") {
+function recordsForPeriod<T extends DatedRecord>(records: T[], month: string, periodMode: "monthly" | "ytd") {
   return records.filter((record) => {
     const recordMonth = monthKey(record.transaction_date);
     if (!recordMonth) return false;
@@ -2498,7 +2475,7 @@ function recordsForPeriod(records: SalesRecord[], month: string, periodMode: "mo
   });
 }
 
-function currentYearRecords(records: SalesRecord[], month: string | null) {
+function currentYearRecords<T extends DatedRecord>(records: T[], month: string | null) {
   if (!month) return [];
   return records.filter((record) => {
     const recordMonth = monthKey(record.transaction_date);
@@ -3660,7 +3637,7 @@ function topInventoryStyles(records: Array<SalesRecord | InventoryRecord>) {
     .slice(0, 10);
 }
 
-function latestDate(records: SalesRecord[]) {
+function latestDate(records: DatedRecord[]) {
   return records.map((record) => record.transaction_date).sort().at(-1) ?? null;
 }
 
