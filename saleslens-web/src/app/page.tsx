@@ -83,6 +83,8 @@ type RebelRagsImageMatch = {
   color: string;
   productUrl: string;
   imageUrl: string;
+  sourceImageUrl?: string;
+  storagePath?: string | null;
   lookupArtCode: string;
   isManualOverride: boolean;
 };
@@ -784,7 +786,8 @@ export default function Home() {
         art_code: match.artCode,
         color: match.color,
         product_url: match.productUrl,
-        image_url: match.imageUrl,
+        image_url: match.sourceImageUrl ?? match.imageUrl,
+        storage_path: match.storagePath ?? null,
         is_manual_override: match.isManualOverride,
         notes: `Matched from product website using ${match.lookupArtCode}`,
       }));
@@ -2408,7 +2411,7 @@ async function fetchProductImages(client: SupabaseClient, customerId: string) {
   return {
     images: ((data ?? []) as ProductImage[]).map((image) => ({
       ...image,
-      resolved_url: image.image_url ?? storagePublicUrl(client, image.storage_path),
+      resolved_url: storagePublicUrl(client, image.storage_path) ?? image.image_url,
     })),
   };
 }
@@ -2879,9 +2882,9 @@ function mergeProductImages(images: ProductImage[], matches: RebelRagsImageMatch
       style_number: match.style,
       art_code: match.artCode,
       color: match.color,
-      image_url: match.imageUrl,
+      image_url: match.sourceImageUrl ?? match.imageUrl,
       product_url: match.productUrl,
-      storage_path: null,
+      storage_path: match.storagePath ?? null,
       resolved_url: match.imageUrl,
     });
   });

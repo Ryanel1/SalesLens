@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 
 export const runtime = "nodejs";
@@ -25,6 +26,8 @@ type ProductImageMatch = {
   color: string;
   productUrl: string;
   imageUrl: string;
+  sourceImageUrl: string;
+  storagePath: string | null;
   lookupArtCode: string;
   isManualOverride: boolean;
 };
@@ -32,6 +35,10 @@ type ProductImageMatch = {
 const REBEL_RAGS_BASE_URL = "https://www.rebelrags.net";
 const VOLSHOP_BASE_URL = "https://www.utvolshop.com";
 const MAX_LOOKUPS = 30;
+const PRODUCT_IMAGE_BUCKET = "product-images";
+const PRODUCT_IMAGE_CACHE_WIDTH = 720;
+const PRODUCT_IMAGE_CACHE_QUALITY = 78;
+const PRODUCT_IMAGE_CACHE_MAX_BYTES = 8_000_000;
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 const REBEL_RAGS_NAMEDROP_CT1000_LOOKUPS: Record<string, { productCode: string; productUrl: string }> = {
   "03503316": namedropLookup("AUNT-03687238-CT1000", "/champion/script-ole-miss-aunt-ss-tee-25809"),
@@ -82,10 +89,26 @@ export async function POST(request: NextRequest) {
   const accountName = clean(body?.accountName);
   const items = Array.isArray(body?.items) ? body.items.slice(0, MAX_LOOKUPS) as ImageRequestItem[] : [];
   const matches: ProductImageMatch[] = [];
+  const storageClient = storageAdminClient(config.supabaseUrl);
+  const canCacheImages = storageClient ? await ensureProductImageBucket(storageClient).catch(() => false) : false;
 
   for (const item of items) {
     const match = await matchingImage(item, accountName).catch(() => null);
-    if (match) matches.push(match);
+    if (!match) continue;
+
+    if (storageClient && canCacheImages) {
+      const cachedImage = await cacheProductImage(storageClient, match, accountName).catch(() => null);
+      if (cachedImage) {
+        matches.push({
+          ...match,
+          imageUrl: cachedImage.publicUrl,
+          storagePath: cachedImage.storagePath,
+        });
+        continue;
+      }
+    }
+
+    matches.push(match);
   }
 
   return NextResponse.json({ matches });
@@ -107,6 +130,8 @@ async function matchingImage(item: ImageRequestItem, accountName: string): Promi
         color,
         productUrl: volshopImage.productUrl,
         imageUrl: volshopImage.imageUrl,
+        sourceImageUrl: volshopImage.imageUrl,
+        storagePath: null,
         lookupArtCode: volshopImage.lookupValue,
         isManualOverride: false,
       };
@@ -136,6 +161,8 @@ async function matchingImage(item: ImageRequestItem, accountName: string): Promi
       color,
       productUrl,
       imageUrl,
+      sourceImageUrl: imageUrl,
+      storagePath: null,
       lookupArtCode: lookup.searchArtCode,
       isManualOverride: lookup.isManualOverride,
     };
@@ -184,6 +211,115 @@ async function matchingVolshopImage(item: ImageRequestItem) {
   }
 
   return null;
+}
+
+function storageAdminClient(supabaseUrl: string) {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) return null;
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+async function ensureProductImageBucket(client: SupabaseClient) {
+  const { data, error } = await client.storage.listBuckets();
+  if (error) return false;
+
+  const bucket = data?.find((item) => item.name === PRODUCT_IMAGE_BUCKET || item.id === PRODUCT_IMAGE_BUCKET);
+  if (!bucket) {
+    const { error: createError } = await client.storage.createBucket(PRODUCT_IMAGE_BUCKET, { public: true });
+    return !createError;
+  }
+
+  if (!bucket.public) {
+    const { error: updateError } = await client.storage.updateBucket(PRODUCT_IMAGE_BUCKET, { public: true });
+    return !updateError;
+  }
+
+  return true;
+}
+
+async function cacheProductImage(client: SupabaseClient, match: ProductImageMatch, accountName: string) {
+  const imageBytes = await fetchImageBytes(match.sourceImageUrl || match.imageUrl);
+  if (!imageBytes) return null;
+
+  const optimized = await optimizeImage(imageBytes);
+  if (!optimized) return null;
+
+  const storagePath = productImageStoragePath(accountName, match);
+  const { error } = await client.storage
+    .from(PRODUCT_IMAGE_BUCKET)
+    .upload(storagePath, optimized.bytes, {
+      cacheControl: "31536000",
+      contentType: optimized.contentType,
+      upsert: true,
+    });
+
+  if (error) return null;
+
+  const publicUrl = client.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(storagePath).data.publicUrl;
+  return { publicUrl, storagePath };
+}
+
+async function fetchImageBytes(imageUrl: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(imageUrl, {
+      headers: {
+        "User-Agent": "SalesLens/1.0 (product image caching)",
+      },
+      signal: controller.signal,
+    });
+
+    const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
+    if (!response.ok || !contentType.includes("image")) return null;
+
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (!bytes.length || bytes.length > PRODUCT_IMAGE_CACHE_MAX_BYTES) return null;
+    return bytes;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function optimizeImage(bytes: Buffer) {
+  try {
+    const sharp = (await import("sharp")).default;
+    return {
+      bytes: await sharp(bytes, { failOn: "none" })
+        .rotate()
+        .resize({
+          width: PRODUCT_IMAGE_CACHE_WIDTH,
+          height: PRODUCT_IMAGE_CACHE_WIDTH,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: PRODUCT_IMAGE_CACHE_QUALITY })
+        .toBuffer(),
+      contentType: "image/webp",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function productImageStoragePath(accountName: string, match: ProductImageMatch) {
+  const account = slugPart(accountName || "saleslens");
+  const style = slugPart(match.style);
+  const art = slugPart(match.artCode);
+  const color = slugPart(match.color);
+  const sourceHash = createHash("sha1").update(match.sourceImageUrl || match.imageUrl).digest("hex").slice(0, 8);
+  return `${account}/${style}/${art}/${color}-${sourceHash}.webp`;
+}
+
+function slugPart(value: string) {
+  return normalized(value).toLowerCase() || "unknown";
 }
 
 async function volshopImageFromSearchKeyword(keyword: string) {

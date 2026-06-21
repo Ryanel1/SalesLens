@@ -7,13 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "sync:images": "node scripts/sync-product-images.mjs"
+    "sync:images": "node scripts/sync-product-images.mjs",
+    "cache:product-images": "node scripts/cache-product-images.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "sharp": "^0.35.2",
     "xlsx": "latest"
   },
   "devDependencies": {
