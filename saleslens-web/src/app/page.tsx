@@ -241,7 +241,8 @@ type InventorySnapshot = {
 
 const PAGE_SIZE = 1000;
 const IMAGE_FETCH_BATCH_SIZE = 30;
-const IMAGE_PREFETCH_LIMIT = 300;
+const IMAGE_PREFETCH_LIMIT = 80;
+const IMAGE_PREFETCH_RECORD_GROUP_LIMIT = 80;
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
@@ -645,15 +646,13 @@ export default function Home() {
   const imagePrefetchCandidates = useMemo(
     () => productImageCandidates({
       bestDayItems: bestDay.items,
-      filteredInventoryTracker,
       images: dashboardData.images,
-      inventoryTracker,
       records: [...periodRecords, ...ytdCurrentRecords],
       topArt,
       visibleInventoryTracker,
       weeklyScorecards,
     }),
-    [bestDay.items, dashboardData.images, filteredInventoryTracker, inventoryTracker, periodRecords, topArt, visibleInventoryTracker, weeklyScorecards, ytdCurrentRecords],
+    [bestDay.items, dashboardData.images, periodRecords, topArt, visibleInventoryTracker, weeklyScorecards, ytdCurrentRecords],
   );
   const ytdLine = useMemo(() => ytdPoints(recordsForCustomer, periodEndMonth), [recordsForCustomer, periodEndMonth]);
   const lastUploaded = latestDate(recordsForCustomer);
@@ -2653,18 +2652,14 @@ function legacyProductPageUrl(
 
 function productImageCandidates({
   bestDayItems,
-  filteredInventoryTracker,
   images,
-  inventoryTracker,
   records,
   topArt,
   visibleInventoryTracker,
   weeklyScorecards,
 }: {
   bestDayItems: Array<{ style: string; artCode: string; color: string }>;
-  filteredInventoryTracker: InventoryTrackerItem[];
   images: ProductImage[];
-  inventoryTracker: InventoryTrackerItem[];
   records: SalesRecord[];
   topArt: TopArt[];
   visibleInventoryTracker: InventoryTrackerItem[];
@@ -2700,8 +2695,6 @@ function productImageCandidates({
 
   topArt.forEach((row) => addCandidate(row));
   visibleInventoryTracker.forEach((row) => addCandidate(row));
-  filteredInventoryTracker.forEach((row) => addCandidate(row));
-  inventoryTracker.forEach((row) => addCandidate(row));
   weeklyScorecards.forEach((row) => row.topItems.forEach((item) => addCandidate({
     ...item,
     parentSku: null,
@@ -2730,6 +2723,7 @@ function productImageCandidates({
       };
     })
     .sort((left, right) => right.units - left.units || right.sales - left.sales || left.style.localeCompare(right.style))
+    .slice(0, IMAGE_PREFETCH_RECORD_GROUP_LIMIT)
     .forEach((row) => addCandidate(row));
 
   return [...byKey.values()];
