@@ -160,7 +160,7 @@ type InventorySort = "highest" | "lowest";
 type InventoryAudience = "Unisex" | "Womens" | "Mens" | "Youth";
 type InventoryAudienceFilter = "All" | "Mens" | "Womens" | "Youth";
 type InventoryProductCategory = "Fleece" | "Reverse Weave" | "Tees" | "Other";
-type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees";
+type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees" | "Namedrop";
 type TopArtSort = "units" | "dollars";
 
 type TopStyle = MetricSet & {
@@ -246,7 +246,44 @@ const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
 const INVENTORY_AUDIENCE_FILTERS: InventoryAudienceFilter[] = ["Mens", "Womens", "Youth"];
-const INVENTORY_PRODUCT_FILTERS: InventoryProductFilter[] = ["Fleece", "Tees", "Reverse Weave"];
+const INVENTORY_PRODUCT_FILTERS: InventoryProductFilter[] = ["Fleece", "Tees", "Reverse Weave", "Namedrop"];
+const REBEL_RAGS_NAMEDROP_CT1000_ARTS = new Set([
+  "00367241",
+  "03491635",
+  "03503264",
+  "03503316",
+  "03503317",
+  "03503347",
+  "03503350",
+  "03503351",
+  "03503432",
+  "03661320",
+  "03687238",
+  "03687242",
+  "03687253",
+  "03687254",
+  "03687256",
+  "03687272",
+  "03687276",
+  "03687288",
+  "03751691",
+  "03751742",
+  "03751856",
+  "03751860",
+  "03751861",
+  "03751866",
+  "03751911",
+  "03751913",
+  "03751915",
+  "03751916",
+  "03751966",
+  "03752042",
+  "03804603",
+  "03804604",
+  "03804605",
+  "03854968",
+  "03884278",
+]);
 const GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 const INVENTORY_FLEECE_STYLES = new Set([
   "CS1220",
@@ -3115,7 +3152,19 @@ function inventoryAudienceMatches(row: InventoryTrackerItem, filter: InventoryAu
 }
 
 function inventoryProductMatches(row: InventoryTrackerItem, filters: InventoryProductFilter[]) {
-  return filters.length === 0 || filters.includes(row.productCategory as InventoryProductFilter);
+  return filters.length === 0 || filters.some((filter) => {
+    if (filter === "Namedrop") return inventoryNamedropMatches(row);
+    return row.productCategory === filter;
+  });
+}
+
+function inventoryNamedropMatches(row: InventoryTrackerItem) {
+  return row.style === "CT1000" && REBEL_RAGS_NAMEDROP_CT1000_ARTS.has(normalizedNamedropArtCode(row.artCode));
+}
+
+function normalizedNamedropArtCode(value: string) {
+  const withoutPrefix = compactImagePart(value).replace(/^(APC|AEC|APO)/, "");
+  return /^\d+$/.test(withoutPrefix) ? withoutPrefix.padStart(8, "0") : withoutPrefix;
 }
 
 function inventoryAudienceFilterLabel(filter: InventoryAudienceFilter) {
