@@ -3118,13 +3118,24 @@ function ytdPoints(records: SalesRecord[], month: string | null) {
   if (!month) return { current: [], prior: [], currentTotal: 0, priorTotal: 0 };
   const year = Number(month.slice(0, 4));
   const lastMonth = Number(month.slice(5, 7));
-  const current: number[] = [];
-  const prior: number[] = [];
-  for (let index = 1; index <= 12; index += 1) {
-    const suffix = String(index).padStart(2, "0");
-    current.push(index <= lastMonth ? sum(recordsForPeriod(records, `${year}-${suffix}`, "monthly").map(amountValue)) : 0);
-    prior.push(sum(recordsForPeriod(records, `${year - 1}-${suffix}`, "monthly").map(amountValue)));
-  }
+  const current = Array.from({ length: 12 }, () => 0);
+  const prior = Array.from({ length: 12 }, () => 0);
+
+  records.forEach((record) => {
+    const recordMonth = monthKey(record.transaction_date);
+    if (!recordMonth) return;
+    const recordYear = Number(recordMonth.slice(0, 4));
+    const monthIndex = Number(recordMonth.slice(5, 7)) - 1;
+    if (monthIndex < 0 || monthIndex > 11) return;
+    const amount = amountValue(record);
+
+    if (recordYear === year && monthIndex < lastMonth) {
+      current[monthIndex] += amount;
+    } else if (recordYear === year - 1) {
+      prior[monthIndex] += amount;
+    }
+  });
+
   return {
     current,
     prior,
