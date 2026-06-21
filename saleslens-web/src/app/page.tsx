@@ -9,73 +9,21 @@ import {
   type ParsedSalesRecord,
   type SalesImportOptions,
 } from "@/lib/importSalesData";
+import {
+  fetchAllRecords,
+  fetchInventoryRecords,
+  fetchProductImages,
+  type DashboardData,
+  type InventoryRecord,
+  type MerchandiseRecord,
+  type ProductImage,
+  type SalesRecord,
+} from "@/lib/reportData";
+import { buildReportPayload as buildSharedReportPayload } from "@/lib/reportBuilder";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
-
-type SalesRecord = {
-  id: string;
-  customer_id: string;
-  transaction_date: string;
-  amount: number | string | null;
-  units: number | null;
-  transaction_number: string | null;
-  barcode: string | null;
-  parent_sku: string | null;
-  sku: string | null;
-  product_class: string | null;
-  master_style: string | null;
-  color: string | null;
-  size: string | null;
-  catalog_color_name: string | null;
-  style_number: string | null;
-  raw_style_identifier: string | null;
-  color_code: string | null;
-  art_code: string | null;
-  inventory_units: number | null;
-  year_to_date_amount: number | string | null;
-  year_to_date_units: number | null;
-};
-
-type InventoryRecord = {
-  id: string;
-  customer_id: string;
-  upload_id: string | null;
-  inventory_date: string;
-  source_file: string;
-  product_class: string | null;
-  master_style: string | null;
-  color: string | null;
-  size: string | null;
-  raw_style_identifier: string | null;
-  style_number: string | null;
-  catalog_color_name: string | null;
-  art_code: string | null;
-  inventory_units: number | null;
-  current_retail: number | string | null;
-};
-
-type MerchandiseRecord = {
-  product_class: string | null;
-  master_style: string | null;
-  style_number: string | null;
-  raw_style_identifier: string | null;
-  catalog_color_name: string | null;
-  color: string | null;
-  color_code?: string | null;
-  art_code: string | null;
-};
-
-type ProductImage = {
-  style_number: string;
-  art_code: string;
-  color: string;
-  product_url: string | null;
-  image_url: string | null;
-  storage_path: string | null;
-  resolved_url?: string | null;
-};
 
 type RebelRagsImageMatch = {
   style: string;
@@ -97,12 +45,6 @@ type ImageFetchCandidate = {
   parentSku: string | null;
   sku: string | null;
   imageUrl: string | null;
-};
-
-type DashboardData = {
-  records: SalesRecord[];
-  inventoryRecords: InventoryRecord[];
-  images: ProductImage[];
 };
 
 type DashboardCacheEntry = {
@@ -252,7 +194,6 @@ type InventorySnapshot = {
   topStyles: { style: string; brand: string; units: number; artworks: number }[];
 } | null;
 
-const PAGE_SIZE = 1000;
 const IMAGE_FETCH_BATCH_SIZE = 6;
 const IMAGE_PREFETCH_LIMIT = 18;
 const IMAGE_PREFETCH_RECORD_GROUP_LIMIT = 30;
@@ -889,7 +830,7 @@ export default function Home() {
 
     async function reportForCustomer(customer: Customer) {
       if (customer.id === activeCustomer.id) {
-        return buildReportPayload({
+        return buildSharedReportPayload({
           accountName: customer.name,
           brandFilter,
           generatedAt,
@@ -907,7 +848,7 @@ export default function Home() {
         fetchInventoryRecords(client, customer.id),
         fetchProductImages(client, customer.id),
       ]);
-      return buildReportPayload({
+      return buildSharedReportPayload({
         accountName: customer.name,
         brandFilter,
         generatedAt,
@@ -2409,127 +2350,6 @@ async function writeDashboardCache(customerId: string, data: DashboardData) {
   });
 }
 
-async function fetchAllRecords(client: SupabaseClient, customerId: string) {
-  const records: SalesRecord[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await client
-      .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,color_code,art_code,inventory_units,year_to_date_amount,year_to_date_units")
-      .eq("customer_id", customerId)
-      .order("transaction_date", { ascending: true })
-      .range(from, from + PAGE_SIZE - 1);
-
-    if (error) return { records: [], error: error.message };
-    records.push(...((data ?? []) as SalesRecord[]));
-    if (!data || data.length < PAGE_SIZE) break;
-  }
-  return { records, error: "" };
-}
-
-async function fetchProductImages(client: SupabaseClient, customerId: string) {
-  const { data } = await client
-    .from("product_images")
-    .select("style_number,art_code,color,product_url,image_url,storage_path")
-    .eq("customer_id", customerId);
-  return {
-    images: ((data ?? []) as ProductImage[]).map((image) => ({
-      ...image,
-      resolved_url: storagePublicUrl(client, image.storage_path) ?? image.image_url,
-    })),
-  };
-}
-
-async function fetchInventoryRecords(client: SupabaseClient, customerId: string) {
-  const records: InventoryRecord[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await client
-      .from("inventory_records")
-      .select("id,customer_id,upload_id,inventory_date,source_file,product_class,master_style,color,size,raw_style_identifier,style_number,catalog_color_name,art_code,inventory_units,current_retail")
-      .eq("customer_id", customerId)
-      .order("inventory_date", { ascending: true })
-      .range(from, from + PAGE_SIZE - 1);
-
-    if (error) return { records: [], error: error.message };
-    records.push(...((data ?? []) as InventoryRecord[]));
-    if (!data || data.length < PAGE_SIZE) break;
-  }
-  return { records, error: "" };
-}
-
-function buildReportPayload({
-  accountName,
-  brandFilter,
-  generatedAt,
-  images,
-  inventoryRecords,
-  inventorySort = "highest",
-  period,
-  records,
-  topArtSort = "units",
-}: {
-  accountName: string;
-  brandFilter: string;
-  generatedAt: string;
-  images: ProductImage[];
-  inventoryRecords: InventoryRecord[];
-  inventorySort?: InventorySort;
-  period: PeriodSelection;
-  records: SalesRecord[];
-  topArtSort?: TopArtSort;
-}): ReportSnapshotPayload {
-  const filteredRecords = records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
-  const filteredInventoryRecords = inventoryRecords.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
-  const periodEndMonth = period.kind === "month" ? period.value : latestMonthForYear(filteredRecords, period.year);
-  const priorYearMonth = periodEndMonth ? `${period.year - 1}${periodEndMonth.slice(4)}` : null;
-  const periodRecords = recordsForSelectedPeriod(filteredRecords, period);
-  const priorPeriodRecords = recordsForPriorPeriod(filteredRecords, period);
-  const ytdCurrentRecords = currentYearRecords(filteredRecords, periodEndMonth);
-  const ytdPriorRecords = priorYearMonth ? currentYearRecords(filteredRecords, priorYearMonth) : [];
-  const priorYearRecords = recordsForYear(filteredRecords, period.year - 1);
-  const currentMetrics = metricSet(periodRecords);
-  const priorMetrics = metricSet(priorPeriodRecords);
-  const selectedPeriodTitle = periodTitle(period, periodEndMonth);
-  const priorPeriodTitle = priorTitle(period, periodEndMonth);
-  const bestDay = bestSalesDay(periodRecords, images);
-  const ytdStyleStudy = topStyleRows(ytdCurrentRecords, ytdPriorRecords);
-
-  return {
-    version: 1,
-    generatedAt,
-    accountName,
-    brandFilter,
-    periodMode: period.kind === "month" ? "monthly" : "ytd",
-    selectedMonth: periodEndMonth,
-    periodTitle: selectedPeriodTitle,
-    priorPeriodTitle,
-    previousMonthTitle: priorPeriodTitle,
-    topArtSort,
-    lastUploaded: latestDate(filteredRecords),
-    currentMetrics,
-    priorMetrics,
-    ytdLine: ytdPoints(filteredRecords, periodEndMonth),
-    ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
-    monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
-    weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
-    inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth, filteredRecords),
-    inventoryTrackerSort: inventorySort,
-    inventoryTracker: inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort, filteredRecords),
-    salesMix: salesMixSlices(periodRecords),
-    bestDay: {
-      date: bestDay.date,
-      sales: bestDay.sales,
-      units: bestDay.units,
-      transactions: bestDay.transactions,
-      dayCount: bestDay.dayCount,
-      items: bestDay.items,
-    },
-    topStyles: ytdStyleStudy,
-    styleStudyMonthly: topStyleRows(periodRecords, priorPeriodRecords),
-    styleStudyYtd: ytdStyleStudy,
-    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords, topArtSort),
-  };
-}
-
 function availableMonths(records: SalesRecord[]) {
   return [...new Set(records.map((record) => monthKey(record.transaction_date)).filter((month): month is string => Boolean(month)))]
     .sort()
@@ -2703,11 +2523,6 @@ function reportedYtdTotals(records: SalesRecord[]) {
     sales: sum(rowsWithYtd.map((record) => Number(record.year_to_date_amount ?? 0))),
     units: sum(rowsWithYtd.map((record) => record.year_to_date_units ?? 0)),
   };
-}
-
-function storagePublicUrl(client: SupabaseClient, storagePath: string | null) {
-  if (!storagePath) return null;
-  return client.storage.from("product-images").getPublicUrl(storagePath).data.publicUrl;
 }
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {
