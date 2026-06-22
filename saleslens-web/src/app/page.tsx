@@ -2,13 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import {
-  parseInventoryWorkbook,
-  parseSalesWorkbook,
-  type ParsedInventoryRecord,
-  type ParsedSalesRecord,
-  type SalesImportOptions,
-} from "@/lib/importSalesData";
+import type { ParsedInventoryRecord, ParsedSalesRecord, SalesImportOptions } from "@/lib/importSalesData";
 import {
   type DashboardData,
   type DashboardShellSummary,
@@ -564,13 +558,17 @@ export default function Home() {
     return JSON.stringify({
       brandFilter,
       customerId: selectedCustomerId,
+      inventoryAudienceFilter,
+      inventoryPage,
+      inventoryPageSize: INVENTORY_TRACKER_PAGE_SIZE,
+      inventoryProductFilters,
       inventorySort,
       period,
       reloadKey,
       reportRefreshKey,
       topArtSort,
     });
-  }, [brandFilter, inventorySort, period, reloadKey, reportRefreshKey, selectedCustomerId, topArtSort]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryPage, inventoryProductFilters, inventorySort, period, reloadKey, reportRefreshKey, selectedCustomerId, topArtSort]);
   const reportPayload = serverReport?.key === reportRequestKey ? serverReport.payload : null;
 
   useEffect(() => {
@@ -601,6 +599,10 @@ export default function Home() {
         body: JSON.stringify({
           brandFilter,
           customerId: selectedCustomerId,
+          inventoryAudienceFilter,
+          inventoryPage,
+          inventoryPageSize: INVENTORY_TRACKER_PAGE_SIZE,
+          inventoryProductFilters,
           inventorySort,
           period,
           topArtSort,
@@ -629,7 +631,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, [brandFilter, inventorySort, period, reportRequestKey, selectedCustomerId, supabase, topArtSort, user]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryPage, inventoryProductFilters, inventorySort, period, reportRequestKey, selectedCustomerId, supabase, topArtSort, user]);
 
   const periodRecords = useMemo(() => {
     if (!period) return [];
@@ -687,24 +689,14 @@ export default function Home() {
     () => (reportPayload?.inventoryTracker ?? []) as InventoryTrackerItem[],
     [reportPayload],
   );
-  const filteredInventoryTracker = useMemo(
-    () => inventoryTracker.filter((row) => (
-      inventoryAudienceMatches(row, inventoryAudienceFilter) &&
-      inventoryProductMatches(row, inventoryProductFilters)
-    )),
-    [inventoryAudienceFilter, inventoryProductFilters, inventoryTracker],
-  );
-  const inventoryPageCount = Math.max(1, Math.ceil(filteredInventoryTracker.length / INVENTORY_TRACKER_PAGE_SIZE));
-  const currentInventoryPage = Math.min(inventoryPage, inventoryPageCount);
-  const visibleInventoryTracker = useMemo(
-    () => filteredInventoryTracker.slice(
-      (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE,
-      currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE,
-    ),
-    [currentInventoryPage, filteredInventoryTracker],
-  );
-  const inventoryPageStart = filteredInventoryTracker.length ? (currentInventoryPage - 1) * INVENTORY_TRACKER_PAGE_SIZE + 1 : 0;
-  const inventoryPageEnd = Math.min(currentInventoryPage * INVENTORY_TRACKER_PAGE_SIZE, filteredInventoryTracker.length);
+  const inventoryTrackerMeta = reportPayload?.inventoryTrackerMeta ?? null;
+  const inventoryPageCount = inventoryTrackerMeta?.pageCount ?? 1;
+  const currentInventoryPage = inventoryTrackerMeta?.page ?? inventoryPage;
+  const visibleInventoryTracker = inventoryTracker;
+  const inventoryPageStart = inventoryTrackerMeta?.pageStart ?? 0;
+  const inventoryPageEnd = inventoryTrackerMeta?.pageEnd ?? 0;
+  const inventoryTrackerTotalItems = inventoryTrackerMeta?.totalItems ?? inventoryTracker.length;
+  const inventoryTrackerTotalUnits = inventoryTrackerMeta?.totalUnits ?? sum(inventoryTracker.map((row) => row.inventoryUnits));
   const bestDay = useMemo(
     () => (reportPayload?.bestDay as ReturnType<typeof bestSalesDay> | undefined) ?? bestSalesDay(periodRecords, dashboardData.images),
     [dashboardData.images, periodRecords, reportPayload],
@@ -891,6 +883,10 @@ export default function Home() {
         body: JSON.stringify({
           brandFilter,
           customerId: customer.id,
+          inventoryAudienceFilter,
+          inventoryPage,
+          inventoryPageSize: INVENTORY_TRACKER_PAGE_SIZE,
+          inventoryProductFilters,
           inventorySort,
           period: activePeriod,
           topArtSort,
@@ -1016,6 +1012,7 @@ export default function Home() {
 
     setImportStatus(`Reading ${file.name}...`);
     try {
+      const { parseSalesWorkbook } = await import("@/lib/importSalesData");
       const parsed = await parseSalesWorkbook(file, selectedCustomer.name, options);
       if (parsed.records.length === 0) {
         setImportStatus(`No importable records found. Skipped ${parsed.skippedCount} rows.`);
@@ -1094,6 +1091,7 @@ export default function Home() {
 
     setImportStatus(`Reading inventory from ${file.name}...`);
     try {
+      const { parseInventoryWorkbook } = await import("@/lib/importSalesData");
       const parsed = await parseInventoryWorkbook(file, selectedCustomer.name);
       if (parsed.records.length === 0) {
         setImportStatus(`No importable inventory records found. Skipped ${parsed.skippedCount} rows.`);
@@ -1578,15 +1576,15 @@ export default function Home() {
             </section>
           ) : null}
 
-          {inventoryTracker.length ? (
+          {inventoryTracker.length || inventoryTrackerMeta ? (
             <section className="sectionBlock">
               <div className="sectionTitle">
                 <div>
                   <h3>Inventory Tracker</h3>
                   <p>
-                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(filteredInventoryTracker.length)} current on-hand items with 5+ units, plus high-demand low-stock exceptions. Showing{" "}
+                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTrackerTotalItems)} current on-hand items with 5+ units, plus high-demand low-stock exceptions. Showing{" "}
                     {numberText(inventoryPageStart)}-{numberText(inventoryPageEnd)} |{" "}
-                    {numberText(sum(filteredInventoryTracker.map((row) => row.inventoryUnits)))} Units
+                    {numberText(inventoryTrackerTotalUnits)} Units
                   </p>
                 </div>
               </div>

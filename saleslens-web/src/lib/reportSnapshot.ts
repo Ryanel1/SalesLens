@@ -179,6 +179,19 @@ export type SnapshotInventoryTrackerItem = {
   productUrl?: string | null;
 };
 
+export type SnapshotInventoryTrackerMeta = {
+  totalItems: number;
+  totalUnits: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  pageStart: number;
+  pageEnd: number;
+  sort: "highest" | "lowest";
+  audienceFilter: "All" | "Mens" | "Womens" | "Youth";
+  productFilters: Array<"Fleece" | "Reverse Weave" | "Tees" | "Namedrop">;
+};
+
 export type ReportSnapshotPayload = {
   version: 1;
   generatedAt: string;
@@ -199,6 +212,7 @@ export type ReportSnapshotPayload = {
   weeklyScorecards?: SnapshotWeeklyScorecardRow[];
   inventorySnapshot?: SnapshotInventory;
   inventoryTrackerSort?: "highest" | "lowest";
+  inventoryTrackerMeta?: SnapshotInventoryTrackerMeta;
   inventoryTracker?: SnapshotInventoryTrackerItem[];
   salesMix: SnapshotSalesMixSlice[];
   bestDay: SnapshotBestDay;

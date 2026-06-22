@@ -83,6 +83,18 @@ export type InventoryAudienceFilter = "All" | "Mens" | "Womens" | "Youth";
 export type InventoryProductCategory = "Fleece" | "Reverse Weave" | "Tees" | "Other";
 export type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees" | "Namedrop";
 export type TopArtSort = "units" | "dollars";
+export type InventoryTrackerMeta = {
+  totalItems: number;
+  totalUnits: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  pageStart: number;
+  pageEnd: number;
+  sort: InventorySort;
+  audienceFilter: InventoryAudienceFilter;
+  productFilters: InventoryProductFilter[];
+};
 
 export type TopStyle = MetricSet & {
   rank: number;
@@ -342,6 +354,10 @@ export function buildReportPayload({
   accountName,
   brandFilter,
   generatedAt,
+  inventoryAudienceFilter = "All",
+  inventoryPage = 1,
+  inventoryPageSize = INVENTORY_TRACKER_PAGE_SIZE,
+  inventoryProductFilters = [],
   images,
   inventoryRecords,
   inventorySort = "highest",
@@ -352,6 +368,10 @@ export function buildReportPayload({
   accountName: string;
   brandFilter: string;
   generatedAt: string;
+  inventoryAudienceFilter?: InventoryAudienceFilter;
+  inventoryPage?: number;
+  inventoryPageSize?: number;
+  inventoryProductFilters?: InventoryProductFilter[];
   images: ProductImage[];
   inventoryRecords: InventoryRecord[];
   inventorySort?: InventorySort;
@@ -374,6 +394,20 @@ export function buildReportPayload({
   const priorPeriodTitle = priorTitle(period, periodEndMonth);
   const bestDay = bestSalesDay(periodRecords, images);
   const ytdStyleStudy = topStyleRows(ytdCurrentRecords, ytdPriorRecords);
+  const inventoryTrackerResult = pagedInventoryTrackerRows({
+    contextRecords: filteredRecords,
+    images,
+    inventoryAudienceFilter,
+    inventoryPage,
+    inventoryPageSize,
+    inventoryProductFilters,
+    periodEndMonth,
+    periodRecords,
+    priorYearRecords,
+    sort: inventorySort,
+    standaloneInventoryRecords: filteredInventoryRecords,
+    ytdCurrentRecords,
+  });
 
   return {
     version: 1,
@@ -395,7 +429,8 @@ export function buildReportPayload({
     weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth, filteredRecords),
     inventoryTrackerSort: inventorySort,
-    inventoryTracker: inventoryTrackerRows(periodRecords, ytdCurrentRecords, priorYearRecords, filteredInventoryRecords, periodEndMonth, images, inventorySort, filteredRecords),
+    inventoryTrackerMeta: inventoryTrackerResult.meta,
+    inventoryTracker: inventoryTrackerResult.rows,
     salesMix: salesMixSlices(periodRecords),
     bestDay: {
       date: bestDay.date,
@@ -1563,6 +1598,71 @@ function monthlyInventoryPoints(
   });
 }
 
+function pagedInventoryTrackerRows({
+  contextRecords,
+  images,
+  inventoryAudienceFilter,
+  inventoryPage,
+  inventoryPageSize,
+  inventoryProductFilters,
+  periodEndMonth,
+  periodRecords,
+  priorYearRecords,
+  sort,
+  standaloneInventoryRecords,
+  ytdCurrentRecords,
+}: {
+  contextRecords: SalesRecord[];
+  images: ProductImage[];
+  inventoryAudienceFilter: InventoryAudienceFilter;
+  inventoryPage: number;
+  inventoryPageSize: number;
+  inventoryProductFilters: InventoryProductFilter[];
+  periodEndMonth: string | null;
+  periodRecords: SalesRecord[];
+  priorYearRecords: SalesRecord[];
+  sort: InventorySort;
+  standaloneInventoryRecords: InventoryRecord[];
+  ytdCurrentRecords: SalesRecord[];
+}): { meta: InventoryTrackerMeta; rows: InventoryTrackerItem[] } {
+  const pageSize = positiveInteger(inventoryPageSize, INVENTORY_TRACKER_PAGE_SIZE);
+  const allRows = inventoryTrackerRows(
+    periodRecords,
+    ytdCurrentRecords,
+    priorYearRecords,
+    standaloneInventoryRecords,
+    periodEndMonth,
+    images,
+    sort,
+    contextRecords,
+  );
+  const filteredRows = allRows.filter((row) => (
+    inventoryAudienceMatches(row, inventoryAudienceFilter) &&
+    inventoryProductMatches(row, inventoryProductFilters)
+  ));
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const page = Math.min(Math.max(positiveInteger(inventoryPage, 1), 1), pageCount);
+  const pageStart = filteredRows.length ? (page - 1) * pageSize + 1 : 0;
+  const pageEnd = Math.min(page * pageSize, filteredRows.length);
+  const rows = filteredRows.slice((page - 1) * pageSize, page * pageSize);
+
+  return {
+    meta: {
+      totalItems: filteredRows.length,
+      totalUnits: sum(filteredRows.map((row) => row.inventoryUnits)),
+      page,
+      pageSize,
+      pageCount,
+      pageStart,
+      pageEnd,
+      sort,
+      audienceFilter: inventoryAudienceFilter,
+      productFilters: inventoryProductFilters,
+    },
+    rows,
+  };
+}
+
 function inventoryTrackerRows(
   records: SalesRecord[],
   ytdRecords: SalesRecord[],
@@ -1620,6 +1720,10 @@ function inventoryTrackerRows(
       return unitDelta || left.style.localeCompare(right.style) || left.artCode.localeCompare(right.artCode);
     })
     .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function positiveInteger(value: number, fallback: number) {
+  return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
 function normalizedMonthlyUnitPace(records: SalesRecord[]) {

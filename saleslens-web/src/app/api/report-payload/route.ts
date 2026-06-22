@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
   buildReportPayload,
+  type InventoryAudienceFilter,
+  type InventoryProductFilter,
   type InventorySort,
   type PeriodSelection,
   type TopArtSort,
@@ -14,6 +16,10 @@ export const runtime = "nodejs";
 type ReportPayloadRequest = {
   customerId?: unknown;
   brandFilter?: unknown;
+  inventoryAudienceFilter?: unknown;
+  inventoryPage?: unknown;
+  inventoryPageSize?: unknown;
+  inventoryProductFilters?: unknown;
   inventorySort?: unknown;
   period?: unknown;
   topArtSort?: unknown;
@@ -84,6 +90,10 @@ export async function POST(request: NextRequest) {
     brandFilter: clean(body?.brandFilter) || "All",
     generatedAt: new Date().toISOString(),
     images,
+    inventoryAudienceFilter: inventoryAudienceFilterValue(body?.inventoryAudienceFilter),
+    inventoryPage: positiveInteger(body?.inventoryPage, 1),
+    inventoryPageSize: positiveInteger(body?.inventoryPageSize, 50),
+    inventoryProductFilters: inventoryProductFilterValues(body?.inventoryProductFilters),
     inventoryRecords,
     inventorySort: inventorySortValue(body?.inventorySort),
     period,
@@ -102,8 +112,27 @@ function inventorySortValue(value: unknown): InventorySort {
   return value === "lowest" ? "lowest" : "highest";
 }
 
+function inventoryAudienceFilterValue(value: unknown): InventoryAudienceFilter {
+  return value === "Mens" || value === "Womens" || value === "Youth" ? value : "All";
+}
+
+function inventoryProductFilterValues(value: unknown): InventoryProductFilter[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is InventoryProductFilter => (
+    item === "Fleece" ||
+    item === "Reverse Weave" ||
+    item === "Tees" ||
+    item === "Namedrop"
+  ));
+}
+
 function topArtSortValue(value: unknown): TopArtSort {
   return value === "dollars" ? "dollars" : "units";
+}
+
+function positiveInteger(value: unknown, fallback: number) {
+  const numberValue = Number(value);
+  return Number.isInteger(numberValue) && numberValue > 0 ? numberValue : fallback;
 }
 
 function periodSelection(value: unknown): PeriodSelection | null {
