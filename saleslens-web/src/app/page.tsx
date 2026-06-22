@@ -602,7 +602,11 @@ export default function Home() {
       topArtSort,
     });
   }, [brandFilter, inventoryAudienceFilter, inventoryPage, inventoryProductFilters, inventorySort, period, reloadKey, reportRefreshKey, selectedCustomerId, topArtSort]);
-  const reportPayload = serverReport?.key === reportRequestKey ? serverReport.payload : null;
+  const reportPayload =
+    serverReport && selectedCustomer && serverReport.payload.accountName === selectedCustomer.name
+      ? serverReport.payload
+      : null;
+  const isReportUpdating = Boolean(reportPayload && serverReport && serverReport.key !== reportRequestKey);
 
   useEffect(() => {
     if (!supabase || !user || !selectedCustomerId || !period || !reportRequestKey) {
@@ -1406,7 +1410,7 @@ export default function Home() {
 
             <div className="navSignOutField">
               <span>{user.email ?? "Signed in"}</span>
-              <button className="ghostButton navSignOut" onClick={signOut}>
+              <button className="ghostButton navSignOut" type="button" onClick={signOut}>
                 Sign Out
               </button>
             </div>
@@ -1420,6 +1424,7 @@ export default function Home() {
                 aria-label="Close import type"
                 className="modalCloseButton"
                 onClick={closeImportModal}
+                type="button"
               >
                 X
               </button>
@@ -1606,6 +1611,7 @@ export default function Home() {
                   setShareUrl("");
                 }}
                 disabled={!period}
+                type="button"
               >
                 Share Report
               </button>
@@ -1623,6 +1629,7 @@ export default function Home() {
                     setShareStatus("");
                     setShareUrl("");
                   }}
+                  type="button"
                 >
                   X
                 </button>
@@ -1647,7 +1654,7 @@ export default function Home() {
                   })}
                 </div>
 
-                <button className="shareGenerateButton" onClick={() => createShareLink()} disabled={!selectedShareCustomerIds.length || shareStatus.includes("Generating")}>
+                <button className="shareGenerateButton" type="button" onClick={() => createShareLink()} disabled={!selectedShareCustomerIds.length || shareStatus.includes("Generating")}>
                   Generate {selectedShareCustomerIds.length > 1 ? "Multi-Account" : "Account"} Link
                 </button>
 
@@ -1655,7 +1662,7 @@ export default function Home() {
                 {shareUrl ? (
                   <div className="shareLinkBox">
                     <a href={shareUrl} target="_blank" rel="noreferrer">{shareUrl}</a>
-                    <button className="ghostButton" onClick={() => navigator.clipboard?.writeText(shareUrl)}>
+                    <button className="ghostButton" type="button" onClick={() => navigator.clipboard?.writeText(shareUrl)}>
                       Copy Link
                     </button>
                   </div>
@@ -1686,7 +1693,7 @@ export default function Home() {
           </section>
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
-          {!dashboardStatus && serverReportStatus ? <section className="notice">{serverReportStatus}</section> : null}
+          {!dashboardStatus && serverReportStatus ? <section className="notice">{isReportUpdating ? "Updating report sections..." : serverReportStatus}</section> : null}
           {!dashboardStatus && !serverReportStatus && reportPayload && currentMetrics.transactions === 0 ? (
             <section className="notice">No records match the current account, period, and brand/class filters.</section>
           ) : null}
@@ -1774,10 +1781,10 @@ export default function Home() {
               </div>
             </div>
             <div className="studyTabs" aria-label="Style study views">
-              <button className={styleStudyMode === "month" ? "active" : ""} onClick={() => setStyleStudyMode("month")}>
+              <button className={styleStudyMode === "month" ? "active" : ""} type="button" onClick={() => setStyleStudyMode("month")}>
                 {selectedPeriodKind === "year" ? "Selected Year" : "Current Month"}
               </button>
-              <button className={styleStudyMode === "ytd" ? "active" : ""} onClick={() => setStyleStudyMode("ytd")}>
+              <button className={styleStudyMode === "ytd" ? "active" : ""} type="button" onClick={() => setStyleStudyMode("ytd")}>
                 YTD
               </button>
             </div>
