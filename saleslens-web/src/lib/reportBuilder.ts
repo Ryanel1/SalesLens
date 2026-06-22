@@ -1,5 +1,5 @@
 import { monthText, numberText } from "@/lib/formatters";
-import type { InventoryRecord, MerchandiseRecord, ProductImage, SalesRecord } from "@/lib/reportData";
+import type { InventoryRecord, MerchandiseRecord, ProductImage, SalesRecord, UploadRecord } from "@/lib/reportData";
 import type { ReportSnapshotPayload, SnapshotSalesForecast } from "@/lib/reportSnapshot";
 
 type RebelRagsImageMatch = {
@@ -364,6 +364,7 @@ export function buildReportPayload({
   period,
   records,
   topArtSort = "units",
+  uploads = [],
 }: {
   accountName: string;
   brandFilter: string;
@@ -378,6 +379,7 @@ export function buildReportPayload({
   period: PeriodSelection;
   records: SalesRecord[];
   topArtSort?: TopArtSort;
+  uploads?: UploadRecord[];
 }): ReportSnapshotPayload {
   const filteredRecords = records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
   const filteredInventoryRecords = inventoryRecords.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
@@ -427,7 +429,7 @@ export function buildReportPayload({
     ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
     salesForecast: salesForecastMetrics(filteredRecords, periodEndMonth),
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
-    weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
+    weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images, uploads) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth, filteredRecords),
     inventoryTrackerSort: inventorySort,
     inventoryTrackerMeta: inventoryTrackerResult.meta,
@@ -1246,8 +1248,11 @@ function monthlyDriverMetrics(currentRecords: SalesRecord[], priorRecords: Sales
   };
 }
 
-function weeklyScorecardRows(records: SalesRecord[], month: string | null, images: ProductImage[]): WeeklyScorecardRow[] {
+function weeklyScorecardRows(records: SalesRecord[], month: string | null, images: ProductImage[], uploads: UploadRecord[] = []): WeeklyScorecardRow[] {
   if (!month) return [];
+  const uploadRows = uploadPeriodScorecardRows(records, month, images, uploads);
+  if (uploadRows.length) return uploadRows;
+
   const imageLookup = imageLookupMaps(images);
   const monthStartDate = parseDate(`${month}-01`);
   const monthEndDate = endOfMonth(monthStartDate);
@@ -1280,6 +1285,72 @@ function weeklyScorecardRows(records: SalesRecord[], month: string | null, image
   }
 
   return rows;
+}
+
+function uploadPeriodScorecardRows(records: SalesRecord[], month: string, images: ProductImage[], uploads: UploadRecord[]) {
+  const uploadById = new Map(uploads.map((upload) => [upload.id, upload]));
+  const imageLookup = imageLookupMaps(images);
+  const monthStartDate = parseDate(`${month}-01`);
+  const monthEndDate = endOfMonth(monthStartDate);
+  const rows: WeeklyScorecardRow[] = [];
+
+  const groups = groupedRows(
+    records.filter((record) => monthKey(record.transaction_date) === month && record.upload_id),
+    (record) => record.upload_id ?? "",
+  )
+    .map(([uploadId, group]) => ({ upload: uploadById.get(uploadId), group }))
+    .filter((row): row is { upload: UploadRecord; group: SalesRecord[] } => Boolean(row.upload))
+    .filter(({ upload, group }) => isSummaryUploadGroup(upload, group))
+    .sort((left, right) => {
+      const leftDate = left.upload.sales_period_start ?? latestRecordDate(left.group) ?? "";
+      const rightDate = right.upload.sales_period_start ?? latestRecordDate(right.group) ?? "";
+      return leftDate.localeCompare(rightDate) || left.upload.created_at.localeCompare(right.upload.created_at);
+    });
+
+  if (!groups.length) return [];
+
+  for (const { upload, group } of groups) {
+    const fallbackDate = latestRecordDate(group) ?? `${month}-01`;
+    const uploadStart = parseDate(upload.sales_period_start ?? fallbackDate);
+    const uploadEnd = parseDate(upload.sales_period_end ?? upload.sales_period_start ?? fallbackDate);
+    const segmentStart = maxDate(uploadStart, monthStartDate);
+    const segmentEnd = minDate(uploadEnd, monthEndDate);
+    const priorStart = addDays(segmentStart, -364);
+    const priorEnd = addDays(segmentEnd, -364);
+    const priorRecords = recordsBetween(records, dateKey(priorStart), dateKey(priorEnd));
+    const topItems = topWeeklyArtItems(group, imageLookup);
+
+    rows.push({
+      rank: rows.length + 1,
+      title: `Week ${rows.length + 1}`,
+      dateRange: dateRangeText(segmentStart, segmentEnd),
+      dayCount: daysBetween(segmentStart, segmentEnd) + 1,
+      current: metricSet(group),
+      prior: metricSet(priorRecords),
+      avgSalePerTransaction: group.length ? sum(group.map(amountValue)) / group.length : 0,
+      breadth: breadthMetrics(group),
+      priorBreadth: breadthMetrics(priorRecords),
+      topItem: topItems[0] ?? null,
+      topItems,
+    });
+  }
+
+  return rows;
+}
+
+function isSummaryUploadGroup(upload: UploadRecord, group: SalesRecord[]) {
+  const uploadStart = clean(upload.sales_period_start);
+  const uploadEnd = clean(upload.sales_period_end);
+  if (!uploadStart || !uploadEnd || uploadStart === uploadEnd) return false;
+
+  const recordDates = new Set(group.map((record) => record.transaction_date).filter(Boolean));
+  if (recordDates.size !== 1) return false;
+
+  return daysBetween(parseDate(uploadStart), parseDate(uploadEnd)) >= 1;
+}
+
+function latestRecordDate(records: SalesRecord[]) {
+  return records.map((record) => record.transaction_date).filter(Boolean).sort().at(-1) ?? null;
 }
 
 function topWeeklyArtItems(records: SalesRecord[], imageLookup: ReturnType<typeof imageLookupMaps>) {

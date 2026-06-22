@@ -6,7 +6,9 @@ const PRODUCT_IMAGE_BUCKET = "product-images";
 export type SalesRecord = {
   id: string;
   customer_id: string;
+  upload_id: string | null;
   transaction_date: string;
+  source_file: string | null;
   amount: number | string | null;
   units: number | null;
   transaction_number: string | null;
@@ -25,6 +27,15 @@ export type SalesRecord = {
   inventory_units: number | null;
   year_to_date_amount: number | string | null;
   year_to_date_units: number | null;
+};
+
+export type UploadRecord = {
+  id: string;
+  source_file: string | null;
+  original_file_name: string | null;
+  sales_period_start: string | null;
+  sales_period_end: string | null;
+  created_at: string;
 };
 
 export type InventoryRecord = {
@@ -112,7 +123,7 @@ export async function fetchAllRecords(client: SupabaseClient, customerId: string
   for (let from = 0; ; from += REPORT_DATA_PAGE_SIZE) {
     const { data, error } = await client
       .from("sales_records")
-      .select("id,customer_id,transaction_date,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,color_code,art_code,inventory_units,year_to_date_amount,year_to_date_units")
+      .select("id,customer_id,upload_id,transaction_date,source_file,amount,units,transaction_number,barcode,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,color_code,art_code,inventory_units,year_to_date_amount,year_to_date_units")
       .eq("customer_id", customerId)
       .order("transaction_date", { ascending: true })
       .range(from, from + REPORT_DATA_PAGE_SIZE - 1);
@@ -122,6 +133,23 @@ export async function fetchAllRecords(client: SupabaseClient, customerId: string
     if (!data || data.length < REPORT_DATA_PAGE_SIZE) break;
   }
   return { records, error: "" };
+}
+
+export async function fetchUploadRecords(client: SupabaseClient, customerId: string) {
+  const uploads: UploadRecord[] = [];
+  for (let from = 0; ; from += REPORT_DATA_PAGE_SIZE) {
+    const { data, error } = await client
+      .from("uploads")
+      .select("id,source_file,original_file_name,sales_period_start,sales_period_end,created_at")
+      .eq("customer_id", customerId)
+      .order("created_at", { ascending: true })
+      .range(from, from + REPORT_DATA_PAGE_SIZE - 1);
+
+    if (error) return { uploads: [], error: error.message };
+    uploads.push(...((data ?? []) as UploadRecord[]));
+    if (!data || data.length < REPORT_DATA_PAGE_SIZE) break;
+  }
+  return { uploads, error: "" };
 }
 
 export async function fetchProductImages(client: SupabaseClient, customerId: string) {

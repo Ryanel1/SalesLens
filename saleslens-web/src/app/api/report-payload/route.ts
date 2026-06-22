@@ -8,7 +8,7 @@ import {
   type PeriodSelection,
   type TopArtSort,
 } from "@/lib/reportBuilder";
-import { fetchAllRecords, fetchInventoryRecords, fetchProductImages } from "@/lib/reportData";
+import { fetchAllRecords, fetchInventoryRecords, fetchProductImages, fetchUploadRecords } from "@/lib/reportData";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 
 export const runtime = "nodejs";
@@ -71,10 +71,12 @@ export async function POST(request: NextRequest) {
     { records, error: recordsError },
     { records: inventoryRecords, error: inventoryError },
     { images },
+    { uploads, error: uploadsError },
   ] = await Promise.all([
     fetchAllRecords(supabase, customerId),
     fetchInventoryRecords(supabase, customerId),
     fetchProductImages(supabase, customerId),
+    fetchUploadRecords(supabase, customerId),
   ]);
 
   if (recordsError) {
@@ -83,6 +85,10 @@ export async function POST(request: NextRequest) {
 
   if (inventoryError) {
     return NextResponse.json({ error: inventoryError }, { status: 500 });
+  }
+
+  if (uploadsError) {
+    return NextResponse.json({ error: uploadsError }, { status: 500 });
   }
 
   const report = buildReportPayload({
@@ -99,6 +105,7 @@ export async function POST(request: NextRequest) {
     period,
     records,
     topArtSort: topArtSortValue(body?.topArtSort),
+    uploads,
   });
 
   return NextResponse.json({ report });
