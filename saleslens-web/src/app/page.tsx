@@ -1310,7 +1310,14 @@ export default function Home() {
         });
 
         setImportStatus(`Replacing overlapping Rebel Rags sales records...`);
-        await replaceSalesRecordsForPeriodAndBrands(supabase, selectedCustomer.id, parsed.records, uploadId);
+        await replaceSalesRecordsForPeriodAndBrands(
+          supabase,
+          selectedCustomer.id,
+          parsed.records,
+          uploadId,
+          parsed.salesPeriodStart,
+          parsed.salesPeriodEnd,
+        );
 
         setImportStatus(
           `Imported ${numberText(parsed.records.length)} records from ${file.name}. Replaced matching date and brand/class records for this upload range. Skipped ${numberText(parsed.skippedCount)} rows.`,
@@ -1318,18 +1325,8 @@ export default function Home() {
         return true;
       }
 
-      setImportStatus(`Checking for duplicate records...`);
-      const existingKeys = await loadExistingRecordKeys(
-        supabase,
-        selectedCustomer.id,
-        parsed.salesPeriodStart,
-        parsed.salesPeriodEnd,
-      );
-      const newRecords = parsed.records.filter((record) => !existingKeys.has(recordKey(record)));
-      const duplicateCount = parsed.records.length - newRecords.length;
-
-      const totalSales = sum(newRecords.map((record) => record.amount));
-      const totalUnits = sum(newRecords.map((record) => record.units ?? 0));
+      const totalSales = sum(parsed.records.map((record) => record.amount));
+      const totalUnits = sum(parsed.records.map((record) => record.units ?? 0));
       const uploadId = await createUploadBatch(supabase, {
         customerId: selectedCustomer.id,
         fileName: file.name,
@@ -1337,20 +1334,25 @@ export default function Home() {
         receivedDate: parsed.receivedDate,
         salesPeriodStart: parsed.salesPeriodStart,
         salesPeriodEnd: parsed.salesPeriodEnd,
-        rowCount: newRecords.length,
-        skippedCount: parsed.skippedCount + duplicateCount,
+        rowCount: parsed.records.length,
+        skippedCount: parsed.skippedCount,
         totalSales,
         totalUnits,
-        status: newRecords.length ? "imported" : "duplicate",
+        status: "imported",
       });
 
-      if (newRecords.length > 0) {
-        setImportStatus(`Saving ${numberText(newRecords.length)} records...`);
-        await insertSalesRecords(supabase, selectedCustomer.id, uploadId, newRecords);
-      }
+      setImportStatus(`Replacing overlapping Volshop MTD records...`);
+      await replaceSalesRecordsForPeriodAndBrands(
+        supabase,
+        selectedCustomer.id,
+        parsed.records,
+        uploadId,
+        parsed.salesPeriodStart,
+        parsed.salesPeriodEnd,
+      );
 
       setImportStatus(
-        `Imported ${numberText(newRecords.length)} records from ${file.name}. Skipped ${numberText(parsed.skippedCount)} rows and ${numberText(duplicateCount)} duplicates.`,
+        `Imported ${numberText(parsed.records.length)} records from ${file.name}. Replaced matching month-to-date records for this upload range. Skipped ${numberText(parsed.skippedCount)} rows.`,
       );
       return true;
     } catch (error) {
@@ -4218,11 +4220,13 @@ async function replaceSalesRecordsForPeriodAndBrands(
   customerId: string,
   records: ParsedSalesRecord[],
   uploadId: string,
+  replacementStartDate?: string | null,
+  replacementEndDate?: string | null,
 ) {
   const dates = [...new Set(records.map((record) => record.transaction_date))].sort();
   const classes = [...new Set(records.map((record) => clean(record.product_class)).filter(Boolean))].sort();
-  const startDate = dates[0];
-  const endDate = dates.at(-1);
+  const startDate = replacementStartDate ?? dates[0];
+  const endDate = replacementEndDate ?? dates.at(-1);
   if (!startDate || !endDate || classes.length === 0) {
     await insertSalesRecords(client, customerId, uploadId, records);
     return;

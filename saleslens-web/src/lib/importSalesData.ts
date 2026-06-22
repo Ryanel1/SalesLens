@@ -255,8 +255,11 @@ function parseVolshopRows(
   const receivedDate = receivedDateFromFileName ?? fileDate;
   const selectedStartDate = validDateOnly(options.reportStartDate);
   const selectedEndDate = validDateOnly(options.reportEndDate);
-  const salesDate = selectedStartDate ?? salesPeriodDateFromFileName(fileName, receivedDateFromFileName) ?? monthStart(fileDate);
-  const salesEndDate = selectedEndDate ?? salesPeriodEndDateFromFileName(fileName) ?? salesDate;
+  const inferredStartDate = salesPeriodDateFromFileName(fileName, receivedDateFromFileName);
+  const fallbackStartDate = inferredStartDate ?? monthStart(fileDate);
+  const fallbackEndDate = receivedDateFromFileName ? fallbackStartDate : validDateOnly(fileDate) ?? fallbackStartDate;
+  const salesEndDate = selectedEndDate ?? salesPeriodEndDateFromFileName(fileName) ?? selectedStartDate ?? fallbackEndDate;
+  const salesDate = monthStart(salesEndDate) ?? fallbackStartDate;
   if (!salesDate) {
     throw new Error("Could not determine the sales month from the file name or file date.");
   }
