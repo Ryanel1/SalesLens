@@ -10,9 +10,8 @@ import {
   type SalesImportOptions,
 } from "@/lib/importSalesData";
 import {
-  fetchDashboardShell,
-  type DashboardShell,
   type DashboardData,
+  type DashboardShellSummary,
   type InventoryRecord,
   type MerchandiseRecord,
   type ProductImage,
@@ -207,6 +206,15 @@ const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
 const INVENTORY_AUDIENCE_FILTERS: InventoryAudienceFilter[] = ["Mens", "Womens", "Youth"];
 const INVENTORY_PRODUCT_FILTERS: InventoryProductFilter[] = ["Fleece", "Tees", "Reverse Weave", "Namedrop"];
+const EMPTY_DASHBOARD_SHELL: DashboardShellSummary = {
+  months: [],
+  years: [],
+  brandOptions: [],
+  lastUploaded: null,
+  lastUploadedByBrand: {},
+  latestMonthByYear: {},
+  latestMonthByBrandYear: {},
+};
 const REBEL_RAGS_NAMEDROP_CT1000_ARTS = new Set([
   "00367241",
   "03491635",
@@ -394,7 +402,7 @@ export default function Home() {
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
-  const [dashboardShell, setDashboardShell] = useState<DashboardShell>({ records: [] });
+  const [dashboardShell, setDashboardShell] = useState<DashboardShellSummary>(EMPTY_DASHBOARD_SHELL);
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [serverReport, setServerReport] = useState<ServerReportState | null>(null);
   const [serverReportStatus, setServerReportStatus] = useState("");
@@ -475,7 +483,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!supabase || !selectedCustomerId) {
-      setDashboardShell({ records: [] });
+      setDashboardShell(EMPTY_DASHBOARD_SHELL);
       setDashboardData({ records: [], inventoryRecords: [], images: [] });
       setServerReport(null);
       setServerReportStatus("");
@@ -487,23 +495,39 @@ export default function Home() {
     let isMounted = true;
     setServerReport(null);
     setServerReportStatus("");
-    setDashboardShell({ records: [] });
+    setDashboardShell(EMPTY_DASHBOARD_SHELL);
     setDashboardData({ records: [], inventoryRecords: [], images: [] });
     setDashboardStatus("Loading dashboard...");
 
     async function loadDashboard() {
-      const shellResult = await fetchDashboardShell(client, customerId);
+      const { data } = await client.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        if (isMounted) setDashboardStatus("Sign in again to load dashboard controls.");
+        return;
+      }
+
+      const response = await fetch("/api/dashboard-shell", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ customerId }),
+      });
+      const payload = (await response.json().catch(() => null)) as { shell?: DashboardShellSummary; error?: string } | null;
       if (!isMounted) return;
 
-      if (shellResult.error) {
-        setDashboardStatus(shellResult.error);
-        setDashboardShell({ records: [] });
+      if (!response.ok || !payload?.shell) {
+        setDashboardStatus(payload?.error ?? "Unable to load dashboard controls.");
+        setDashboardShell(EMPTY_DASHBOARD_SHELL);
         setDashboardData({ records: [], inventoryRecords: [], images: [] });
         return;
       }
 
-      setDashboardShell(shellResult.shell);
-      setSelectedPeriod((current) => current ?? defaultPeriodValue(shellResult.shell.records));
+      const shell = payload.shell;
+      setDashboardShell(shell);
+      setSelectedPeriod((current) => current ?? defaultPeriodValueFromMonths(shell.months));
       setDashboardStatus("");
     }
 
@@ -515,15 +539,11 @@ export default function Home() {
   }, [supabase, selectedCustomerId, reloadKey]);
 
   const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId) ?? null;
-  const months = useMemo(() => availableMonths(dashboardShell.records), [dashboardShell.records]);
-  const years = useMemo(() => availableYears(dashboardShell.records), [dashboardShell.records]);
+  const months = dashboardShell.months;
+  const years = dashboardShell.years;
   const periodOptions = useMemo(() => periodOptionGroups(months, years), [months, years]);
-  const selectedPeriodValue = selectedPeriod ?? defaultPeriodValue(dashboardShell.records);
+  const selectedPeriodValue = selectedPeriod ?? defaultPeriodValueFromMonths(dashboardShell.months);
   const period = useMemo(() => (selectedPeriodValue ? parsePeriodValue(selectedPeriodValue) : null), [selectedPeriodValue]);
-
-  const shellRecordsForCustomer = useMemo(() => {
-    return dashboardShell.records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
-  }, [brandFilter, dashboardShell.records]);
 
   const recordsForCustomer = useMemo(() => {
     return dashboardData.records.filter((record) => brandFilter === "All" || brandName(record) === brandFilter);
@@ -532,8 +552,8 @@ export default function Home() {
   const periodEndMonth = useMemo(() => {
     if (!period) return null;
     if (period.kind === "month") return period.value;
-    return latestMonthForYear(shellRecordsForCustomer, period.year);
-  }, [period, shellRecordsForCustomer]);
+    return latestMonthForShellYear(dashboardShell, brandFilter, period.year);
+  }, [brandFilter, dashboardShell, period]);
   const selectedYear = period?.year ?? null;
   const priorYearMonth = periodEndMonth && selectedYear ? `${selectedYear - 1}${periodEndMonth.slice(4)}` : null;
   const selectedPeriodTitle = periodTitle(period, periodEndMonth);
@@ -615,11 +635,6 @@ export default function Home() {
     if (!period) return [];
     return recordsForSelectedPeriod(recordsForCustomer, period);
   }, [period, recordsForCustomer]);
-
-  const shellPeriodRecords = useMemo(() => {
-    if (!period) return [];
-    return recordsForSelectedPeriod(shellRecordsForCustomer, period);
-  }, [period, shellRecordsForCustomer]);
 
   const priorPeriodRecords = useMemo(() => {
     if (!period) return [];
@@ -706,12 +721,9 @@ export default function Home() {
     [bestDay.items, dashboardData.images, reportPayload, topArt, visibleInventoryTracker, weeklyScorecards],
   );
   const ytdLine = useMemo(() => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth), [periodEndMonth, recordsForCustomer, reportPayload]);
-  const lastUploaded = reportPayload?.lastUploaded ?? latestDate(shellRecordsForCustomer);
+  const lastUploaded = reportPayload?.lastUploaded ?? lastUploadedForShell(dashboardShell, brandFilter);
 
-  const brandOptions = useMemo(() => {
-    const options = [...new Set(dashboardShell.records.map(brandName))].sort();
-    return ["All", ...options];
-  }, [dashboardShell.records]);
+  const brandOptions = useMemo(() => ["All", ...dashboardShell.brandOptions], [dashboardShell.brandOptions]);
 
   useEffect(() => {
     setInventoryPage(1);
@@ -1337,7 +1349,7 @@ export default function Home() {
                   setShareStatus("");
                   setShareUrl("");
                 }}
-                disabled={!shellPeriodRecords.length}
+                disabled={!period}
               >
                 Share Report
               </button>
@@ -1409,7 +1421,7 @@ export default function Home() {
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
           {!dashboardStatus && serverReportStatus ? <section className="notice">{serverReportStatus}</section> : null}
-          {!dashboardStatus && shellPeriodRecords.length === 0 ? (
+          {!dashboardStatus && !serverReportStatus && reportPayload && currentMetrics.transactions === 0 ? (
             <section className="notice">No records match the current account, period, and brand/class filters.</section>
           ) : null}
 
@@ -2406,6 +2418,11 @@ function defaultPeriodValue(records: DatedRecord[]) {
   return month ? `month:${month}` : null;
 }
 
+function defaultPeriodValueFromMonths(months: string[]) {
+  const month = months[0];
+  return month ? `month:${month}` : null;
+}
+
 function periodOptionGroups(months: string[], years: string[]) {
   return [
     {
@@ -2450,6 +2467,15 @@ function yearLabel(year: number, endMonth?: string | null) {
 
 function latestMonthForYear(records: DatedRecord[], year: number) {
   return availableMonths(records).filter((month) => month.startsWith(`${year}-`))[0] ?? `${year}-12`;
+}
+
+function latestMonthForShellYear(shell: DashboardShellSummary, brandFilter: string, year: number) {
+  const yearKey = String(year);
+  if (brandFilter !== "All") {
+    const brandMonth = shell.latestMonthByBrandYear[brandFilter]?.[yearKey];
+    if (brandMonth) return brandMonth;
+  }
+  return shell.latestMonthByYear[yearKey] ?? `${year}-12`;
 }
 
 function recordsForSelectedPeriod<T extends DatedRecord>(records: T[], period: PeriodSelection) {
@@ -3639,6 +3665,11 @@ function topInventoryStyles(records: Array<SalesRecord | InventoryRecord>) {
 
 function latestDate(records: DatedRecord[]) {
   return records.map((record) => record.transaction_date).sort().at(-1) ?? null;
+}
+
+function lastUploadedForShell(shell: DashboardShellSummary, brandFilter: string) {
+  if (brandFilter !== "All") return shell.lastUploadedByBrand[brandFilter] ?? shell.lastUploaded;
+  return shell.lastUploaded;
 }
 
 function compactDateText(value: string | null) {

@@ -76,8 +76,18 @@ export type DashboardData = {
   images: ProductImage[];
 };
 
-export type DashboardShell = {
+export type DashboardShellRows = {
   records: SalesShellRecord[];
+};
+
+export type DashboardShellSummary = {
+  months: string[];
+  years: string[];
+  brandOptions: string[];
+  lastUploaded: string | null;
+  lastUploadedByBrand: Record<string, string>;
+  latestMonthByYear: Record<string, string>;
+  latestMonthByBrandYear: Record<string, Record<string, string>>;
 };
 
 export async function fetchDashboardShell(client: SupabaseClient, customerId: string) {
