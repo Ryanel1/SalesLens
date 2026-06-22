@@ -386,14 +386,22 @@ export function buildReportPayload({
   const periodEndMonth = period.kind === "month" ? period.value : latestMonthForYear(filteredRecords, period.year);
   const priorYearMonth = periodEndMonth ? `${period.year - 1}${periodEndMonth.slice(4)}` : null;
   const periodRecords = recordsForSelectedPeriod(filteredRecords, period);
-  const priorPeriodRecords = recordsForPriorPeriod(filteredRecords, period);
-  const ytdCurrentRecords = currentYearRecords(filteredRecords, periodEndMonth);
-  const ytdPriorRecords = priorYearMonth ? currentYearRecords(filteredRecords, priorYearMonth) : [];
+  const priorPeriodRecords = recordsForPriorPeriod(filteredRecords, period, periodRecords);
+  const ytdCurrentRecords =
+    period.kind === "month"
+      ? currentYtdRecordsForPeriod(filteredRecords, periodEndMonth, periodRecords)
+      : currentYearRecords(filteredRecords, periodEndMonth);
+  const ytdPriorRecords =
+    period.kind === "month"
+      ? priorYtdRecordsForPeriod(filteredRecords, periodEndMonth, periodRecords)
+      : priorYearMonth
+        ? currentYearRecords(filteredRecords, priorYearMonth)
+        : [];
   const priorYearRecords = recordsForYear(filteredRecords, period.year - 1);
   const currentMetrics = metricSet(periodRecords);
   const priorMetrics = metricSet(priorPeriodRecords);
-  const selectedPeriodTitle = periodTitle(period, periodEndMonth);
-  const priorPeriodTitle = priorTitle(period, periodEndMonth);
+  const selectedPeriodTitle = periodTitle(period, periodEndMonth, periodRecords);
+  const priorPeriodTitle = priorTitle(period, periodEndMonth, periodRecords);
   const bestDay = bestSalesDay(periodRecords, images);
   const ytdStyleStudy = topStyleRows(ytdCurrentRecords, ytdPriorRecords);
   const inventoryTrackerResult = pagedInventoryTrackerRows({
@@ -425,7 +433,7 @@ export function buildReportPayload({
     lastUploaded: latestDate(filteredRecords),
     currentMetrics,
     priorMetrics,
-    ytdLine: ytdPoints(filteredRecords, periodEndMonth),
+    ytdLine: ytdPoints(filteredRecords, periodEndMonth, period.kind === "month" ? periodRecords : []),
     ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
     salesForecast: salesForecastMetrics(filteredRecords, periodEndMonth),
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
@@ -572,16 +580,54 @@ function parsePeriodValue(value: string): PeriodSelection | null {
   return null;
 }
 
-function periodTitle(period: PeriodSelection | null, endMonth: string | null) {
+function periodTitle(period: PeriodSelection | null, endMonth: string | null, periodRecords: SalesRecord[] = []) {
   if (!period) return "-";
-  if (period.kind === "month") return monthText(period.value);
+  if (period.kind === "month") {
+    const range = recordDateRange(periodRecords);
+    return range ? comparisonRangeTitle(range.startDate, range.endDate, period.value) : monthText(period.value);
+  }
   return yearLabel(period.year, endMonth);
 }
 
-function priorTitle(period: PeriodSelection | null, endMonth: string | null) {
+function priorTitle(period: PeriodSelection | null, endMonth: string | null, periodRecords: SalesRecord[] = []) {
   if (!period) return "-";
-  if (period.kind === "month") return monthText(`${period.year - 1}${period.value.slice(4)}`);
+  if (period.kind === "month") {
+    const priorMonth = `${period.year - 1}${period.value.slice(4)}`;
+    const range = priorYearComparisonRange(period, periodRecords);
+    return range ? comparisonRangeTitle(range.startDate, range.endDate, priorMonth) : monthText(priorMonth);
+  }
   return yearLabel(period.year - 1, endMonth ? `${period.year - 1}${endMonth.slice(4)}` : null);
+}
+
+function recordDateRange(records: SalesRecord[]) {
+  const dates = records.map((record) => record.transaction_date).filter((date): date is string => Boolean(date)).sort();
+  if (!dates.length) return null;
+  return { startDate: dates[0], endDate: dates[dates.length - 1] };
+}
+
+function comparisonRangeTitle(startDate: string, endDate: string, month: string) {
+  return isFullMonthRange(startDate, endDate, month) ? monthText(month) : dateRangeText(parseDate(startDate), parseDate(endDate));
+}
+
+function isFullMonthRange(startDate: string, endDate: string, month: string) {
+  return startDate === `${month}-01` && endDate === dateKey(endOfMonth(parseDate(`${month}-01`)));
+}
+
+function sameMonthDayInYear(date: string, year: number) {
+  const month = Number(date.slice(5, 7));
+  const day = Number(date.slice(8, 10));
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
+}
+
+function priorYearComparisonRange(period: PeriodSelection, periodRecords: SalesRecord[]) {
+  if (period.kind !== "month") return null;
+  const range = recordDateRange(periodRecords);
+  if (!range) return null;
+  return {
+    startDate: sameMonthDayInYear(range.startDate, period.year - 1),
+    endDate: sameMonthDayInYear(range.endDate, period.year - 1),
+  };
 }
 
 function yearLabel(year: number, endMonth?: string | null) {
@@ -599,8 +645,12 @@ function recordsForSelectedPeriod(records: SalesRecord[], period: PeriodSelectio
   return recordsForYear(records, period.year);
 }
 
-function recordsForPriorPeriod(records: SalesRecord[], period: PeriodSelection) {
-  if (period.kind === "month") return recordsForPeriod(records, `${period.year - 1}${period.value.slice(4)}`, "monthly");
+function recordsForPriorPeriod(records: SalesRecord[], period: PeriodSelection, periodRecords: SalesRecord[] = []) {
+  if (period.kind === "month") {
+    const range = priorYearComparisonRange(period, periodRecords);
+    if (range) return recordsForDateRange(records, range.startDate, range.endDate);
+    return recordsForPeriod(records, `${period.year - 1}${period.value.slice(4)}`, "monthly");
+  }
   return recordsForYear(records, period.year - 1);
 }
 
@@ -623,6 +673,32 @@ function currentYearRecords(records: SalesRecord[], month: string | null) {
     const recordMonth = monthKey(record.transaction_date);
     return recordMonth?.slice(0, 4) === month.slice(0, 4) && recordMonth <= month;
   });
+}
+
+function recordsForDateRange(records: SalesRecord[], startDate: string, endDate: string) {
+  return records.filter((record) => {
+    const date = record.transaction_date;
+    return Boolean(date && date >= startDate && date <= endDate);
+  });
+}
+
+function periodComparisonEndDate(month: string | null, periodRecords: SalesRecord[] = []) {
+  if (!month) return null;
+  const range = recordDateRange(periodRecords.filter((record) => monthKey(record.transaction_date) === month));
+  return range?.endDate ?? dateKey(endOfMonth(parseDate(`${month}-01`)));
+}
+
+function currentYtdRecordsForPeriod(records: SalesRecord[], month: string | null, periodRecords: SalesRecord[] = []) {
+  const endDate = periodComparisonEndDate(month, periodRecords);
+  if (!month || !endDate) return [];
+  return recordsForDateRange(records, `${month.slice(0, 4)}-01-01`, endDate);
+}
+
+function priorYtdRecordsForPeriod(records: SalesRecord[], month: string | null, periodRecords: SalesRecord[] = []) {
+  const endDate = periodComparisonEndDate(month, periodRecords);
+  if (!month || !endDate) return [];
+  const priorYear = Number(month.slice(0, 4)) - 1;
+  return recordsForDateRange(records, `${priorYear}-01-01`, sameMonthDayInYear(endDate, priorYear));
 }
 
 function trailingSixMonthRecords(records: SalesRecord[], endMonth: string | null) {
@@ -1099,12 +1175,15 @@ function bestSalesDay(records: SalesRecord[], images: ProductImage[] = []) {
   };
 }
 
-function ytdPoints(records: SalesRecord[], month: string | null) {
+function ytdPoints(records: SalesRecord[], month: string | null, periodRecords: SalesRecord[] = []) {
   if (!month) return { current: [], prior: [], currentTotal: 0, priorTotal: 0 };
   const year = Number(month.slice(0, 4));
   const lastMonth = Number(month.slice(5, 7));
   const current = Array.from({ length: 12 }, () => 0);
   const prior = Array.from({ length: 12 }, () => 0);
+  const currentYtdRecords = periodRecords.length ? currentYtdRecordsForPeriod(records, month, periodRecords) : currentYearRecords(records, month);
+  const priorYtdRecords = periodRecords.length ? priorYtdRecordsForPeriod(records, month, periodRecords) : currentYearRecords(records, `${year - 1}${month.slice(4)}`);
+  const priorComparisonRange = periodRecords.length ? priorYearComparisonRange({ kind: "month", value: month, year }, periodRecords) : null;
 
   records.forEach((record) => {
     const recordMonth = monthKey(record.transaction_date);
@@ -1117,6 +1196,10 @@ function ytdPoints(records: SalesRecord[], month: string | null) {
     if (recordYear === year && monthIndex < lastMonth) {
       current[monthIndex] += amount;
     } else if (recordYear === year - 1) {
+      if (priorComparisonRange && monthIndex === lastMonth - 1) {
+        const date = record.transaction_date;
+        if (!date || date < priorComparisonRange.startDate || date > priorComparisonRange.endDate) return;
+      }
       prior[monthIndex] += amount;
     }
   });
@@ -1124,8 +1207,8 @@ function ytdPoints(records: SalesRecord[], month: string | null) {
   return {
     current,
     prior,
-    currentTotal: sum(current),
-    priorTotal: sum(prior.slice(0, lastMonth)),
+    currentTotal: sum(currentYtdRecords.map(amountValue)),
+    priorTotal: sum(priorYtdRecords.map(amountValue)),
   };
 }
 
