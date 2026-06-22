@@ -1281,6 +1281,7 @@ function uploadPeriodScorecardRows(records: SalesRecord[], month: string, images
   const imageLookup = imageLookupMaps(images);
   const monthStartDate = parseDate(`${month}-01`);
   const monthEndDate = endOfMonth(monthStartDate);
+  const firstWeekStart = startOfMondayWeek(monthStartDate);
   const rows: WeeklyScorecardRow[] = [];
 
   const groups = groupedRows(
@@ -1298,26 +1299,38 @@ function uploadPeriodScorecardRows(records: SalesRecord[], month: string, images
 
   if (!groups.length) return [];
 
-  for (const { upload, group } of groups) {
+  const uploadSegments = groups.map(({ upload, group }) => {
     const fallbackDate = latestRecordDate(group) ?? `${month}-01`;
     const uploadStart = parseDate(upload.sales_period_start ?? fallbackDate);
     const uploadEnd = parseDate(upload.sales_period_end ?? upload.sales_period_start ?? fallbackDate);
-    const segmentStart = maxDate(uploadStart, monthStartDate);
-    const segmentEnd = minDate(uploadEnd, monthEndDate);
+    return {
+      group,
+      segmentStart: maxDate(uploadStart, monthStartDate),
+      segmentEnd: minDate(uploadEnd, monthEndDate),
+    };
+  });
+
+  for (let weekStart = firstWeekStart; weekStart <= monthEndDate; weekStart = addDays(weekStart, 7)) {
+    const weekEnd = addDays(weekStart, 6);
+    const segmentStart = maxDate(weekStart, monthStartDate);
+    const segmentEnd = minDate(weekEnd, monthEndDate);
     const priorStart = addDays(segmentStart, -364);
     const priorEnd = addDays(segmentEnd, -364);
     const priorRecords = recordsBetween(records, dateKey(priorStart), dateKey(priorEnd));
-    const topItems = topWeeklyArtItems(group, imageLookup);
+    const currentRecords = uploadSegments
+      .filter((segment) => segment.segmentEnd >= segmentStart && segment.segmentEnd <= segmentEnd)
+      .flatMap((segment) => segment.group);
+    const topItems = topWeeklyArtItems(currentRecords, imageLookup);
 
     rows.push({
       rank: rows.length + 1,
       title: `Week ${rows.length + 1}`,
       dateRange: dateRangeText(segmentStart, segmentEnd),
       dayCount: daysBetween(segmentStart, segmentEnd) + 1,
-      current: metricSet(group),
+      current: metricSet(currentRecords),
       prior: metricSet(priorRecords),
-      avgSalePerTransaction: group.length ? sum(group.map(amountValue)) / group.length : 0,
-      breadth: breadthMetrics(group),
+      avgSalePerTransaction: currentRecords.length ? sum(currentRecords.map(amountValue)) / currentRecords.length : 0,
+      breadth: breadthMetrics(currentRecords),
       priorBreadth: breadthMetrics(priorRecords),
       topItem: topItems[0] ?? null,
       topItems,
