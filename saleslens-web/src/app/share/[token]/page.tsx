@@ -224,7 +224,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
               <article className="artCard" key={row.key}>
                 <div className="artImage">
                   <b>#{row.rank}</b>
-                  {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
+                  {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
                 </div>
                 <div className="artMeta">
                   {row.productUrl ? (
@@ -268,7 +268,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                 <article className="artCard" key={row.key}>
                   <div className="artImage">
                     <b>#{row.rank}</b>
-                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} /> : <span>No Image</span>}
+                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
                   </div>
                   <div className="artMeta">
                     {row.productUrl ? (
@@ -533,7 +533,7 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
                   {topProducts.map((item) => (
                     <div className="weeklyTopProduct" key={`${item.style}-${item.artCode}-${item.color}`}>
                       {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} />
+                        <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} loading="lazy" decoding="async" />
                       ) : (
                         <div className="weeklyTopProductPlaceholder">No Image</div>
                       )}
@@ -575,7 +575,7 @@ function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay;
             <div className="topSalesProduct" key={`${item.rank}-${item.style}-${item.artCode}`}>
               <span className="topSalesRank">#{item.rank}</span>
               {item.imageUrl ? (
-                <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} />
+                <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} loading="lazy" decoding="async" />
               ) : (
                 <div className="weeklyTopProductPlaceholder">No Image</div>
               )}

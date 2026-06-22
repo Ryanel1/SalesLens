@@ -828,6 +828,36 @@ select {
   padding: clamp(1.25rem, 3vw, 2.5rem);
 }
 
+@media screen {
+  .dashboard > .sectionBlock,
+  .publicReport > .sectionBlock,
+  .publicAccountReport > .sectionBlock {
+    content-visibility: auto;
+    contain-intrinsic-size: 900px;
+  }
+
+  .dashboard > .sectionBlock:first-of-type,
+  .publicReport > .sectionBlock:first-of-type,
+  .publicAccountReport > .sectionBlock:first-of-type {
+    content-visibility: visible;
+  }
+
+  .artCard,
+  .weeklyScorecardRow,
+  .insightCard,
+  .metric,
+  .styleCompareCard,
+  .inventoryCard,
+  .lineCard {
+    contain: layout paint style;
+  }
+
+  .artCard {
+    content-visibility: auto;
+    contain-intrinsic-size: 330px;
+  }
+}
+
 .sectionTitle {
   align-items: start;
   border-bottom: var(--hairline);
