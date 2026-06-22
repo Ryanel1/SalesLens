@@ -432,9 +432,13 @@ export default function Home() {
   const inventoryControlsRef = useRef<HTMLDivElement | null>(null);
   const [importStatus, setImportStatus] = useState("");
   const [uploadHistoryOpen, setUploadHistoryOpen] = useState(false);
+  const [uploadHistoryCustomerId, setUploadHistoryCustomerId] = useState("");
   const [uploadHistoryRows, setUploadHistoryRows] = useState<UploadHistoryRow[]>([]);
   const [uploadHistoryLoading, setUploadHistoryLoading] = useState(false);
   const [uploadHistoryStatus, setUploadHistoryStatus] = useState("");
+  const [editingUploadId, setEditingUploadId] = useState<string | null>(null);
+  const [editUploadRangeStart, setEditUploadRangeStart] = useState("");
+  const [editUploadRangeEnd, setEditUploadRangeEnd] = useState("");
   const [imageCacheRunning, setImageCacheRunning] = useState(false);
   const [imageCacheStatus, setImageCacheStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -453,6 +457,9 @@ export default function Home() {
     setUploadHistoryOpen(false);
     setUploadHistoryRows([]);
     setUploadHistoryStatus("");
+    setEditingUploadId(null);
+    setEditUploadRangeStart("");
+    setEditUploadRangeEnd("");
     setImageCacheStatus("");
   }, [selectedCustomerId]);
 
@@ -1048,8 +1055,34 @@ export default function Home() {
     await navigator.clipboard?.writeText(url).catch(() => undefined);
   }
 
-  async function loadUploadHistory() {
-    if (!supabase || !selectedCustomer) return;
+  function openUploadHistoryManager() {
+    const customerId = selectedCustomerId || uploadHistoryCustomerId || customers[0]?.id || "";
+    setUploadHistoryCustomerId(customerId);
+    setUploadHistoryOpen(true);
+    if (customerId) void loadUploadHistory(customerId);
+  }
+
+  function closeUploadHistoryManager() {
+    setUploadHistoryOpen(false);
+    setEditingUploadId(null);
+    setEditUploadRangeStart("");
+    setEditUploadRangeEnd("");
+  }
+
+  function beginEditUpload(upload: UploadHistoryRow) {
+    setEditingUploadId(upload.id);
+    setEditUploadRangeStart(dateInputValue(upload.sales_period_start));
+    setEditUploadRangeEnd(dateInputValue(upload.sales_period_end));
+  }
+
+  function cancelEditUpload() {
+    setEditingUploadId(null);
+    setEditUploadRangeStart("");
+    setEditUploadRangeEnd("");
+  }
+
+  async function loadUploadHistory(customerId = uploadHistoryCustomerId || selectedCustomerId || "") {
+    if (!supabase || !customerId) return;
     setUploadHistoryLoading(true);
     setUploadHistoryStatus("Loading upload history...");
 
@@ -1061,7 +1094,7 @@ export default function Home() {
         return;
       }
 
-      const response = await fetch(`/api/upload-history?customerId=${encodeURIComponent(selectedCustomer.id)}`, {
+      const response = await fetch(`/api/upload-history?customerId=${encodeURIComponent(customerId)}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -1074,13 +1107,15 @@ export default function Home() {
 
       setUploadHistoryRows(payload.uploads);
       setUploadHistoryStatus(payload.uploads.length ? "" : "No uploads found for this account.");
+      cancelEditUpload();
     } finally {
       setUploadHistoryLoading(false);
     }
   }
 
   async function deleteUpload(upload: UploadHistoryRow) {
-    if (!supabase || !selectedCustomer) return;
+    const customerId = uploadHistoryCustomerId || selectedCustomerId;
+    if (!supabase || !customerId) return;
     const label = upload.original_file_name || upload.source_file || "this upload";
     const confirmed = window.confirm(`Delete ${label} and its imported records?`);
     if (!confirmed) return;
@@ -1100,7 +1135,7 @@ export default function Home() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        customerId: selectedCustomer.id,
+        customerId,
         uploadId: upload.id,
       }),
     });
@@ -1122,6 +1157,58 @@ export default function Home() {
     setUploadHistoryStatus(
       `Deleted ${label}: ${numberText(payload?.deletedSalesRecords ?? 0)} sales records and ${numberText(payload?.deletedInventoryRecords ?? 0)} inventory records.`,
     );
+  }
+
+  async function saveUploadDateRange(upload: UploadHistoryRow) {
+    const customerId = uploadHistoryCustomerId || selectedCustomerId;
+    if (!supabase || !customerId) return;
+    if (!editUploadRangeStart || !editUploadRangeEnd) {
+      setUploadHistoryStatus("Choose both a start and end date before saving.");
+      return;
+    }
+    if (editUploadRangeStart > editUploadRangeEnd) {
+      setUploadHistoryStatus("The upload start date must be before the end date.");
+      return;
+    }
+
+    const label = upload.original_file_name || upload.source_file || "this upload";
+    setUploadHistoryStatus(`Updating ${label}...`);
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) {
+      setUploadHistoryStatus("Sign in again to edit uploads.");
+      return;
+    }
+
+    const response = await fetch("/api/upload-history", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        customerId,
+        uploadId: upload.id,
+        salesPeriodStart: editUploadRangeStart,
+        salesPeriodEnd: editUploadRangeEnd,
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      upload?: UploadHistoryRow;
+      error?: string;
+    } | null;
+
+    if (!response.ok || !payload?.upload) {
+      setUploadHistoryStatus(payload?.error ?? "Unable to update upload.");
+      return;
+    }
+
+    setUploadHistoryRows((rows) => rows.map((row) => (row.id === upload.id ? payload.upload! : row)));
+    cancelEditUpload();
+    reportCache.current.clear();
+    setReportRefreshKey((key) => key + 1);
+    setReloadKey((key) => key + 1);
+    setUploadHistoryStatus(`Updated date range for ${label}.`);
   }
 
   async function cacheMissingImages() {
@@ -1577,44 +1664,122 @@ export default function Home() {
                 <button
                   className="ghostButton"
                   type="button"
-                  onClick={() => {
-                    const nextOpen = !uploadHistoryOpen;
-                    setUploadHistoryOpen(nextOpen);
-                    if (nextOpen) void loadUploadHistory();
-                  }}
+                  onClick={openUploadHistoryManager}
                 >
-                  {uploadHistoryOpen ? "Hide Uploads" : "Manage Uploads"}
+                  Manage Uploads
                 </button>
                 {uploadHistoryStatus ? <span>{uploadHistoryStatus}</span> : null}
               </div>
-              {uploadHistoryOpen ? (
-                <div className="uploadHistoryPanel" aria-live="polite">
-                  {uploadHistoryLoading ? <p>Loading uploads...</p> : null}
-                  {!uploadHistoryLoading && uploadHistoryRows.length ? (
-                    uploadHistoryRows.map((upload) => (
-                      <article className="uploadHistoryRow" key={upload.id}>
-                        <div>
+            </section>
+          </div>
+        ) : null}
+
+        {uploadHistoryOpen ? (
+          <div className="modalOverlay" role="presentation">
+            <section className="shareModal uploadManagerModal" role="dialog" aria-modal="true" aria-labelledby="upload-manager-title">
+              <button
+                aria-label="Close upload manager"
+                className="modalCloseButton"
+                onClick={closeUploadHistoryManager}
+                type="button"
+              >
+                X
+              </button>
+              <p className="eyebrow">Upload Manager</p>
+              <h3 id="upload-manager-title">Manage Uploads</h3>
+              <div className="uploadManagerToolbar">
+                <label>
+                  <span>Account</span>
+                  <select
+                    value={uploadHistoryCustomerId}
+                    onChange={(event) => {
+                      const customerId = event.target.value;
+                      setUploadHistoryCustomerId(customerId);
+                      void loadUploadHistory(customerId);
+                    }}
+                  >
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="ghostButton" type="button" onClick={() => void loadUploadHistory()}>
+                  Refresh
+                </button>
+              </div>
+              {uploadHistoryStatus ? <p className="shareStatus">{uploadHistoryStatus}</p> : null}
+              <div className="uploadHistoryPanel uploadManagerList" aria-live="polite">
+                {uploadHistoryLoading ? <p>Loading uploads...</p> : null}
+                {!uploadHistoryLoading && uploadHistoryRows.length ? (
+                  uploadHistoryRows.map((upload) => {
+                    const isEditing = editingUploadId === upload.id;
+                    return (
+                      <article className="uploadHistoryRow uploadManagerRow" key={upload.id}>
+                        <div className="uploadManagerFile">
                           <strong>{upload.original_file_name || upload.source_file || "Imported upload"}</strong>
-                          <span>
-                            {dateText(upload.sales_period_start)} - {dateText(upload.sales_period_end)}
-                          </span>
+                          <span>Uploaded {uploadedAtText(upload.created_at)}</span>
                         </div>
-                        <div>
+                        <div className="uploadManagerRange">
+                          {isEditing ? (
+                            <>
+                              <label>
+                                <span>Start</span>
+                                <input
+                                  type="date"
+                                  value={editUploadRangeStart}
+                                  onChange={(event) => setEditUploadRangeStart(event.target.value)}
+                                />
+                              </label>
+                              <label>
+                                <span>End</span>
+                                <input
+                                  type="date"
+                                  value={editUploadRangeEnd}
+                                  onChange={(event) => setEditUploadRangeEnd(event.target.value)}
+                                />
+                              </label>
+                            </>
+                          ) : (
+                            <>
+                              <span>Range</span>
+                              <strong>{dateText(upload.sales_period_start)} - {dateText(upload.sales_period_end)}</strong>
+                            </>
+                          )}
+                        </div>
+                        <div className="uploadManagerStats">
                           <span>{numberText(upload.row_count)} rows</span>
                           <span>{numberText(upload.total_units ?? 0)} units</span>
                           <span>{currencyText(Number(upload.total_sales ?? 0))}</span>
                         </div>
-                        <button className="dangerTextButton" type="button" onClick={() => void deleteUpload(upload)}>
-                          Delete
-                        </button>
+                        <div className="uploadManagerActions">
+                          {isEditing ? (
+                            <>
+                              <button className="ghostButton compactButton" type="button" onClick={() => void saveUploadDateRange(upload)}>
+                                Save
+                              </button>
+                              <button className="ghostButton compactButton" type="button" onClick={cancelEditUpload}>
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button className="ghostButton compactButton" type="button" onClick={() => beginEditUpload(upload)}>
+                              Edit
+                            </button>
+                          )}
+                          <button className="dangerTextButton" type="button" onClick={() => void deleteUpload(upload)}>
+                            Delete
+                          </button>
+                        </div>
                       </article>
-                    ))
-                  ) : null}
-                  {!uploadHistoryLoading && !uploadHistoryRows.length ? (
-                    <p className="muted">No uploads are currently listed for this account.</p>
-                  ) : null}
-                </div>
-              ) : null}
+                    );
+                  })
+                ) : null}
+                {!uploadHistoryLoading && !uploadHistoryRows.length ? (
+                  <p className="muted">No uploads are currently listed for this account.</p>
+                ) : null}
+              </div>
             </section>
           </div>
         ) : null}
@@ -4068,6 +4233,21 @@ function compactDateText(value: string | null) {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return "-";
   return `${date.getMonth() + 1}.${date.getDate()}.${String(date.getFullYear()).slice(-2)}`;
+}
+
+function dateInputValue(value: string | null) {
+  return value?.slice(0, 10) ?? "";
+}
+
+function uploadedAtText(value: string | null | undefined) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function clean(value: string | null | undefined) {

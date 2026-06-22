@@ -101,6 +101,76 @@ export async function DELETE(request: NextRequest) {
   });
 }
 
+export async function PATCH(request: NextRequest) {
+  const auth = await authenticatedClient(request);
+  if ("response" in auth) return auth.response;
+
+  const body = await request.json().catch(() => null) as {
+    customerId?: unknown;
+    salesPeriodEnd?: unknown;
+    salesPeriodStart?: unknown;
+    uploadId?: unknown;
+  } | null;
+  const uploadId = clean(body?.uploadId);
+  const customerId = clean(body?.customerId);
+  const salesPeriodStart = cleanDate(body?.salesPeriodStart);
+  const salesPeriodEnd = cleanDate(body?.salesPeriodEnd);
+
+  if (!uploadId || !customerId || !salesPeriodStart || !salesPeriodEnd) {
+    return NextResponse.json({ error: "An upload, customer, start date, and end date are required." }, { status: 400 });
+  }
+  if (salesPeriodStart > salesPeriodEnd) {
+    return NextResponse.json({ error: "The start date must be before the end date." }, { status: 400 });
+  }
+
+  const { data: existingRows, error: existingError } = await auth.supabase
+    .from("uploads")
+    .select("id")
+    .eq("id", uploadId)
+    .eq("customer_id", customerId)
+    .limit(1);
+
+  if (existingError) {
+    return NextResponse.json({ error: existingError.message }, { status: 500 });
+  }
+  if (!existingRows?.length) {
+    return NextResponse.json({ error: "Upload not found." }, { status: 404 });
+  }
+
+  const [salesDateUpdate, inventoryDateUpdate] = await Promise.all([
+    updateSingleDateUpload(auth.supabase, "sales_records", "transaction_date", uploadId, customerId, salesPeriodStart),
+    updateSingleDateUpload(auth.supabase, "inventory_records", "inventory_date", uploadId, customerId, salesPeriodStart),
+  ]);
+
+  if (salesDateUpdate.error) {
+    return NextResponse.json({ error: salesDateUpdate.error }, { status: 500 });
+  }
+  if (inventoryDateUpdate.error) {
+    return NextResponse.json({ error: inventoryDateUpdate.error }, { status: 500 });
+  }
+
+  const { data: upload, error: uploadError } = await auth.supabase
+    .from("uploads")
+    .update({
+      sales_period_start: salesPeriodStart,
+      sales_period_end: salesPeriodEnd,
+    })
+    .eq("id", uploadId)
+    .eq("customer_id", customerId)
+    .select(UPLOAD_SELECT)
+    .single();
+
+  if (uploadError) {
+    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    upload,
+    updatedInventoryRecordDates: inventoryDateUpdate.updatedCount,
+    updatedSalesRecordDates: salesDateUpdate.updatedCount,
+  });
+}
+
 async function authenticatedClient(request: NextRequest): Promise<AuthenticatedClient> {
   const config = getSupabaseConfig();
   if (!config) {
@@ -131,4 +201,49 @@ async function authenticatedClient(request: NextRequest): Promise<AuthenticatedC
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function cleanDate(value: unknown) {
+  const text = clean(value);
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
+}
+
+async function updateSingleDateUpload(
+  supabase: SupabaseClient,
+  table: "inventory_records" | "sales_records",
+  dateColumn: "inventory_date" | "transaction_date",
+  uploadId: string,
+  customerId: string,
+  nextDate: string,
+) {
+  const { data: firstRows, error: firstError } = await supabase
+    .from(table)
+    .select(dateColumn)
+    .eq("upload_id", uploadId)
+    .eq("customer_id", customerId)
+    .limit(1);
+
+  if (firstError) return { error: firstError.message, updatedCount: 0 };
+  const firstDate = (firstRows?.[0] as Record<string, unknown> | undefined)?.[dateColumn] as string | null | undefined;
+  if (!firstDate) return { error: "", updatedCount: 0 };
+
+  const { count: differentDateCount, error: countError } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq("upload_id", uploadId)
+    .eq("customer_id", customerId)
+    .neq(dateColumn, firstDate);
+
+  if (countError) return { error: countError.message, updatedCount: 0 };
+  if (differentDateCount) return { error: "", updatedCount: 0 };
+
+  const { data: updatedRows, error: updateError } = await supabase
+    .from(table)
+    .update({ [dateColumn]: nextDate })
+    .eq("upload_id", uploadId)
+    .eq("customer_id", customerId)
+    .select("id");
+
+  if (updateError) return { error: updateError.message, updatedCount: 0 };
+  return { error: "", updatedCount: updatedRows?.length ?? 0 };
 }
