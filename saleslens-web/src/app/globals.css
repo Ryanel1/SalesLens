@@ -760,6 +760,74 @@ select {
   opacity: 0.55;
 }
 
+.uploadHistoryActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.uploadHistoryActions span {
+  color: var(--taupe);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.uploadHistoryPanel {
+  border: var(--hairline);
+  display: grid;
+  gap: 1px;
+  margin-top: 0.9rem;
+  max-height: min(45vh, 480px);
+  overflow: auto;
+}
+
+.uploadHistoryPanel > p {
+  color: var(--taupe);
+  font-weight: 800;
+  padding: 1rem;
+}
+
+.uploadHistoryRow {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.76);
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  padding: 0.85rem 1rem;
+}
+
+.uploadHistoryRow strong,
+.uploadHistoryRow span {
+  display: block;
+}
+
+.uploadHistoryRow strong {
+  color: var(--soft-black);
+  font-size: 0.95rem;
+}
+
+.uploadHistoryRow span {
+  color: var(--taupe);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.dangerTextButton {
+  background: transparent;
+  border: 1px solid rgba(194, 74, 60, 0.35);
+  color: var(--clay);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 0.75rem;
+  text-transform: uppercase;
+}
+
 .modalCloseButton {
   align-items: center;
   background: transparent;
@@ -815,6 +883,38 @@ select {
   color: var(--soft-black);
   display: block;
   font-size: 1.05rem;
+}
+
+.operatorOverview {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.operatorOverview button {
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  justify-self: start;
+  letter-spacing: 0.06em;
+  padding: 0.55rem 0.8rem;
+  text-transform: uppercase;
+}
+
+.operatorOverview button:disabled {
+  background: transparent;
+  color: var(--taupe-2);
+  cursor: default;
+}
+
+.operatorOverview small {
+  color: var(--taupe);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.45;
 }
 
 .notice {
@@ -1218,6 +1318,40 @@ select {
   font-style: normal;
   font-weight: 850;
   text-transform: none;
+}
+
+.forecastGrid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.forecastGrid .metric {
+  min-height: 132px;
+}
+
+.forecastStory {
+  background: rgba(255, 253, 248, 0.88);
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  color: var(--taupe);
+  display: grid;
+  gap: 0.45rem;
+  grid-column: 1 / -1;
+  padding: 1.1rem 1.25rem;
+}
+
+.forecastStory p {
+  color: var(--charcoal);
+  font-size: 1rem;
+  font-weight: 780;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.forecastStory span {
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.4;
 }
 
 .lineLegend {
@@ -2495,6 +2629,10 @@ tbody tr:nth-child(even) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .forecastGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .artGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -2517,6 +2655,7 @@ tbody tr:nth-child(even) {
   .ytdInsightGrid,
   .ytdTrackerLayout,
   .ytdTrackerTiles,
+  .forecastGrid,
   .styleComparisonGrid,
   .weeklyScorecardRow,
   .inventoryCard,
@@ -2574,6 +2713,11 @@ tbody tr:nth-child(even) {
   }
 
   .productBreadthCard > div {
+    grid-template-columns: 1fr;
+  }
+
+  .uploadHistoryRow {
+    align-items: start;
     grid-template-columns: 1fr;
   }
 

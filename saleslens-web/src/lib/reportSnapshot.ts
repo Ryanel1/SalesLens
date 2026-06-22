@@ -93,6 +93,25 @@ export type SnapshotYtdInsights = {
   priorArtworksSold: number;
 };
 
+export type SnapshotSalesForecast = {
+  currentYear: number;
+  priorYear: number;
+  throughMonth: string;
+  currentYtdSales: number;
+  priorYtdSales: number;
+  priorFullYearSales: number;
+  projectedSales: number;
+  remainingSales: number;
+  currentYtdUnits: number;
+  priorYtdUnits: number;
+  priorFullYearUnits: number;
+  projectedUnits: number;
+  remainingUnits: number;
+  seasonalityPercent: number | null;
+  confidence: "Stable" | "Directional" | "Limited";
+  note: string;
+};
+
 export type SnapshotMonthlyDrivers = {
   avgSalePerTransaction: number;
   priorAvgSalePerTransaction: number;
@@ -208,6 +227,7 @@ export type ReportSnapshotPayload = {
   priorMetrics: SnapshotMetricSet;
   ytdLine: SnapshotYtdLine;
   ytdInsights?: SnapshotYtdInsights;
+  salesForecast?: SnapshotSalesForecast | null;
   monthlyDrivers?: SnapshotMonthlyDrivers;
   weeklyScorecards?: SnapshotWeeklyScorecardRow[];
   inventorySnapshot?: SnapshotInventory;

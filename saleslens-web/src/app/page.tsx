@@ -49,6 +49,23 @@ type ServerReportState = {
   payload: ReportSnapshotPayload;
 };
 
+type UploadHistoryRow = {
+  id: string;
+  source_file: string;
+  original_file_name: string;
+  received_date: string | null;
+  sales_period_start: string | null;
+  sales_period_end: string | null;
+  row_count: number;
+  skipped_count: number;
+  total_sales: number | string;
+  total_units: number;
+  status: string;
+  created_at: string;
+};
+
+type SalesForecast = NonNullable<ReportSnapshotPayload["salesForecast"]>;
+
 type IdleWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
   cancelIdleCallback?: (handle: number) => void;
@@ -412,6 +429,12 @@ export default function Home() {
   const [shareStatus, setShareStatus] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const [importStatus, setImportStatus] = useState("");
+  const [uploadHistoryOpen, setUploadHistoryOpen] = useState(false);
+  const [uploadHistoryRows, setUploadHistoryRows] = useState<UploadHistoryRow[]>([]);
+  const [uploadHistoryLoading, setUploadHistoryLoading] = useState(false);
+  const [uploadHistoryStatus, setUploadHistoryStatus] = useState("");
+  const [imageCacheRunning, setImageCacheRunning] = useState(false);
+  const [imageCacheStatus, setImageCacheStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
@@ -423,6 +446,13 @@ export default function Home() {
     setImagePrefetchRun(0);
     reportCache.current.clear();
   }, [reloadKey, selectedCustomerId]);
+
+  useEffect(() => {
+    setUploadHistoryOpen(false);
+    setUploadHistoryRows([]);
+    setUploadHistoryStatus("");
+    setImageCacheStatus("");
+  }, [selectedCustomerId]);
 
   useEffect(() => {
     if (!supabase) {
@@ -724,6 +754,8 @@ export default function Home() {
     }) : []),
     [bestDay.items, dashboardData.images, reportPayload, topArt, visibleInventoryTracker, weeklyScorecards],
   );
+  const missingImageCount = imagePrefetchCandidates.filter((row) => !row.imageUrl && row.style !== "-").length;
+  const salesForecast = (reportPayload?.salesForecast ?? null) as SalesForecast | null;
   const ytdLine = useMemo(() => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth), [periodEndMonth, recordsForCustomer, reportPayload]);
   const lastUploaded = reportPayload?.lastUploaded ?? lastUploadedForShell(dashboardShell, brandFilter);
 
@@ -957,6 +989,178 @@ export default function Home() {
     setShareUrl(url);
     setShareStatus("Share link ready.");
     await navigator.clipboard?.writeText(url).catch(() => undefined);
+  }
+
+  async function loadUploadHistory() {
+    if (!supabase || !selectedCustomer) return;
+    setUploadHistoryLoading(true);
+    setUploadHistoryStatus("Loading upload history...");
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setUploadHistoryStatus("Sign in again to load upload history.");
+        return;
+      }
+
+      const response = await fetch(`/api/upload-history?customerId=${encodeURIComponent(selectedCustomer.id)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const payload = (await response.json().catch(() => null)) as { uploads?: UploadHistoryRow[]; error?: string } | null;
+      if (!response.ok || !payload?.uploads) {
+        setUploadHistoryStatus(payload?.error ?? "Unable to load upload history.");
+        return;
+      }
+
+      setUploadHistoryRows(payload.uploads);
+      setUploadHistoryStatus(payload.uploads.length ? "" : "No uploads found for this account.");
+    } finally {
+      setUploadHistoryLoading(false);
+    }
+  }
+
+  async function deleteUpload(upload: UploadHistoryRow) {
+    if (!supabase || !selectedCustomer) return;
+    const label = upload.original_file_name || upload.source_file || "this upload";
+    const confirmed = window.confirm(`Delete ${label} and its imported records?`);
+    if (!confirmed) return;
+
+    setUploadHistoryStatus(`Deleting ${label}...`);
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) {
+      setUploadHistoryStatus("Sign in again to delete uploads.");
+      return;
+    }
+
+    const response = await fetch("/api/upload-history", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        customerId: selectedCustomer.id,
+        uploadId: upload.id,
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      deletedInventoryRecords?: number;
+      deletedSalesRecords?: number;
+      error?: string;
+    } | null;
+
+    if (!response.ok) {
+      setUploadHistoryStatus(payload?.error ?? "Unable to delete upload.");
+      return;
+    }
+
+    reportCache.current.clear();
+    setReportRefreshKey((key) => key + 1);
+    setReloadKey((key) => key + 1);
+    setUploadHistoryRows((rows) => rows.filter((row) => row.id !== upload.id));
+    setUploadHistoryStatus(
+      `Deleted ${label}: ${numberText(payload?.deletedSalesRecords ?? 0)} sales records and ${numberText(payload?.deletedInventoryRecords ?? 0)} inventory records.`,
+    );
+  }
+
+  async function cacheMissingImages() {
+    if (!supabase || !selectedCustomerId || !selectedCustomer || !supportsProductImageFetch(selectedCustomer.name)) return;
+    const missingRows = imagePrefetchCandidates
+      .filter((row) => !row.imageUrl && row.style !== "-")
+      .slice(0, 120);
+
+    if (!missingRows.length) {
+      setImageCacheStatus("No missing images in the current view.");
+      return;
+    }
+
+    setImageCacheRunning(true);
+    setImageCacheStatus(`Searching ${numberText(missingRows.length)} missing images...`);
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setImageCacheStatus("Sign in again to cache product images.");
+        return;
+      }
+
+      const allMatches: RebelRagsImageMatch[] = [];
+      for (let index = 0; index < missingRows.length; index += IMAGE_FETCH_BATCH_SIZE) {
+        const batch = missingRows.slice(index, index + IMAGE_FETCH_BATCH_SIZE);
+        const response = await fetch("/api/rebel-rags-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            accountName: selectedCustomer.name,
+            items: batch.map((row) => ({
+              style: row.style,
+              artCode: row.artCode,
+              color: row.color,
+              styleName: row.styleName,
+              parentSku: row.parentSku,
+              sku: row.sku,
+            })),
+          }),
+        });
+
+        if (!response.ok) continue;
+        const payload = (await response.json().catch(() => null)) as { matches?: RebelRagsImageMatch[] } | null;
+        allMatches.push(...(payload?.matches?.filter((match) => match.imageUrl) ?? []));
+      }
+
+      const matchesByKey = new Map<string, RebelRagsImageMatch>();
+      allMatches.forEach((match) => matchesByKey.set(imageKey(match.style, match.artCode, match.color), match));
+      const matches = [...matchesByKey.values()];
+
+      if (!matches.length) {
+        setImageCacheStatus("No new image matches found in this view.");
+        return;
+      }
+
+      const rows = matches.map((match) => ({
+        customer_id: selectedCustomerId,
+        style_number: match.style,
+        art_code: match.artCode,
+        color: match.color,
+        product_url: match.productUrl,
+        image_url: match.sourceImageUrl ?? match.imageUrl,
+        storage_path: match.storagePath ?? null,
+        is_manual_override: match.isManualOverride,
+        notes: `Matched from product website using ${match.lookupArtCode}`,
+      }));
+
+      const { error } = await supabase
+        .from("product_images")
+        .upsert(rows, { onConflict: "customer_id,style_number,art_code,color" });
+
+      if (error) {
+        setImageCacheStatus(error.message);
+        return;
+      }
+
+      setDashboardData((current) => {
+        const next = {
+          ...current,
+          images: mergeProductImages(current.images, matches),
+        };
+        writeDashboardCache(selectedCustomerId, next).catch(() => undefined);
+        return next;
+      });
+      reportCache.current.clear();
+      setReportRefreshKey((key) => key + 1);
+      setImagePrefetchRun((run) => run + 1);
+      setImageCacheStatus(`Cached ${numberText(matches.length)} product images. Rebuilding report view...`);
+    } finally {
+      setImageCacheRunning(false);
+    }
   }
 
   function beginImportFiles(files: File[]) {
@@ -1309,6 +1513,48 @@ export default function Home() {
                   <span>Standalone on-hand units by product/style/color/artwork.</span>
                 </button>
               </div>
+              <div className="uploadHistoryActions">
+                <button
+                  className="ghostButton"
+                  type="button"
+                  onClick={() => {
+                    const nextOpen = !uploadHistoryOpen;
+                    setUploadHistoryOpen(nextOpen);
+                    if (nextOpen) void loadUploadHistory();
+                  }}
+                >
+                  {uploadHistoryOpen ? "Hide Uploads" : "Manage Uploads"}
+                </button>
+                {uploadHistoryStatus ? <span>{uploadHistoryStatus}</span> : null}
+              </div>
+              {uploadHistoryOpen ? (
+                <div className="uploadHistoryPanel" aria-live="polite">
+                  {uploadHistoryLoading ? <p>Loading uploads...</p> : null}
+                  {!uploadHistoryLoading && uploadHistoryRows.length ? (
+                    uploadHistoryRows.map((upload) => (
+                      <article className="uploadHistoryRow" key={upload.id}>
+                        <div>
+                          <strong>{upload.original_file_name || upload.source_file || "Imported upload"}</strong>
+                          <span>
+                            {dateText(upload.sales_period_start)} - {dateText(upload.sales_period_end)}
+                          </span>
+                        </div>
+                        <div>
+                          <span>{numberText(upload.row_count)} rows</span>
+                          <span>{numberText(upload.total_units ?? 0)} units</span>
+                          <span>{currencyText(Number(upload.total_sales ?? 0))}</span>
+                        </div>
+                        <button className="dangerTextButton" type="button" onClick={() => void deleteUpload(upload)}>
+                          Delete
+                        </button>
+                      </article>
+                    ))
+                  ) : null}
+                  {!uploadHistoryLoading && !uploadHistoryRows.length ? (
+                    <p className="muted">No uploads are currently listed for this account.</p>
+                  ) : null}
+                </div>
+              ) : null}
             </section>
           </div>
         ) : null}
@@ -1427,6 +1673,16 @@ export default function Home() {
               <span>Last Date Uploaded</span>
               <strong>{dateText(lastUploaded)}</strong>
             </article>
+            {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
+              <article className="operatorOverview">
+                <span>Image Cache</span>
+                <strong>{missingImageCount ? `${numberText(missingImageCount)} missing in view` : "Current view cached"}</strong>
+                <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
+                  {imageCacheRunning ? "Caching..." : "Cache Missing Images"}
+                </button>
+                {imageCacheStatus ? <small>{imageCacheStatus}</small> : null}
+              </article>
+            ) : null}
           </section>
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
@@ -1463,6 +1719,19 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          {salesForecast ? (
+            <section className="sectionBlock forecastSection">
+              <div className="sectionTitle">
+                <div>
+                  <h3>Forecast Outlook</h3>
+                  <p>Projected full-year finish using current YTD pace and prior-year seasonality when available.</p>
+                </div>
+                <strong className="changeBadge neutral">{salesForecast.confidence}</strong>
+              </div>
+              <SalesForecastGrid forecast={salesForecast} />
+            </section>
+          ) : null}
 
           <section className="sectionBlock">
             <div className="sectionTitle">
@@ -1823,6 +2092,32 @@ function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsig
         </span>
       </div>
     </article>
+  );
+}
+
+function SalesForecastGrid({ forecast }: { forecast: SalesForecast }) {
+  const projectedSalesDelta = forecast.projectedSales - forecast.priorFullYearSales;
+  const projectedUnitsDelta = forecast.projectedUnits - forecast.priorFullYearUnits;
+
+  return (
+    <div className="forecastGrid">
+      <MetricCard label={`${forecast.currentYear} Projected Sales`} value={currencyText(forecast.projectedSales)} tone={projectedSalesDelta} />
+      <MetricCard label="Remaining To Projection" value={currencyText(forecast.remainingSales)} />
+      <MetricCard label={`${forecast.currentYear} Projected Units`} value={`${numberText(Math.round(forecast.projectedUnits))} Units`} tone={projectedUnitsDelta} />
+      <MetricCard
+        label="Seasonality Used"
+        value={forecast.seasonalityPercent == null ? "Pace-Based" : `${decimalText(forecast.seasonalityPercent, 1)}%`}
+      />
+      <article className="forecastStory">
+        <p>{forecast.note}</p>
+        <span>
+          Current YTD: {currencyText(forecast.currentYtdSales)} / {numberText(forecast.currentYtdUnits)} units
+        </span>
+        <span>
+          {forecast.priorYear} full year: {currencyText(forecast.priorFullYearSales)} / {numberText(forecast.priorFullYearUnits)} units
+        </span>
+      </article>
+    </div>
   );
 }
 

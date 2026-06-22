@@ -1,6 +1,6 @@
 import { monthText, numberText } from "@/lib/formatters";
 import type { InventoryRecord, MerchandiseRecord, ProductImage, SalesRecord } from "@/lib/reportData";
-import type { ReportSnapshotPayload } from "@/lib/reportSnapshot";
+import type { ReportSnapshotPayload, SnapshotSalesForecast } from "@/lib/reportSnapshot";
 
 type RebelRagsImageMatch = {
   style: string;
@@ -425,6 +425,7 @@ export function buildReportPayload({
     priorMetrics,
     ytdLine: ytdPoints(filteredRecords, periodEndMonth),
     ytdInsights: ytdInsightMetrics(ytdCurrentRecords, ytdPriorRecords, periodEndMonth),
+    salesForecast: salesForecastMetrics(filteredRecords, periodEndMonth),
     monthlyDrivers: monthlyDriverMetrics(periodRecords, priorPeriodRecords),
     weeklyScorecards: period.kind === "month" ? weeklyScorecardRows(filteredRecords, periodEndMonth, images) : [],
     inventorySnapshot: inventorySnapshotForRecords(periodRecords, filteredInventoryRecords, periodEndMonth, filteredRecords),
@@ -1153,6 +1154,70 @@ function ytdInsightMetrics(currentRecords: SalesRecord[], priorRecords: SalesRec
     priorColorsSold: priorBreadth.colors,
     artworksSold: currentBreadth.artworks,
     priorArtworksSold: priorBreadth.artworks,
+  };
+}
+
+function salesForecastMetrics(records: SalesRecord[], month: string | null) {
+  if (!month) return null;
+  const year = Number(month.slice(0, 4));
+  const monthNumber = Number(month.slice(5, 7));
+  if (!year || !monthNumber) return null;
+
+  const priorYearMonth = `${year - 1}${month.slice(4)}`;
+  const currentYtdRecords = currentYearRecords(records, month);
+  const priorYtdRecords = currentYearRecords(records, priorYearMonth);
+  const priorFullYearRecords = recordsForYear(records, year - 1);
+
+  const currentYtd = metricSet(currentYtdRecords);
+  const priorYtd = metricSet(priorYtdRecords);
+  const priorFullYear = metricSet(priorFullYearRecords);
+  if (!currentYtd.sales && !currentYtd.units) return null;
+
+  const priorFullYearMonths = uniqueCount(
+    priorFullYearRecords
+      .map((record) => monthKey(record.transaction_date) ?? "")
+      .filter(Boolean),
+  );
+  const salesSeasonality = priorYtd.sales > 0 && priorFullYear.sales > 0
+    ? priorYtd.sales / priorFullYear.sales
+    : null;
+  const unitsSeasonality = priorYtd.units > 0 && priorFullYear.units > 0
+    ? priorYtd.units / priorFullYear.units
+    : null;
+  const monthlySalesPace = monthNumber ? currentYtd.sales / monthNumber : currentYtd.sales;
+  const monthlyUnitPace = monthNumber ? currentYtd.units / monthNumber : currentYtd.units;
+  const projectedSales = salesSeasonality
+    ? currentYtd.sales / salesSeasonality
+    : monthlySalesPace * 12;
+  const projectedUnits = unitsSeasonality
+    ? currentYtd.units / unitsSeasonality
+    : monthlyUnitPace * 12;
+  const confidence: SnapshotSalesForecast["confidence"] = priorFullYearMonths >= 9 && monthNumber >= 3
+    ? "Stable"
+    : priorFullYearMonths >= 3 && monthNumber >= 2
+      ? "Directional"
+      : "Limited";
+  const note = salesSeasonality
+    ? `Uses ${year - 1} seasonality through ${monthText(month)} to estimate the full-year finish.`
+    : "Uses current monthly pace because prior-year seasonality is limited for this account and period.";
+
+  return {
+    currentYear: year,
+    priorYear: year - 1,
+    throughMonth: month,
+    currentYtdSales: currentYtd.sales,
+    priorYtdSales: priorYtd.sales,
+    priorFullYearSales: priorFullYear.sales,
+    projectedSales,
+    remainingSales: projectedSales - currentYtd.sales,
+    currentYtdUnits: currentYtd.units,
+    priorYtdUnits: priorYtd.units,
+    priorFullYearUnits: priorFullYear.units,
+    projectedUnits,
+    remainingUnits: projectedUnits - currentYtd.units,
+    seasonalityPercent: salesSeasonality ? salesSeasonality * 100 : null,
+    confidence,
+    note,
   };
 }
 

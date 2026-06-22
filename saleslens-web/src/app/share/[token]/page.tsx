@@ -8,6 +8,7 @@ import {
   type ReportSnapshotPayload,
   type ReportSnapshotRecord,
   type SnapshotBestDay,
+  type SnapshotSalesForecast,
   type SnapshotInventory,
   type SnapshotInventoryLine,
   type SnapshotMetricSet,
@@ -179,6 +180,16 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
             </div>
           </div>
         </ReportSection>
+
+        {payload.salesForecast ? (
+          <ReportSection
+            title="Forecast Outlook"
+            subtitle="Projected full-year finish using current YTD pace and prior-year seasonality when available."
+            aside={payload.salesForecast.confidence}
+          >
+            <SalesForecastGrid forecast={payload.salesForecast} />
+          </ReportSection>
+        ) : null}
 
         <ReportSection
           title={payload.periodMode === "ytd" ? "Selected Year Scorecard" : "Monthly Scorecard"}
@@ -387,6 +398,32 @@ function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
         </span>
       </div>
     </article>
+  );
+}
+
+function SalesForecastGrid({ forecast }: { forecast: SnapshotSalesForecast }) {
+  const projectedSalesDelta = forecast.projectedSales - forecast.priorFullYearSales;
+  const projectedUnitsDelta = forecast.projectedUnits - forecast.priorFullYearUnits;
+
+  return (
+    <div className="forecastGrid">
+      <MetricCard label={`${forecast.currentYear} Projected Sales`} value={currencyText(forecast.projectedSales)} tone={projectedSalesDelta} />
+      <MetricCard label="Remaining To Projection" value={currencyText(forecast.remainingSales)} />
+      <MetricCard label={`${forecast.currentYear} Projected Units`} value={`${numberText(Math.round(forecast.projectedUnits))} Units`} tone={projectedUnitsDelta} />
+      <MetricCard
+        label="Seasonality Used"
+        value={forecast.seasonalityPercent == null ? "Pace-Based" : `${decimalText(forecast.seasonalityPercent, 1)}%`}
+      />
+      <article className="forecastStory">
+        <p>{forecast.note}</p>
+        <span>
+          Current YTD: {currencyText(forecast.currentYtdSales)} / {numberText(forecast.currentYtdUnits)} units
+        </span>
+        <span>
+          {forecast.priorYear} full year: {currencyText(forecast.priorFullYearSales)} / {numberText(forecast.priorFullYearUnits)} units
+        </span>
+      </article>
+    </div>
   );
 }
 
