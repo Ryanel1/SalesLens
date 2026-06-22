@@ -4365,6 +4365,8 @@ label,
 }
 
 .artMeta span {
+  font-size: 0.78rem;
+  letter-spacing: 0;
   line-height: 1.45;
 }
 
