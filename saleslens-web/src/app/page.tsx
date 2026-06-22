@@ -193,6 +193,7 @@ type InventorySnapshot = {
 const IMAGE_FETCH_BATCH_SIZE = 6;
 const IMAGE_PREFETCH_LIMIT = 18;
 const IMAGE_PREFETCH_RECORD_GROUP_LIMIT = 30;
+const REPORT_CACHE_LIMIT = 16;
 const DASHBOARD_CACHE_DB = "saleslens-dashboard-cache";
 const DASHBOARD_CACHE_STORE = "dashboard-data";
 const INVENTORY_TRACKER_MIN_UNITS = 5;
@@ -415,11 +416,13 @@ export default function Home() {
   const [navCompact, setNavCompact] = useState(false);
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
+  const reportCache = useRef<Map<string, ReportSnapshotPayload>>(new Map());
 
   useEffect(() => {
     imageFetchAttempts.current.clear();
     setImagePrefetchRun(0);
-  }, [selectedCustomerId]);
+    reportCache.current.clear();
+  }, [reloadKey, selectedCustomerId]);
 
   useEffect(() => {
     if (!supabase) {
@@ -580,6 +583,14 @@ export default function Home() {
 
     let isMounted = true;
     const client = supabase;
+
+    const cachedReport = reportCache.current.get(reportRequestKey);
+    if (cachedReport) {
+      setServerReport({ key: reportRequestKey, payload: cachedReport });
+      setServerReportStatus("");
+      return undefined;
+    }
+
     setServerReportStatus("Preparing report sections...");
 
     async function loadServerReport() {
@@ -617,6 +628,7 @@ export default function Home() {
         return;
       }
 
+      rememberReportPayload(reportCache.current, reportRequestKey, payload.report);
       setServerReport({ key: reportRequestKey, payload: payload.report });
       setServerReportStatus("");
     }
@@ -2393,6 +2405,16 @@ async function writeDashboardCache(customerId: string, data: DashboardData) {
       resolve();
     };
   });
+}
+
+function rememberReportPayload(cache: Map<string, ReportSnapshotPayload>, key: string, payload: ReportSnapshotPayload) {
+  if (!key) return;
+  cache.set(key, payload);
+  while (cache.size > REPORT_CACHE_LIMIT) {
+    const firstKey = cache.keys().next().value;
+    if (!firstKey) break;
+    cache.delete(firstKey);
+  }
 }
 
 type DatedRecord = {
