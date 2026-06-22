@@ -443,9 +443,22 @@ export default function Home() {
   const [imageCacheStatus, setImageCacheStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
   const reportCache = useRef<Map<string, ReportSnapshotPayload>>(new Map());
+
+  useEffect(() => {
+    const storedTheme = window.localStorage.getItem("saleslens-theme");
+    if (storedTheme === "light" || storedTheme === "dark") {
+      setThemeMode(storedTheme);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+    window.localStorage.setItem("saleslens-theme", themeMode);
+  }, [themeMode]);
 
   useEffect(() => {
     imageFetchAttempts.current.clear();
@@ -1521,63 +1534,102 @@ export default function Home() {
             <p>by Lester Sales</p>
           </div>
 
-          <div className="navControls">
-            <label className="navField">
-              <span>Account</span>
-              <select
-                value={selectedCustomerId ?? ""}
-                onChange={(event) => {
-                  setSelectedCustomerId(event.target.value);
-                  setSelectedPeriod(null);
-                  setBrandFilter("All");
-                }}
-              >
-                {customers.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div className="sideNavMenu" aria-label="SalesLens navigation">
+            <a className="sideNavItem active" href="#saleslens-dashboard" aria-current="page">
+              <span className="sideNavIcon sideNavIconHome" aria-hidden="true" />
+              <span>SalesLens</span>
+            </a>
+            <a className="sideNavItem" href="#scorecards">
+              <span className="sideNavIcon sideNavIconChart" aria-hidden="true" />
+              <span>Scorecards</span>
+            </a>
+            <a className="sideNavItem" href="#top-performing">
+              <span className="sideNavIcon sideNavIconGrid" aria-hidden="true" />
+              <span>Top Performers</span>
+            </a>
+            <a className="sideNavItem" href="#inventory-section">
+              <span className="sideNavIcon sideNavIconBox" aria-hidden="true" />
+              <span>Inventory</span>
+            </a>
+            <button className="sideNavItem" type="button" onClick={openUploadHistoryManager}>
+              <span className="sideNavIcon sideNavIconUpload" aria-hidden="true" />
+              <span>Uploads</span>
+            </button>
+            <button className="sideNavItem disabled" type="button" disabled>
+              <span className="sideNavIcon sideNavIconOrder" aria-hidden="true" />
+              <span>Order Entry</span>
+              <small>soon</small>
+            </button>
+          </div>
 
-            <div className="navUploadField">
-              <div className="navDateMeta">
-                <p>Last Upload:</p>
-                <strong>{compactDateText(lastUploaded)}</strong>
-              </div>
-              <button
-                className="fileButton"
-                onClick={() => {
-                  setCustomerStatus("");
-                  setImportModalOpen(true);
-                }}
-                type="button"
-              >
-                Upload / Import
-              </button>
-              {(customerStatus || importStatus) ? (
-                <div className="navMessage">
-                  <span>{importStatus || customerStatus}</span>
-                  <button
-                    aria-label="Dismiss message"
-                    onClick={() => {
-                      setImportStatus("");
-                      setCustomerStatus("");
-                    }}
-                    type="button"
-                  >
-                    ×
-                  </button>
+          <div className="sideNavBottom">
+            <div className="navControls">
+              <label className="navField">
+                <span>Account</span>
+                <select
+                  value={selectedCustomerId ?? ""}
+                  onChange={(event) => {
+                    setSelectedCustomerId(event.target.value);
+                    setSelectedPeriod(null);
+                    setBrandFilter("All");
+                  }}
+                >
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="navUploadField">
+                <div className="navDateMeta">
+                  <p>Last Upload:</p>
+                  <strong>{compactDateText(lastUploaded)}</strong>
                 </div>
-              ) : null}
-            </div>
+                <button
+                  className="fileButton"
+                  onClick={() => {
+                    setCustomerStatus("");
+                    setImportModalOpen(true);
+                  }}
+                  type="button"
+                >
+                  Upload / Import
+                </button>
+                {(customerStatus || importStatus) ? (
+                  <div className="navMessage">
+                    <span>{importStatus || customerStatus}</span>
+                    <button
+                      aria-label="Dismiss message"
+                      onClick={() => {
+                        setImportStatus("");
+                        setCustomerStatus("");
+                      }}
+                      type="button"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : null}
+              </div>
 
-            <div className="navSignOutField">
-              <span>{user.email ?? "Signed in"}</span>
-              <button className="ghostButton navSignOut" type="button" onClick={signOut}>
-                Sign Out
-              </button>
+              <div className="navSignOutField">
+                <span>{user.email ?? "Signed in"}</span>
+                <button className="ghostButton navSignOut" type="button" onClick={signOut}>
+                  Sign Out
+                </button>
+              </div>
             </div>
+            <button
+              className="themeSwitch"
+              type="button"
+              aria-label={`Switch to ${themeMode === "dark" ? "light" : "dark"} theme`}
+              onClick={() => setThemeMode((current) => (current === "dark" ? "light" : "dark"))}
+            >
+              <span>Theme</span>
+              <strong>{themeMode === "dark" ? "Dark" : "Light"}</strong>
+            </button>
           </div>
         </nav>
 
@@ -1806,7 +1858,7 @@ export default function Home() {
           </div>
         ) : null}
 
-        <section className="dashboard">
+        <section className="dashboard" id="saleslens-dashboard">
           <header className="dashboardHeader">
             <div>
               <p className="eyebrow">Sales Snapshot</p>
@@ -1940,7 +1992,7 @@ export default function Home() {
             <section className="notice">No records match the current account, period, and brand/class filters.</section>
           ) : null}
 
-          <section className="sectionBlock">
+          <section className="sectionBlock" id="scorecards">
             <div className="sectionTitle">
               <div>
                 <h3>{selectedPeriodKind === "year" ? "Year Scorecard" : "YTD Scorecard"}</h3>
@@ -2037,7 +2089,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="sectionBlock">
+          <section className="sectionBlock" id="top-performing">
             <div className="sectionTitle">
               <div>
                 <h3>Top Performing Styles</h3>
@@ -2094,7 +2146,7 @@ export default function Home() {
           </section>
 
           {inventorySnapshot ? (
-            <section className="sectionBlock inventorySection">
+            <section className="sectionBlock inventorySection" id="inventory-section">
               <div className="sectionTitle">
                 <div>
                   <h3>Inventory Snapshot</h3>
