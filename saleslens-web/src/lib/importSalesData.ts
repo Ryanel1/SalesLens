@@ -275,13 +275,17 @@ function parseVolshopRows(
       continue;
     }
 
+    const rawStyleIdentifier = valueAt(row, styleColorIndex);
+    if (!clean(rawStyleIdentifier)) {
+      continue;
+    }
+
     const amount = parseNumber(valueAt(row, mtdAmountIndex));
     if (amount == null) {
       skippedCount += 1;
       continue;
     }
 
-    const rawStyleIdentifier = valueAt(row, styleColorIndex);
     const parsed = parseStyleIdentifier(rawStyleIdentifier);
     const parsedSku = parseVolshopSkuName(valueAt(row, skuIndex));
 

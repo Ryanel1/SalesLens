@@ -667,7 +667,6 @@ function topArtRows(
       const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
-      const reportedYtd = reportedYtdTotals(group);
       const exactStandaloneInventory = inventoryGroups.get(key);
       const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory);
       return {
@@ -683,8 +682,8 @@ function topArtRows(
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
         transactions: group.length,
-        cySales: reportedYtd?.sales ?? sum(cyGroup.map(amountValue)),
-        cyUnits: reportedYtd?.units ?? sum(cyGroup.map((record) => record.units ?? 0)),
+        cySales: sum(cyGroup.map(amountValue)),
+        cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
         inventoryUnits: inventoryResult.units,
         inventoryScope: inventoryResult.scope,
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
@@ -694,16 +693,6 @@ function topArtRows(
     .sort(sort === "dollars" ? sortBySales : sortByUnits)
     .slice(0, 30)
     .map((row, index) => ({ ...row, rank: index + 1 }));
-}
-
-function reportedYtdTotals(records: SalesRecord[]) {
-  const rowsWithYtd = records.filter((record) => record.year_to_date_units != null || record.year_to_date_amount != null);
-  if (!rowsWithYtd.length) return null;
-
-  return {
-    sales: sum(rowsWithYtd.map((record) => Number(record.year_to_date_amount ?? 0))),
-    units: sum(rowsWithYtd.map((record) => record.year_to_date_units ?? 0)),
-  };
 }
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {

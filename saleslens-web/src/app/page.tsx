@@ -1412,8 +1412,16 @@ export default function Home() {
         return true;
       }
 
-      const totalSales = sum(parsed.records.map((record) => record.amount));
-      const totalUnits = sum(parsed.records.map((record) => record.units ?? 0));
+      setImportStatus(`Calculating weekly Volshop sales from prior YTD snapshot...`);
+      const adjusted = await applyVolshopCumulativeDeltas(
+        supabase,
+        selectedCustomer.id,
+        parsed.records,
+        parsed.salesPeriodStart,
+      );
+      const recordsToImport = adjusted.records;
+      const totalSales = sum(recordsToImport.map((record) => record.amount));
+      const totalUnits = sum(recordsToImport.map((record) => record.units ?? 0));
       const uploadId = await createUploadBatch(supabase, {
         customerId: selectedCustomer.id,
         fileName: file.name,
@@ -1421,25 +1429,31 @@ export default function Home() {
         receivedDate: parsed.receivedDate,
         salesPeriodStart: parsed.salesPeriodStart,
         salesPeriodEnd: parsed.salesPeriodEnd,
-        rowCount: parsed.records.length,
+        rowCount: recordsToImport.length,
         skippedCount: parsed.skippedCount,
         totalSales,
         totalUnits,
         status: "imported",
       });
 
-      setImportStatus(`Replacing overlapping Volshop MTD records...`);
+      setImportStatus(`Replacing overlapping Volshop weekly snapshot records...`);
       await replaceSalesRecordsForPeriodAndBrands(
         supabase,
         selectedCustomer.id,
-        parsed.records,
+        recordsToImport,
         uploadId,
         parsed.salesPeriodStart,
         parsed.salesPeriodEnd,
       );
 
+      const deltaNote = adjusted.deltaCount
+        ? ` Calculated ${numberText(adjusted.deltaCount)} rows from YTD deltas.`
+        : "";
+      const fallbackNote = adjusted.fallbackCount
+        ? ` ${numberText(adjusted.fallbackCount)} rows used sheet MTD because no prior YTD baseline was found.`
+        : "";
       setImportStatus(
-        `Imported ${numberText(parsed.records.length)} records from ${file.name}. Replaced matching month-to-date records for this upload range. Skipped ${numberText(parsed.skippedCount)} rows.`,
+        `Imported ${numberText(recordsToImport.length)} records from ${file.name}. Replaced matching weekly snapshot records for this upload range.${deltaNote}${fallbackNote} Skipped ${numberText(parsed.skippedCount)} rows.`,
       );
       return true;
     } catch (error) {
@@ -3107,7 +3121,6 @@ function topArtRows(
       const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
-      const reportedYtd = reportedYtdTotals(group);
       const exactStandaloneInventory = inventoryGroups.get(key);
       const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory);
       return {
@@ -3123,8 +3136,8 @@ function topArtRows(
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
         transactions: group.length,
-        cySales: reportedYtd?.sales ?? sum(cyGroup.map(amountValue)),
-        cyUnits: reportedYtd?.units ?? sum(cyGroup.map((record) => record.units ?? 0)),
+        cySales: sum(cyGroup.map(amountValue)),
+        cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
         inventoryUnits: inventoryResult.units,
         inventoryScope: inventoryResult.scope,
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
@@ -3134,16 +3147,6 @@ function topArtRows(
     .sort(sort === "dollars" ? sortBySales : sortByUnits)
     .slice(0, 30)
     .map((row, index) => ({ ...row, rank: index + 1 }));
-}
-
-function reportedYtdTotals(records: SalesRecord[]) {
-  const rowsWithYtd = records.filter((record) => record.year_to_date_units != null || record.year_to_date_amount != null);
-  if (!rowsWithYtd.length) return null;
-
-  return {
-    sales: sum(rowsWithYtd.map((record) => Number(record.year_to_date_amount ?? 0))),
-    units: sum(rowsWithYtd.map((record) => record.year_to_date_units ?? 0)),
-  };
 }
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {
@@ -4337,6 +4340,146 @@ async function loadExistingRecordKeys(
   return new Set(((data ?? []) as SalesRecordForDuplicateCheck[]).map(recordKey));
 }
 
+type VolshopCumulativeRecord = {
+  transaction_date: string;
+  parent_sku?: string | null;
+  sku?: string | null;
+  product_class?: string | null;
+  master_style?: string | null;
+  color?: string | null;
+  size?: string | null;
+  catalog_color_name?: string | null;
+  style_number?: string | null;
+  raw_style_identifier?: string | null;
+  art_code?: string | null;
+  year_to_date_amount?: number | string | null;
+  year_to_date_units?: number | null;
+};
+
+async function applyVolshopCumulativeDeltas(
+  client: SupabaseClient,
+  customerId: string,
+  records: ParsedSalesRecord[],
+  salesPeriodStart: string | null,
+) {
+  const startDate = salesPeriodStart ?? records.map((record) => record.transaction_date).sort()[0] ?? null;
+  if (!startDate) {
+    return { records, deltaCount: 0, fallbackCount: records.length };
+  }
+
+  const priorRecords = await loadPriorVolshopCumulativeRecords(client, customerId, startDate);
+  const priorByKey = new Map<string, VolshopCumulativeRecord>();
+
+  priorRecords.forEach((record) => {
+    volshopCumulativeKeys(record).forEach((key) => {
+      const existing = priorByKey.get(key);
+      if (!existing || newerVolshopSnapshot(record, existing)) {
+        priorByKey.set(key, record);
+      }
+    });
+  });
+
+  let deltaCount = 0;
+  let fallbackCount = 0;
+  const adjustedRecords = records.map((record) => {
+    const prior = volshopCumulativeKeys(record)
+      .map((key) => priorByKey.get(key))
+      .find(Boolean);
+    const currentYtdUnits = nullableNumber(record.year_to_date_units);
+    const currentYtdAmount = nullableNumber(record.year_to_date_amount);
+    const priorYtdUnits = nullableNumber(prior?.year_to_date_units);
+    const priorYtdAmount = nullableNumber(prior?.year_to_date_amount);
+
+    if (
+      prior &&
+      currentYtdUnits != null &&
+      currentYtdAmount != null &&
+      priorYtdUnits != null &&
+      priorYtdAmount != null
+    ) {
+      deltaCount += 1;
+      return {
+        ...record,
+        amount: roundCurrency(currentYtdAmount - priorYtdAmount),
+        units: Math.round(currentYtdUnits - priorYtdUnits),
+      };
+    }
+
+    fallbackCount += 1;
+    return record;
+  });
+
+  return { records: adjustedRecords, deltaCount, fallbackCount };
+}
+
+async function loadPriorVolshopCumulativeRecords(
+  client: SupabaseClient,
+  customerId: string,
+  startDate: string,
+) {
+  const yearStart = `${startDate.slice(0, 4)}-01-01`;
+  const rows: VolshopCumulativeRecord[] = [];
+  const pageSize = 1000;
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await client
+      .from("sales_records")
+      .select(
+        "transaction_date,parent_sku,sku,product_class,master_style,color,size,catalog_color_name,style_number,raw_style_identifier,art_code,year_to_date_amount,year_to_date_units",
+      )
+      .eq("customer_id", customerId)
+      .gte("transaction_date", yearStart)
+      .lt("transaction_date", startDate)
+      .order("transaction_date", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) throw new Error(error.message);
+    rows.push(...((data ?? []) as VolshopCumulativeRecord[]));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return rows.filter((row) => row.year_to_date_amount != null || row.year_to_date_units != null);
+}
+
+function volshopCumulativeKeys(record: VolshopCumulativeRecord) {
+  const color = record.catalog_color_name || record.color;
+  const keys = [
+    record.sku ? ["sku", record.sku] : [],
+    record.parent_sku && record.size ? ["parent-size", record.parent_sku, record.size] : [],
+    record.style_number && record.art_code && color && record.size
+      ? ["style-art-color-size", record.style_number, record.art_code, color, record.size]
+      : [],
+    record.raw_style_identifier && color && record.size
+      ? ["raw-color-size", record.raw_style_identifier, color, record.size]
+      : [],
+    record.master_style && color && record.size
+      ? ["master-color-size", record.master_style, color, record.size]
+      : [],
+  ];
+
+  return keys
+    .filter((parts) => parts.length > 1)
+    .map((parts) => parts.map(compactKey).join("|"))
+    .filter((key) => key.replace(/\|/g, "").length > 0);
+}
+
+function newerVolshopSnapshot(left: VolshopCumulativeRecord, right: VolshopCumulativeRecord) {
+  if (left.transaction_date !== right.transaction_date) {
+    return left.transaction_date > right.transaction_date;
+  }
+  return (nullableNumber(left.year_to_date_units) ?? 0) >= (nullableNumber(right.year_to_date_units) ?? 0);
+}
+
+function nullableNumber(value: number | string | null | undefined) {
+  if (value == null || value === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function roundCurrency(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
 async function createUploadBatch(
   client: SupabaseClient,
   input: {
@@ -4502,8 +4645,8 @@ function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
   ].join("|");
 }
 
-function compactKey(value: string | null | undefined) {
-  return (value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+function compactKey(value: string | number | null | undefined) {
+  return (value == null ? "" : String(value)).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
 function firstNonBlank(values: Array<string | null | undefined>) {
