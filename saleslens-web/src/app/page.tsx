@@ -413,6 +413,7 @@ export default function Home() {
   const [inventoryPage, setInventoryPage] = useState(1);
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
+  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"sort" | "filter" | null>(null);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [dashboardShell, setDashboardShell] = useState<DashboardShellSummary>(EMPTY_DASHBOARD_SHELL);
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
@@ -428,6 +429,7 @@ export default function Home() {
   const [selectedShareCustomerIds, setSelectedShareCustomerIds] = useState<string[]>([]);
   const [shareStatus, setShareStatus] = useState("");
   const [shareUrl, setShareUrl] = useState("");
+  const inventoryControlsRef = useRef<HTMLDivElement | null>(null);
   const [importStatus, setImportStatus] = useState("");
   const [uploadHistoryOpen, setUploadHistoryOpen] = useState(false);
   const [uploadHistoryRows, setUploadHistoryRows] = useState<UploadHistoryRow[]>([]);
@@ -772,6 +774,57 @@ export default function Home() {
   useEffect(() => {
     if (inventoryPage > inventoryPageCount) setInventoryPage(inventoryPageCount);
   }, [inventoryPage, inventoryPageCount]);
+
+  useEffect(() => {
+    if (!inventoryMenuOpen) return undefined;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (inventoryControlsRef.current?.contains(event.target as Node)) return;
+      setInventoryMenuOpen(null);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [inventoryMenuOpen]);
+
+  function applyInventorySort(sort: InventorySort) {
+    setInventorySort(sort);
+    setInventoryPage(1);
+    setInventoryMenuOpen(null);
+  }
+
+  function clearInventoryFilters() {
+    setInventoryAudienceFilter("All");
+    setInventoryProductFilters([]);
+    setInventoryPage(1);
+    setInventoryMenuOpen(null);
+  }
+
+  function applyInventoryAudienceFilter(filter: InventoryAudienceFilter) {
+    setInventoryAudienceFilter(filter);
+    setInventoryPage(1);
+    if (inventoryProductFilters.includes("Namedrop") && filter !== "All" && filter !== "Mens") {
+      setInventoryProductFilters([]);
+    }
+  }
+
+  function toggleInventoryProductFilter(filter: InventoryProductFilter) {
+    setInventoryPage(1);
+
+    if (filter === "Namedrop") {
+      setInventoryAudienceFilter("All");
+      setInventoryProductFilters((current) => (current.includes("Namedrop") ? [] : ["Namedrop"]));
+      setInventoryMenuOpen(null);
+      return;
+    }
+
+    setInventoryProductFilters((current) => {
+      const withoutNamedrop = current.filter((item) => item !== "Namedrop");
+      return withoutNamedrop.includes(filter)
+        ? withoutNamedrop.filter((item) => item !== filter)
+        : [...withoutNamedrop, filter];
+    });
+  }
 
   useEffect(() => {
     if (!supabase || !selectedCustomerId || !selectedCustomer || !supportsProductImageFetch(selectedCustomer.name)) return;
@@ -1876,78 +1929,87 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-              <div className="inventoryControls">
+              <div className="inventoryControls" ref={inventoryControlsRef}>
                 <div className="inventoryDropdownControls">
-                  <details className="inventoryDropdown">
-                    <summary>
+                  <div className={`inventoryDropdown ${inventoryMenuOpen === "sort" ? "isOpen" : ""}`}>
+                    <button
+                      aria-expanded={inventoryMenuOpen === "sort"}
+                      className="inventoryDropdownTrigger"
+                      type="button"
+                      onClick={() => setInventoryMenuOpen((current) => (current === "sort" ? null : "sort"))}
+                    >
                       <span>Sort by</span>
                       <strong>{inventorySort === "highest" ? "Highest" : "Lowest"}</strong>
-                    </summary>
+                    </button>
+                    {inventoryMenuOpen === "sort" ? (
                     <div className="inventoryDropdownMenu">
                       {(["highest", "lowest"] as InventorySort[]).map((sort) => (
-                        <label className="inventoryOption" key={sort}>
-                          <input
-                            checked={inventorySort === sort}
-                            name="inventory-sort"
-                            type="radio"
-                            onChange={() => setInventorySort(sort)}
-                          />
+                        <button
+                          aria-pressed={inventorySort === sort}
+                          className={`inventoryOption ${inventorySort === sort ? "active" : ""}`}
+                          key={sort}
+                          type="button"
+                          onClick={() => applyInventorySort(sort)}
+                        >
+                          <span className="inventoryOptionMark" aria-hidden="true" />
                           <span>{sort === "highest" ? "Highest" : "Lowest"}</span>
-                        </label>
+                        </button>
                       ))}
                     </div>
-                  </details>
-                  <details className="inventoryDropdown">
-                    <summary>
+                    ) : null}
+                  </div>
+                  <div className={`inventoryDropdown ${inventoryMenuOpen === "filter" ? "isOpen" : ""}`}>
+                    <button
+                      aria-expanded={inventoryMenuOpen === "filter"}
+                      className="inventoryDropdownTrigger"
+                      type="button"
+                      onClick={() => setInventoryMenuOpen((current) => (current === "filter" ? null : "filter"))}
+                    >
                       <span>Filter</span>
                       <strong>{inventoryFilterSummary(inventoryAudienceFilter, inventoryProductFilters)}</strong>
-                    </summary>
+                    </button>
+                    {inventoryMenuOpen === "filter" ? (
                     <div className="inventoryDropdownMenu wide">
                       <button
                         className="inventoryResetOption"
                         type="button"
-                        onClick={() => {
-                          setInventoryAudienceFilter("All");
-                          setInventoryProductFilters([]);
-                        }}
+                        onClick={clearInventoryFilters}
                       >
                         Clear filters
                       </button>
                       <div className="inventoryOptionGroup">
                         <p>Audience</p>
                         {(["All", ...INVENTORY_AUDIENCE_FILTERS] as InventoryAudienceFilter[]).map((filter) => (
-                          <label className="inventoryOption" key={filter}>
-                            <input
-                              checked={inventoryAudienceFilter === filter}
-                              name="inventory-audience-filter"
-                              type="radio"
-                              onChange={() => setInventoryAudienceFilter(filter)}
-                            />
+                          <button
+                            aria-pressed={inventoryAudienceFilter === filter}
+                            className={`inventoryOption ${inventoryAudienceFilter === filter ? "active" : ""}`}
+                            key={filter}
+                            type="button"
+                            onClick={() => applyInventoryAudienceFilter(filter)}
+                          >
+                            <span className="inventoryOptionMark" aria-hidden="true" />
                             <span>{inventoryAudienceFilterLabel(filter)}</span>
-                          </label>
+                          </button>
                         ))}
                       </div>
                       <div className="inventoryOptionGroup">
                         <p>Product Type</p>
                         {INVENTORY_PRODUCT_FILTERS.map((filter) => (
-                          <label className="inventoryOption" key={filter}>
-                            <input
-                              checked={inventoryProductFilters.includes(filter)}
-                              type="checkbox"
-                              onChange={() => {
-                                setInventoryProductFilters((current) => (
-                                  current.includes(filter)
-                                    ? current.filter((item) => item !== filter)
-                                    : [...current, filter]
-                                ));
-                              }}
-                            />
+                          <button
+                            aria-pressed={inventoryProductFilters.includes(filter)}
+                            className={`inventoryOption ${inventoryProductFilters.includes(filter) ? "active" : ""}`}
+                            key={filter}
+                            type="button"
+                            onClick={() => toggleInventoryProductFilter(filter)}
+                          >
+                            <span className="inventoryOptionMark square" aria-hidden="true" />
                             <span>{filter}</span>
-                          </label>
+                          </button>
                         ))}
                       </div>
                     </div>
-                  </details>
+                    ) : null}
+                  </div>
                 </div>
                 {inventoryPageCount > 1 ? (
                   <div className="pagerControls" aria-label="Inventory page controls">
@@ -1994,7 +2056,12 @@ export default function Home() {
                   ))}
                 </div>
               ) : (
-                <p className="emptyNotice">No inventory items match the selected filters.</p>
+                <div className="emptyNotice">
+                  <span>No inventory items match the selected filters.</span>
+                  <button type="button" onClick={clearInventoryFilters}>
+                    Clear filters
+                  </button>
+                </div>
               )}
             </section>
           ) : null}

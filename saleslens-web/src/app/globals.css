@@ -1034,7 +1034,8 @@ select {
   position: relative;
 }
 
-.inventoryDropdown summary {
+.inventoryDropdown summary,
+.inventoryDropdownTrigger {
   align-items: center;
   background: rgba(255, 253, 248, 0.84);
   border: 1px solid rgba(113, 105, 96, 0.35);
@@ -1051,7 +1052,8 @@ select {
   display: none;
 }
 
-.inventoryDropdown summary::after {
+.inventoryDropdown summary::after,
+.inventoryDropdownTrigger::after {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-top: 5px solid var(--taupe);
@@ -1059,12 +1061,14 @@ select {
   margin-left: 0.15rem;
 }
 
-.inventoryDropdown[open] summary {
+.inventoryDropdown[open] summary,
+.inventoryDropdown.isOpen .inventoryDropdownTrigger {
   background: rgba(255, 253, 248, 0.98);
   border-color: rgba(36, 35, 33, 0.62);
 }
 
-.inventoryDropdown summary span {
+.inventoryDropdown summary span,
+.inventoryDropdownTrigger span {
   color: var(--taupe);
   font-size: 0.68rem;
   font-weight: 900;
@@ -1072,7 +1076,8 @@ select {
   text-transform: uppercase;
 }
 
-.inventoryDropdown summary strong {
+.inventoryDropdown summary strong,
+.inventoryDropdownTrigger strong {
   color: var(--charcoal);
   font-size: 0.78rem;
   font-weight: 900;
@@ -1127,6 +1132,8 @@ select {
 
 .inventoryOption {
   align-items: center;
+  background: transparent;
+  border: 0;
   color: var(--charcoal);
   cursor: pointer;
   display: flex;
@@ -1134,11 +1141,39 @@ select {
   font-weight: 850;
   gap: 0.5rem;
   padding: 0.26rem 0.1rem;
+  text-align: left;
+  width: 100%;
 }
 
 .inventoryOption input {
   accent-color: var(--charcoal);
   flex: 0 0 auto;
+}
+
+.inventoryOption.active {
+  color: var(--soft-black);
+}
+
+.inventoryOptionMark {
+  border: 1px solid rgba(113, 105, 96, 0.72);
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 11px;
+  position: relative;
+  width: 11px;
+}
+
+.inventoryOptionMark.square {
+  border-radius: 2px;
+}
+
+.inventoryOption.active .inventoryOptionMark::after {
+  background: var(--charcoal);
+  border-radius: inherit;
+  content: "";
+  inset: 2px;
+  position: absolute;
 }
 
 .pagerControls {
@@ -1166,11 +1201,25 @@ select {
 }
 
 .emptyNotice {
+  align-items: center;
   border: 1px solid rgba(216, 207, 193, 0.82);
   color: var(--taupe);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
   font-weight: 800;
   margin: 0;
   padding: 1.2rem;
+}
+
+.emptyNotice button {
+  background: var(--charcoal);
+  border: 1px solid var(--charcoal);
+  color: var(--paper);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.48rem 0.68rem;
+  text-transform: uppercase;
 }
 
 .changeBadge {
