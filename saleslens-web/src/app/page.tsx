@@ -696,7 +696,7 @@ export default function Home() {
     return recordsForPriorPeriod(recordsForCustomer, period, periodRecords);
   }, [period, periodRecords, recordsForCustomer]);
   const selectedPeriodTitle = reportPayload?.periodTitle ?? periodTitle(period, periodEndMonth, periodRecords);
-  const priorPeriodTitle = reportPayload?.priorPeriodTitle ?? priorTitle(period, periodEndMonth, periodRecords);
+  const priorPeriodTitle = reportPayload?.priorPeriodTitle ?? priorTitle(period, periodEndMonth, periodRecords, recordsForCustomer);
 
   const currentMetrics = useMemo(
     () => (reportPayload?.currentMetrics as MetricSet | undefined) ?? metricSet(periodRecords),
@@ -3034,10 +3034,14 @@ function periodTitle<T extends DatedRecord>(period: PeriodSelection | null, endM
   return yearLabel(period.year, endMonth);
 }
 
-function priorTitle<T extends DatedRecord>(period: PeriodSelection | null, endMonth: string | null, periodRecords: T[] = []) {
+function priorTitle<T extends DatedRecord>(period: PeriodSelection | null, endMonth: string | null, periodRecords: T[] = [], records: T[] = []) {
   if (!period) return "-";
   if (period.kind === "month") {
     const priorMonth = `${period.year - 1}${period.value.slice(4)}`;
+    if (records.length) {
+      const comparison = priorPeriodComparison(records, period, periodRecords);
+      if (comparison.usesFullMonth) return monthText(priorMonth);
+    }
     const range = priorYearComparisonRange(period, periodRecords);
     return range ? comparisonRangeTitle(range.startDate, range.endDate, priorMonth) : monthText(priorMonth);
   }
@@ -3101,11 +3105,23 @@ function recordsForSelectedPeriod<T extends DatedRecord>(records: T[], period: P
 
 function recordsForPriorPeriod<T extends DatedRecord>(records: T[], period: PeriodSelection, periodRecords: T[] = []) {
   if (period.kind === "month") {
-    const range = priorYearComparisonRange(period, periodRecords);
-    if (range) return recordsForDateRange(records, range.startDate, range.endDate);
-    return recordsForPeriod(records, `${period.year - 1}${period.value.slice(4)}`, "monthly");
+    return priorPeriodComparison(records, period, periodRecords).records;
   }
   return recordsForYear(records, period.year - 1);
+}
+
+function priorPeriodComparison<T extends DatedRecord>(records: T[], period: PeriodSelection, periodRecords: T[] = []) {
+  const priorMonth = `${period.year - 1}${period.value.slice(4)}`;
+  const fullMonthRecords = recordsForPeriod(records, priorMonth, "monthly");
+  const range = priorYearComparisonRange(period, periodRecords);
+  if (!range) return { records: fullMonthRecords, range: null, usesFullMonth: true };
+
+  const rangeRecords = recordsForDateRange(records, range.startDate, range.endDate);
+  if (rangeRecords.length || !fullMonthRecords.length) {
+    return { records: rangeRecords, range, usesFullMonth: false };
+  }
+
+  return { records: fullMonthRecords, range: null, usesFullMonth: true };
 }
 
 function recordsForYear<T extends DatedRecord>(records: T[], year: number) {
@@ -3152,7 +3168,18 @@ function priorYtdRecordsForPeriod<T extends DatedRecord>(records: T[], month: st
   const endDate = periodComparisonEndDate(month, periodRecords);
   if (!month || !endDate) return [];
   const priorYear = Number(month.slice(0, 4)) - 1;
-  return recordsForDateRange(records, `${priorYear}-01-01`, sameMonthDayInYear(endDate, priorYear));
+  const priorMonth = `${priorYear}${month.slice(4)}`;
+  const priorEndDate = sameMonthDayInYear(endDate, priorYear);
+  const rangedRecords = recordsForDateRange(records, `${priorYear}-01-01`, priorEndDate);
+  const priorMonthRecords = recordsForPeriod(records, priorMonth, "monthly");
+  const hasPriorMonthInRange = rangedRecords.some((record) => monthKey(record.transaction_date) === priorMonth);
+
+  if (hasPriorMonthInRange || !priorMonthRecords.length) return rangedRecords;
+
+  return [
+    ...rangedRecords.filter((record) => monthKey(record.transaction_date) !== priorMonth),
+    ...priorMonthRecords,
+  ];
 }
 
 function trailingSixMonthRecords(records: SalesRecord[], endMonth: string | null) {
@@ -3637,7 +3664,8 @@ function ytdPoints(records: SalesRecord[], month: string | null, periodRecords: 
   const prior = Array.from({ length: 12 }, () => 0);
   const currentYtdRecords = periodRecords.length ? currentYtdRecordsForPeriod(records, month, periodRecords) : currentYearRecords(records, month);
   const priorYtdRecords = periodRecords.length ? priorYtdRecordsForPeriod(records, month, periodRecords) : currentYearRecords(records, `${year - 1}${month.slice(4)}`);
-  const priorComparisonRange = periodRecords.length ? priorYearComparisonRange({ kind: "month", value: month, year }, periodRecords) : null;
+  const priorComparison = periodRecords.length ? priorPeriodComparison(records, { kind: "month", value: month, year }, periodRecords) : null;
+  const priorComparisonRange = priorComparison?.usesFullMonth ? null : priorComparison?.range ?? null;
 
   records.forEach((record) => {
     const recordMonth = monthKey(record.transaction_date);
