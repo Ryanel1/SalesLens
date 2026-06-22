@@ -1111,19 +1111,37 @@ function imageFilename(value: string) {
 }
 
 function topStyleRows(records: SalesRecord[], priorRecords: SalesRecord[]) {
-  const priorGroups = groupBy(priorRecords, styleKey);
-  return allStyleRows(records)
-    .slice(0, 10)
+  const currentRows = allStyleRows(records);
+  const priorRows = allStyleRows(priorRecords);
+  const currentByStyle = new Map(currentRows.map((row) => [row.style, row]));
+  const priorByStyle = new Map(priorRows.map((row) => [row.style, row]));
+  const styleKeys = new Set([...currentByStyle.keys(), ...priorByStyle.keys()]);
+
+  return [...styleKeys]
     .map((style) => {
-      const priorGroup = priorGroups.get(style.style) ?? [];
+      const current = currentByStyle.get(style);
+      const prior = priorByStyle.get(style);
       return {
-        ...style,
-        priorUnits: sum(priorGroup.map((record) => record.units ?? 0)),
-        priorSales: sum(priorGroup.map(amountValue)),
-        priorColorCount: uniqueCount(priorGroup.map(colorName)),
-        priorArtCount: uniqueCount(priorGroup.map((record) => clean(record.art_code))),
+        rank: 0,
+        style,
+        brand: current?.brand ?? prior?.brand ?? "",
+        sales: current?.sales ?? 0,
+        units: current?.units ?? 0,
+        transactions: current?.transactions ?? 0,
+        colorCount: current?.colorCount ?? 0,
+        artCount: current?.artCount ?? 0,
+        priorUnits: prior?.units ?? 0,
+        priorSales: prior?.sales ?? 0,
+        priorColorCount: prior?.colorCount ?? 0,
+        priorArtCount: prior?.artCount ?? 0,
       };
-    });
+    })
+    .sort(
+      (left, right) =>
+        Math.max(right.units, right.priorUnits) - Math.max(left.units, left.priorUnits) ||
+        Math.max(right.sales, right.priorSales) - Math.max(left.sales, left.priorSales),
+    )
+    .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 function allStyleRows(records: SalesRecord[]): TopStyle[] {

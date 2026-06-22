@@ -15,6 +15,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
+import { StyleSignals } from "@/components/StyleSignals";
 
 type RebelRagsImageMatch = {
   style: string;
@@ -2066,11 +2067,11 @@ export default function Home() {
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
-                <h3>Style Comparison</h3>
+                <h3>Style Signals</h3>
                 <p>
                   {styleStudyMode === "month"
-                    ? `Top 10 Styles: ${selectedPeriodTitle} vs ${priorPeriodTitle}`
-                    : "Top 10 Styles vs Last YTD"}
+                    ? `${selectedPeriodTitle} style movement vs ${priorPeriodTitle}`
+                    : "YTD style movement vs last year"}
                 </p>
               </div>
             </div>
@@ -2082,11 +2083,7 @@ export default function Home() {
                 YTD
               </button>
             </div>
-            <div className="styleComparisonGrid">
-              {(styleStudyMode === "month" ? periodStyleStudy : ytdStyleStudy).map((style) => (
-                <StyleComparisonCard key={style.style} style={style} compareLabel="LY" />
-              ))}
-            </div>
+            <StyleSignals styles={styleStudyMode === "month" ? periodStyleStudy : ytdStyleStudy} compareLabel="LY" />
           </section>
 
           <section className="sectionBlock" id="top-performing">
@@ -2710,58 +2707,6 @@ function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: ReturnType<typeo
         <strong>No sales</strong>
       )}
     </article>
-  );
-}
-
-function StyleComparisonCard({ style, compareLabel }: { style: TopStyle; compareLabel: string }) {
-  const maxUnits = Math.max(style.units, style.priorUnits, 1);
-  const unitDelta = style.units - style.priorUnits;
-  return (
-    <article className="styleCompareCard">
-      <div className="styleCompareTop">
-        <strong>#{style.rank} {style.style}</strong>
-        <span>{style.brand}</span>
-        <em className={changeClass(unitDelta)}>
-          {unitDelta >= 0 ? "+" : "-"}
-          {numberText(Math.abs(unitDelta))} units
-        </em>
-        <em className={changeClass(style.sales - style.priorSales)}>{currencyText(style.sales - style.priorSales)}</em>
-      </div>
-      <p>
-        CY:{" "}
-        <span className={changeClass(style.colorCount - style.priorColorCount)}>
-          {countText(style.colorCount, "Color", "Colors")}
-        </span>
-        ,{" "}
-        <span className={changeClass(style.artCount - style.priorArtCount)}>
-          {countText(style.artCount, "Artwork", "Artworks")}
-        </span>{" "}
-        | {compareLabel}:{" "}
-        <span className={changeClass(style.priorColorCount - style.colorCount)}>
-          {countText(style.priorColorCount, "Color", "Colors")}
-        </span>
-        ,{" "}
-        <span className={changeClass(style.priorArtCount - style.artCount)}>
-          {countText(style.priorArtCount, "Artwork", "Artworks")}
-        </span>
-      </p>
-      <div className="styleBars">
-        <CompareUnitBar label="CY" value={style.units} max={maxUnits} />
-        <CompareUnitBar label={compareLabel} value={style.priorUnits} max={maxUnits} secondary />
-      </div>
-    </article>
-  );
-}
-
-function CompareUnitBar({ label, value, max, secondary = false }: { label: string; value: number; max: number; secondary?: boolean }) {
-  return (
-    <div className="unitBar">
-      <span>{label}</span>
-      <div className={`barTrack ${secondary ? "secondary" : ""}`}>
-        <span style={{ width: `${Math.max(3, (value / max) * 100)}%` }} />
-      </div>
-      <strong>{numberText(value)}</strong>
-    </div>
   );
 }
 
@@ -3617,19 +3562,37 @@ function imageFilename(value: string) {
 }
 
 function topStyleRows(records: SalesRecord[], priorRecords: SalesRecord[]) {
-  const priorGroups = groupBy(priorRecords, styleKey);
-  return allStyleRows(records)
-    .slice(0, 10)
+  const currentRows = allStyleRows(records);
+  const priorRows = allStyleRows(priorRecords);
+  const currentByStyle = new Map(currentRows.map((row) => [row.style, row]));
+  const priorByStyle = new Map(priorRows.map((row) => [row.style, row]));
+  const styleKeys = new Set([...currentByStyle.keys(), ...priorByStyle.keys()]);
+
+  return [...styleKeys]
     .map((style) => {
-      const priorGroup = priorGroups.get(style.style) ?? [];
+      const current = currentByStyle.get(style);
+      const prior = priorByStyle.get(style);
       return {
-        ...style,
-        priorUnits: sum(priorGroup.map((record) => record.units ?? 0)),
-        priorSales: sum(priorGroup.map(amountValue)),
-        priorColorCount: uniqueCount(priorGroup.map(colorName)),
-        priorArtCount: uniqueCount(priorGroup.map((record) => clean(record.art_code))),
+        rank: 0,
+        style,
+        brand: current?.brand ?? prior?.brand ?? "",
+        sales: current?.sales ?? 0,
+        units: current?.units ?? 0,
+        transactions: current?.transactions ?? 0,
+        colorCount: current?.colorCount ?? 0,
+        artCount: current?.artCount ?? 0,
+        priorUnits: prior?.units ?? 0,
+        priorSales: prior?.sales ?? 0,
+        priorColorCount: prior?.colorCount ?? 0,
+        priorArtCount: prior?.artCount ?? 0,
       };
-    });
+    })
+    .sort(
+      (left, right) =>
+        Math.max(right.units, right.priorUnits) - Math.max(left.units, left.priorUnits) ||
+        Math.max(right.sales, right.priorSales) - Math.max(left.sales, left.priorSales),
+    )
+    .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 function allStyleRows(records: SalesRecord[]): TopStyle[] {

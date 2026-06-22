@@ -215,7 +215,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </ReportSection>
         ) : null}
 
-        <ReportSection title="Style Comparison" subtitle="Style-level units, sales, colors, and artwork breadth.">
+        <ReportSection title="Style Signals" subtitle="Growth, decline, and assortment movement by style.">
           <StyleStudyTabs
             monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
             ytdStyles={payload.styleStudyYtd ?? payload.topStyles}

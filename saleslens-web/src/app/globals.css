@@ -2467,6 +2467,148 @@ select {
   gap: 0.45rem;
 }
 
+.styleSignalsGrid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.styleSignalPanel {
+  background: rgba(255, 253, 248, 0.78);
+  border: var(--hairline);
+  border-left: 4px solid var(--steel);
+  border-radius: 10px;
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.9rem;
+}
+
+.styleSignalPanel.growth {
+  border-left-color: var(--account-accent, var(--steel-dark));
+}
+
+.styleSignalPanel.risk {
+  border-left-color: var(--charcoal);
+}
+
+.styleSignalPanel.neutral {
+  border-left-color: var(--steel);
+}
+
+.styleSignalHeader {
+  align-items: start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.styleSignalHeader h4 {
+  color: var(--soft-black);
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0 0 0.18rem;
+}
+
+.styleSignalHeader p,
+.styleSignalEmpty {
+  color: var(--taupe);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.styleSignalHeader > span {
+  align-items: center;
+  background: color-mix(in srgb, var(--stone) 48%, transparent);
+  border: var(--hairline);
+  border-radius: 999px;
+  color: var(--taupe);
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 900;
+  height: 1.55rem;
+  justify-content: center;
+  min-width: 1.55rem;
+}
+
+.styleSignalRows {
+  display: grid;
+  gap: 1px;
+}
+
+.styleSignalRow {
+  align-items: center;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  border-top: var(--hairline);
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 1.65rem minmax(82px, 0.7fr) minmax(145px, 1fr) minmax(150px, 1fr) minmax(108px, 0.66fr);
+  min-height: 48px;
+  padding: 0.48rem 0;
+}
+
+.styleSignalRank {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.styleSignalIdentity,
+.styleSignalMeasure,
+.styleSignalBreadth,
+.styleSignalDelta {
+  display: grid;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.styleSignalIdentity strong {
+  color: var(--soft-black);
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.styleSignalIdentity span,
+.styleSignalMeasure span,
+.styleSignalBreadth span,
+.styleSignalDelta span {
+  color: var(--taupe);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.styleSignalMeasure strong,
+.styleSignalBreadth span,
+.styleSignalDelta strong {
+  color: var(--charcoal);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.styleSignalBreadth span {
+  white-space: nowrap;
+}
+
+.styleSignalDelta {
+  justify-items: end;
+  text-align: right;
+}
+
+.styleSignalDelta.positive strong {
+  color: var(--positive-text, var(--steel-dark));
+}
+
+.styleSignalDelta.negative strong {
+  color: var(--clay);
+}
+
 .artGrid {
   display: grid;
   gap: 1rem;
@@ -2794,6 +2936,7 @@ tbody tr:nth-child(even) {
   .ytdTrackerTiles,
   .forecastGrid,
   .styleComparisonGrid,
+  .styleSignalsGrid,
   .weeklyScorecardRow,
   .inventoryCard,
   .inventorySummaryGrid,
@@ -2817,6 +2960,18 @@ tbody tr:nth-child(even) {
 
   .loginShell {
     grid-template-columns: 1fr;
+  }
+
+  .styleSignalRow {
+    grid-template-columns: 1.6rem 1fr;
+  }
+
+  .styleSignalMeasure,
+  .styleSignalBreadth,
+  .styleSignalDelta {
+    grid-column: 2;
+    justify-items: start;
+    text-align: left;
   }
 
   .controlDock label,
@@ -4309,6 +4464,15 @@ label,
 
 .styleCompareCard {
   padding: 0.72rem;
+}
+
+.styleSignalPanel {
+  padding: 0.78rem;
+}
+
+.styleSignalRow {
+  min-height: 44px;
+  padding: 0.4rem 0;
 }
 
 .inventoryControls {
