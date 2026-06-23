@@ -1545,13 +1545,21 @@ export default function Home() {
               <span className="sideNavIcon sideNavIconChart" aria-hidden="true" />
               <span>Scorecards</span>
             </a>
+            <a className="sideNavItem" href="#style-signals">
+              <span className="sideNavIcon sideNavIconChart" aria-hidden="true" />
+              <span>Style Signals</span>
+            </a>
             <a className="sideNavItem" href="#top-performing">
               <span className="sideNavIcon sideNavIconGrid" aria-hidden="true" />
               <span>Top Performers</span>
             </a>
-            <a className="sideNavItem" href="#inventory-section">
+            <a className="sideNavItem" href="#inventory-snapshot">
               <span className="sideNavIcon sideNavIconBox" aria-hidden="true" />
-              <span>Inventory</span>
+              <span>Inventory Snapshot</span>
+            </a>
+            <a className="sideNavItem" href="#inventory-tracker">
+              <span className="sideNavIcon sideNavIconGrid" aria-hidden="true" />
+              <span>Inventory Tracker</span>
             </a>
             <button className="sideNavItem" type="button" onClick={openUploadHistoryManager}>
               <span className="sideNavIcon sideNavIconUpload" aria-hidden="true" />
@@ -2065,7 +2073,7 @@ export default function Home() {
             </section>
           ) : null}
 
-          <section className="sectionBlock">
+          <section className="sectionBlock" id="style-signals">
             <div className="sectionTitle">
               <div>
                 <h3>Style Signals</h3>
@@ -2144,7 +2152,7 @@ export default function Home() {
           </section>
 
           {inventorySnapshot ? (
-            <section className="sectionBlock inventorySection" id="inventory-section">
+            <section className="sectionBlock inventorySection" id="inventory-snapshot">
               <div className="sectionTitle">
                 <div>
                   <h3>Inventory Snapshot</h3>
@@ -2157,7 +2165,7 @@ export default function Home() {
           ) : null}
 
           {inventoryTracker.length || inventoryTrackerMeta ? (
-            <section className="sectionBlock">
+            <section className="sectionBlock" id="inventory-tracker">
               <div className="sectionTitle">
                 <div>
                   <h3>Inventory Tracker</h3>
