@@ -15,7 +15,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
-import { MonthlyPulseChart } from "@/components/MonthlyPulseChart";
 import { StyleSignals } from "@/components/StyleSignals";
 
 type RebelRagsImageMatch = {
@@ -2456,44 +2455,6 @@ function SalesDriverGrid({
   periodTitle: string;
 }) {
   const salesDelta = current.sales - prior.sales;
-  const pulseMetrics = [
-    {
-      label: "Sales",
-      current: current.sales,
-      prior: prior.sales,
-      currentText: currencyText(current.sales),
-      priorText: currencyText(prior.sales),
-      deltaText: changeText(current.sales, prior.sales),
-      tone: salesDelta,
-    },
-    {
-      label: "Units",
-      current: current.units,
-      prior: prior.units,
-      currentText: numberText(current.units),
-      priorText: numberText(prior.units),
-      deltaText: changeText(current.units, prior.units),
-      tone: current.units - prior.units,
-    },
-    {
-      label: "Transactions",
-      current: current.transactions,
-      prior: prior.transactions,
-      currentText: numberText(current.transactions),
-      priorText: numberText(prior.transactions),
-      deltaText: changeText(current.transactions, prior.transactions),
-      tone: current.transactions - prior.transactions,
-    },
-    {
-      label: "Avg Transaction",
-      current: drivers.avgSalePerTransaction,
-      prior: drivers.priorAvgSalePerTransaction,
-      currentText: currencyText(drivers.avgSalePerTransaction),
-      priorText: currencyText(drivers.priorAvgSalePerTransaction),
-      deltaText: changeText(drivers.avgSalePerTransaction, drivers.priorAvgSalePerTransaction),
-      tone: drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction,
-    },
-  ];
 
   return (
     <div className="salesDriverGrid">
@@ -2521,7 +2482,6 @@ function SalesDriverGrid({
             <strong>{currencyText(prior.sales)}</strong>
           </span>
         </div>
-        <MonthlyPulseChart metrics={pulseMetrics} />
       </article>
       <TopSalesItemsCard bestDay={bestDay} periodTitle={periodTitle} />
       <div className="monthlyDriverMetricsRow">
