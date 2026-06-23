@@ -1,7 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700;800;900&display=swap");
 
 :root {
   color-scheme: light;
+  --font-main: "Inconsolata", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --canvas: #f6f2ea;
   --paper: #fffdf8;
   --paper-soft: #fbf8f1;
@@ -30,7 +31,7 @@ body {
     url("/images/campus-stadium-night-blur.jpg") center / cover fixed,
     var(--canvas);
   color: var(--charcoal);
-  font-family: "Inter", "Montserrat", "Roboto", Arial, Helvetica, sans-serif;
+  font-family: var(--font-main);
   isolation: isolate;
   line-height: 1.55;
   min-height: 100vh;
@@ -43,8 +44,10 @@ body > * {
 
 button,
 input,
-select {
-  font: inherit;
+select,
+textarea {
+  font-family: var(--font-main);
+  font-size: inherit;
 }
 
 button,
@@ -77,8 +80,8 @@ p {
 h1,
 h2,
 h3 {
-  font-family: "Inter", "Montserrat", "Roboto", Arial, Helvetica, sans-serif;
-  letter-spacing: -0.04em;
+  font-family: var(--font-main);
+  letter-spacing: 0;
   line-height: 1.04;
 }
 
