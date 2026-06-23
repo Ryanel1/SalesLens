@@ -1933,6 +1933,105 @@ select {
   white-space: nowrap;
 }
 
+.monthlyPulseChart {
+  border: 1px solid rgba(231, 222, 209, 0.72);
+  display: grid;
+  gap: 0.85rem;
+  margin-top: auto;
+  padding: 1rem;
+}
+
+.monthlyPulseHeader {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.monthlyPulseHeader span,
+.monthlyPulseLabel strong {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.monthlyPulseHeader small {
+  color: var(--taupe);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.monthlyPulseRows {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.monthlyPulseRow {
+  align-items: center;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(112px, 0.9fr) minmax(180px, 1.55fr) minmax(170px, 0.95fr);
+}
+
+.monthlyPulseLabel {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.monthlyPulseLabel span {
+  color: var(--taupe);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.monthlyPulseLabel span.positive {
+  color: var(--steel);
+}
+
+.monthlyPulseLabel span.negative {
+  color: var(--clay);
+}
+
+.monthlyPulseBars {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.monthlyPulseBar {
+  border-radius: 999px;
+  display: block;
+  height: 7px;
+}
+
+.monthlyPulseBar.current {
+  background: var(--account-accent);
+}
+
+.monthlyPulseBar.prior {
+  background: var(--account-secondary);
+}
+
+.monthlyPulseValues {
+  display: grid;
+  gap: 0.18rem;
+  justify-items: end;
+}
+
+.monthlyPulseValues span {
+  color: var(--taupe);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.monthlyPulseValues span:first-child {
+  color: var(--soft-black);
+  font-size: 0.84rem;
+  font-weight: 950;
+}
+
 .topSalesItemsCard {
   align-content: start;
   display: grid;
@@ -2972,6 +3071,15 @@ tbody tr:nth-child(even) {
     grid-column: 2;
     justify-items: start;
     text-align: left;
+  }
+
+  .monthlyPulseRow {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .monthlyPulseValues {
+    justify-items: start;
   }
 
   .controlDock label,

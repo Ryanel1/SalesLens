@@ -17,6 +17,7 @@ import {
   type SnapshotWeeklyScorecardRow,
   type SnapshotYtdInsights,
 } from "@/lib/reportSnapshot";
+import { MonthlyPulseChart } from "@/components/MonthlyPulseChart";
 import { StyleStudyTabs } from "./StyleStudyTabs";
 
 export const dynamic = "force-dynamic";
@@ -447,6 +448,44 @@ function SalesDriverGrid({
   const avgSalePerUnit = drivers.avgSalePerUnit ?? (current.units ? current.sales / current.units : 0);
   const priorAvgSalePerUnit = drivers.priorAvgSalePerUnit ?? (prior.units ? prior.sales / prior.units : 0);
   const salesDelta = current.sales - prior.sales;
+  const pulseMetrics = [
+    {
+      label: "Sales",
+      current: current.sales,
+      prior: prior.sales,
+      currentText: currencyText(current.sales),
+      priorText: currencyText(prior.sales),
+      deltaText: changeText(current.sales, prior.sales),
+      tone: salesDelta,
+    },
+    {
+      label: "Units",
+      current: current.units,
+      prior: prior.units,
+      currentText: numberText(current.units),
+      priorText: numberText(prior.units),
+      deltaText: changeText(current.units, prior.units),
+      tone: current.units - prior.units,
+    },
+    {
+      label: "Transactions",
+      current: current.transactions,
+      prior: prior.transactions,
+      currentText: numberText(current.transactions),
+      priorText: numberText(prior.transactions),
+      deltaText: changeText(current.transactions, prior.transactions),
+      tone: current.transactions - prior.transactions,
+    },
+    {
+      label: "Avg Transaction",
+      current: avgSalePerTransaction,
+      prior: priorAvgSalePerTransaction,
+      currentText: currencyText(avgSalePerTransaction),
+      priorText: currencyText(priorAvgSalePerTransaction),
+      deltaText: changeText(avgSalePerTransaction, priorAvgSalePerTransaction),
+      tone: avgSalePerTransaction - priorAvgSalePerTransaction,
+    },
+  ];
 
   return (
     <div className="salesDriverGrid">
@@ -474,6 +513,7 @@ function SalesDriverGrid({
             <strong>{currencyText(prior.sales)}</strong>
           </span>
         </div>
+        <MonthlyPulseChart metrics={pulseMetrics} />
       </article>
       <TopSalesItemsCard bestDay={bestDay} periodTitle={periodTitle} />
       <div className="monthlyDriverMetricsRow">
