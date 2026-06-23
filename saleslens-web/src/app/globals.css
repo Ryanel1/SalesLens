@@ -5324,3 +5324,89 @@ button {
     gap: 0.82rem;
   }
 }
+
+.monthlyStoryCard .monthlyStoryNote {
+  color: var(--taupe);
+  font-size: 0.98rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.65;
+  text-transform: none;
+}
+
+.monthlyStoryLead span,
+.monthlyStoryLead em {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+.weeklyDateRail {
+  border-radius: 0 0 12px 0;
+  gap: 0.58rem;
+  min-height: 2.05rem;
+  padding: 0.42rem 0.78rem 0.44rem;
+}
+
+.weeklyDateRail span {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.weeklyDateRail strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.weeklyDateRail em {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.styleSignalHeader h4 {
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+
+.styleSignalHeader p,
+.styleSignalEmpty {
+  font-size: 0.84rem;
+  font-weight: 550;
+}
+
+.styleSignalHeader > span {
+  font-size: 0.76rem;
+  height: 1.72rem;
+  min-width: 1.72rem;
+}
+
+.styleSignalRow {
+  min-height: 50px;
+  padding: 0.5rem 0;
+}
+
+.styleSignalRank {
+  font-size: 0.82rem;
+}
+
+.styleSignalIdentity strong {
+  font-size: 1.04rem;
+}
+
+.styleSignalIdentity span,
+.styleSignalMeasure span,
+.styleSignalBreadth span,
+.styleSignalDelta span {
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.styleSignalMeasure strong,
+.styleSignalBreadth span,
+.styleSignalDelta strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
