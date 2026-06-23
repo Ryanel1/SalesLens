@@ -711,6 +711,7 @@ export default function Home() {
   }, [period, periodRecords, recordsForCustomer]);
   const selectedPeriodTitle = reportPayload?.periodTitle ?? periodTitle(period, periodEndMonth, periodRecords);
   const priorPeriodTitle = reportPayload?.priorPeriodTitle ?? priorTitle(period, periodEndMonth, periodRecords, recordsForCustomer);
+  const topArtPeriodTitle = reportPayload?.topArtPeriodTitle ?? topPerformingRangeTitle(period, periodEndMonth, periodRecords);
 
   const currentMetrics = useMemo(
     () => (reportPayload?.currentMetrics as MetricSet | undefined) ?? metricSet(periodRecords),
@@ -2052,7 +2053,6 @@ export default function Home() {
             </div>
 
             <SalesDriverGrid
-              bestDay={bestDay}
               current={currentMetrics}
               drivers={monthlyDrivers}
               periodTitle={selectedPeriodTitle}
@@ -2099,7 +2099,7 @@ export default function Home() {
               <div>
                 <h3>Top Performing Styles</h3>
                 <p>
-                  {selectedPeriodTitle} Top 30 by {topArtSort === "units" ? "Units" : "Dollars"}: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
+                  {topArtPeriodTitle} Top 30 by {topArtSort === "units" ? "Units" : "Dollars"}: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
                   {currencyText(sum(topArt.map((row) => row.sales)))}
                 </p>
               </div>
@@ -2441,55 +2441,63 @@ function SalesForecastGrid({ forecast }: { forecast: SalesForecast }) {
   );
 }
 
-function SalesDriverGrid({
-  bestDay,
-  current,
-  prior,
-  drivers,
-  periodTitle,
-}: {
-  bestDay: ReturnType<typeof bestSalesDay>;
+function SalesDriverGrid({ current, prior, drivers, periodTitle }: {
   current: MetricSet;
   prior: MetricSet;
   drivers: ReturnType<typeof monthlyDriverMetrics>;
   periodTitle: string;
 }) {
   const salesDelta = current.sales - prior.sales;
+  const unitDelta = current.units - prior.units;
+  const transactionDelta = current.transactions - prior.transactions;
+  const avgTransactionDelta = drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction;
+  const maxSales = Math.max(current.sales, prior.sales, 1);
+  const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
+  const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
+  const monthlyStory = [
+    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
+    `Units are ${changeText(current.units, prior.units).toLowerCase()} while transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
+    `Average transaction is ${currencyText(drivers.avgSalePerTransaction)}, compared with ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`,
+  ].join(" ");
 
   return (
     <div className="salesDriverGrid">
-      <article className="driverTile monthlySalesCard">
+      <article className="driverTile monthlySalesCard monthlyStoryCard">
         <div className="monthlySalesHeader">
-          <p>Sales</p>
+          <p>Monthly Story</p>
+          <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
         </div>
-        <div className="monthlySalesStory">
-          <span>
-            <em>Sales Change</em>
-            <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
-          </span>
-          <span>
-            <em>Dollar Gap</em>
-            <strong className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)}</strong>
-          </span>
-        </div>
-        <div className="monthlySalesPair">
-          <span>
-            <em>{periodTitle}</em>
+        <div className="monthlyStoryBoard">
+          <div className="monthlyStoryLead">
+            <span>{periodTitle}</span>
             <strong>{currencyText(current.sales)}</strong>
-          </span>
-          <span>
-            <em>Last Year</em>
-            <strong>{currencyText(prior.sales)}</strong>
-          </span>
+            <em className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)} vs LY</em>
+          </div>
+          <div className="monthlyComparisonBars" aria-label="Current sales compared with last year">
+            <div className="monthlyComparisonRow">
+              <span>{periodTitle}</span>
+              <div className="monthlyBarTrack">
+                <i style={{ width: `${currentSalesWidth}%` }} />
+              </div>
+              <strong>{currencyText(current.sales)}</strong>
+            </div>
+            <div className="monthlyComparisonRow prior">
+              <span>Last Year</span>
+              <div className="monthlyBarTrack">
+                <i style={{ width: `${priorSalesWidth}%` }} />
+              </div>
+              <strong>{currencyText(prior.sales)}</strong>
+            </div>
+          </div>
+          <p className="monthlyStoryNote">{monthlyStory}</p>
         </div>
       </article>
-      <TopSalesItemsCard bestDay={bestDay} periodTitle={periodTitle} />
       <div className="monthlyDriverMetricsRow">
         <DriverTile
           label="Transactions"
           value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
           details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
-          tone={current.transactions - prior.transactions}
+          tone={transactionDelta}
         />
         <DriverTile
           label="Units"
@@ -2498,7 +2506,7 @@ function SalesDriverGrid({
             `Change: ${changeText(current.units, prior.units)}`,
             `Avg $ / unit: ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY`,
           ]}
-          tone={current.units - prior.units}
+          tone={unitDelta}
         />
         <DriverTile
           label="Avg Transaction"
@@ -2507,7 +2515,7 @@ function SalesDriverGrid({
             `${decimalText(drivers.avgUnitsPerTransaction)} units / transaction`,
             `LY: ${currencyText(drivers.priorAvgSalePerTransaction)} | ${decimalText(drivers.priorAvgUnitsPerTransaction)} units`,
           ]}
-          tone={drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction}
+          tone={avgTransactionDelta}
         />
         <DriverTile
           label="Top Style Dependence"
@@ -3037,6 +3045,31 @@ function periodTitle<T extends DatedRecord>(period: PeriodSelection | null, endM
     return range ? comparisonRangeTitle(range.startDate, range.endDate, period.value) : monthText(period.value);
   }
   return yearLabel(period.year, endMonth);
+}
+
+function topPerformingRangeTitle<T extends DatedRecord>(period: PeriodSelection | null, endMonth: string | null, periodRecords: T[] = []) {
+  if (!period) return "-";
+  if (period.kind !== "month") return yearLabel(period.year, endMonth);
+
+  const range = recordDateRange(periodRecords.filter((record) => monthKey(record.transaction_date) === period.value));
+  if (!range) return monthText(period.value);
+
+  return fullMonthDayRangeText(`${period.value}-01`, range.endDate);
+}
+
+function fullMonthDayRangeText(startDate: string, endDate: string) {
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  const startMonth = new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" }).format(start);
+  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  const sameMonth = sameYear && start.getUTCMonth() === end.getUTCMonth();
+
+  if (!sameMonth) return dateRangeText(start, end);
+  if (dateKey(start) === dateKey(end)) {
+    return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(start);
+  }
+
+  return `${startMonth} ${start.getUTCDate()}-${end.getUTCDate()}, ${end.getUTCFullYear()}`;
 }
 
 function priorTitle<T extends DatedRecord>(period: PeriodSelection | null, endMonth: string | null, periodRecords: T[] = [], records: T[] = []) {

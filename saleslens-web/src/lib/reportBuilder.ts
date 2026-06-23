@@ -429,6 +429,7 @@ export function buildReportPayload({
     periodTitle: selectedPeriodTitle,
     priorPeriodTitle,
     previousMonthTitle: priorPeriodTitle,
+    topArtPeriodTitle: topPerformingRangeTitle(period, periodEndMonth, periodRecords),
     topArtSort,
     lastUploaded: latestDate(filteredRecords),
     currentMetrics,
@@ -587,6 +588,31 @@ function periodTitle(period: PeriodSelection | null, endMonth: string | null, pe
     return range ? comparisonRangeTitle(range.startDate, range.endDate, period.value) : monthText(period.value);
   }
   return yearLabel(period.year, endMonth);
+}
+
+function topPerformingRangeTitle(period: PeriodSelection | null, endMonth: string | null, periodRecords: SalesRecord[] = []) {
+  if (!period) return "-";
+  if (period.kind !== "month") return yearLabel(period.year, endMonth);
+
+  const range = recordDateRange(periodRecords.filter((record) => monthKey(record.transaction_date) === period.value));
+  if (!range) return monthText(period.value);
+
+  return fullMonthDayRangeText(`${period.value}-01`, range.endDate);
+}
+
+function fullMonthDayRangeText(startDate: string, endDate: string) {
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  const startMonth = new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" }).format(start);
+  const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
+  const sameMonth = sameYear && start.getUTCMonth() === end.getUTCMonth();
+
+  if (!sameMonth) return dateRangeText(start, end);
+  if (dateKey(start) === dateKey(end)) {
+    return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(start);
+  }
+
+  return `${startMonth} ${start.getUTCDate()}-${end.getUTCDate()}, ${end.getUTCFullYear()}`;
 }
 
 function priorTitle(period: PeriodSelection | null, endMonth: string | null, periodRecords: SalesRecord[] = [], records: SalesRecord[] = []) {

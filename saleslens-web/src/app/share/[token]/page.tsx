@@ -197,7 +197,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         >
           {payload.monthlyDrivers ? (
             <SalesDriverGrid
-              bestDay={payload.bestDay}
               current={payload.currentMetrics}
               drivers={payload.monthlyDrivers}
               periodTitle={payload.periodTitle}
@@ -228,7 +227,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
 
         <ReportSection
           title="Top Performing Styles"
-          subtitle={`${payload.periodTitle} Top 30 by ${payload.topArtSort === "dollars" ? "Dollars" : "Units"}: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
+          subtitle={`${payload.topArtPeriodTitle ?? payload.periodTitle} Top 30 by ${payload.topArtSort === "dollars" ? "Dollars" : "Units"}: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
         >
           <div className="artGrid">
             {payload.topArt.map((row) => (
@@ -428,13 +427,11 @@ function SalesForecastGrid({ forecast }: { forecast: SnapshotSalesForecast }) {
 }
 
 function SalesDriverGrid({
-  bestDay,
   current,
   prior,
   drivers,
   periodTitle,
 }: {
-  bestDay: SnapshotBestDay;
   current: SnapshotMetricSet;
   prior: SnapshotMetricSet;
   drivers: SnapshotMonthlyDrivers;
@@ -447,41 +444,56 @@ function SalesDriverGrid({
   const avgSalePerUnit = drivers.avgSalePerUnit ?? (current.units ? current.sales / current.units : 0);
   const priorAvgSalePerUnit = drivers.priorAvgSalePerUnit ?? (prior.units ? prior.sales / prior.units : 0);
   const salesDelta = current.sales - prior.sales;
+  const unitDelta = current.units - prior.units;
+  const transactionDelta = current.transactions - prior.transactions;
+  const avgTransactionDelta = avgSalePerTransaction - priorAvgSalePerTransaction;
+  const maxSales = Math.max(current.sales, prior.sales, 1);
+  const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
+  const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
+  const monthlyStory = [
+    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
+    `Units are ${changeText(current.units, prior.units).toLowerCase()} while transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
+    `Average transaction is ${currencyText(avgSalePerTransaction)}, compared with ${currencyText(priorAvgSalePerTransaction)} LY.`,
+  ].join(" ");
 
   return (
     <div className="salesDriverGrid">
-      <article className="driverTile monthlySalesCard">
+      <article className="driverTile monthlySalesCard monthlyStoryCard">
         <div className="monthlySalesHeader">
-          <p>Sales</p>
+          <p>Monthly Story</p>
+          <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
         </div>
-        <div className="monthlySalesStory">
-          <span>
-            <em>Sales Change</em>
-            <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
-          </span>
-          <span>
-            <em>Dollar Gap</em>
-            <strong className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)}</strong>
-          </span>
-        </div>
-        <div className="monthlySalesPair">
-          <span>
-            <em>{periodTitle}</em>
+        <div className="monthlyStoryBoard">
+          <div className="monthlyStoryLead">
+            <span>{periodTitle}</span>
             <strong>{currencyText(current.sales)}</strong>
-          </span>
-          <span>
-            <em>Last Year</em>
-            <strong>{currencyText(prior.sales)}</strong>
-          </span>
+            <em className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)} vs LY</em>
+          </div>
+          <div className="monthlyComparisonBars" aria-label="Current sales compared with last year">
+            <div className="monthlyComparisonRow">
+              <span>{periodTitle}</span>
+              <div className="monthlyBarTrack">
+                <i style={{ width: `${currentSalesWidth}%` }} />
+              </div>
+              <strong>{currencyText(current.sales)}</strong>
+            </div>
+            <div className="monthlyComparisonRow prior">
+              <span>Last Year</span>
+              <div className="monthlyBarTrack">
+                <i style={{ width: `${priorSalesWidth}%` }} />
+              </div>
+              <strong>{currencyText(prior.sales)}</strong>
+            </div>
+          </div>
+          <p className="monthlyStoryNote">{monthlyStory}</p>
         </div>
       </article>
-      <TopSalesItemsCard bestDay={bestDay} periodTitle={periodTitle} />
       <div className="monthlyDriverMetricsRow">
         <DriverTile
           label="Transactions"
           value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
           details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
-          tone={current.transactions - prior.transactions}
+          tone={transactionDelta}
         />
         <DriverTile
           label="Units"
@@ -490,7 +502,7 @@ function SalesDriverGrid({
             `Change: ${changeText(current.units, prior.units)}`,
             `Avg $ / unit: ${currencyText(avgSalePerUnit)} vs ${currencyText(priorAvgSalePerUnit)} LY`,
           ]}
-          tone={current.units - prior.units}
+          tone={unitDelta}
         />
         <DriverTile
           label="Avg Transaction"
@@ -499,7 +511,7 @@ function SalesDriverGrid({
             `${decimalText(avgUnitsPerTransaction)} units / transaction`,
             `LY: ${currencyText(priorAvgSalePerTransaction)} | ${decimalText(priorAvgUnitsPerTransaction)} units`,
           ]}
-          tone={avgSalePerTransaction - priorAvgSalePerTransaction}
+          tone={avgTransactionDelta}
         />
         <DriverTile
           label="Top Style Dependence"

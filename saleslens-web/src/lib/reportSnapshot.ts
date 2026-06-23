@@ -221,6 +221,7 @@ export type ReportSnapshotPayload = {
   periodTitle: string;
   priorPeriodTitle: string;
   previousMonthTitle?: string;
+  topArtPeriodTitle?: string;
   topArtSort?: "units" | "dollars";
   lastUploaded: string | null;
   currentMetrics: SnapshotMetricSet;
