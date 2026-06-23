@@ -5500,3 +5500,49 @@ button {
     min-height: 340px;
   }
 }
+
+/* Weekly rows need more room for product callouts than for the date tab area. */
+.weeklyScorecardRow {
+  grid-template-columns: minmax(190px, 0.62fr) minmax(230px, 0.62fr) minmax(560px, 1.9fr);
+}
+
+.weeklyTopProducts {
+  padding-left: clamp(1.1rem, 1.6vw, 1.45rem);
+  padding-right: clamp(1.1rem, 1.6vw, 1.45rem);
+}
+
+.weeklyTopProductList {
+  gap: clamp(0.6rem, 0.9vw, 0.8rem);
+}
+
+.weeklyTopProduct {
+  gap: 0.58rem;
+  grid-template-columns: 50px minmax(0, 1fr);
+  min-height: 66px;
+  padding: 0.42rem 0.52rem;
+}
+
+.weeklyTopProduct img,
+.weeklyTopProductPlaceholder {
+  height: 50px;
+  width: 50px;
+}
+
+.weeklyTopProduct strong,
+.weeklyTopProduct em,
+.weeklyTopProduct small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weeklyTopProduct em,
+.weeklyTopProduct small {
+  font-size: 0.72rem;
+}
+
+@media (max-width: 1320px) {
+  .weeklyScorecardRow {
+    grid-template-columns: minmax(180px, 0.58fr) minmax(220px, 0.6fr) minmax(500px, 1.82fr);
+  }
+}
