@@ -65,8 +65,6 @@ type UploadHistoryRow = {
   created_at: string;
 };
 
-type SalesForecast = NonNullable<ReportSnapshotPayload["salesForecast"]>;
-
 type IdleWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
   cancelIdleCallback?: (handle: number) => void;
@@ -131,6 +129,25 @@ type InventoryAudienceFilter = "All" | "Mens" | "Womens" | "Youth";
 type InventoryProductCategory = "Fleece" | "Reverse Weave" | "Tees" | "Other";
 type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees" | "Namedrop";
 type TopArtSort = "units" | "dollars";
+type ProductGalleryView = "top-sellers" | "inventory" | "low-stock" | "growth";
+type ProductGallerySort = "units" | "dollars" | "inventory-high" | "inventory-low";
+
+type ProductGalleryItem = {
+  rank: number;
+  key: string;
+  style: string;
+  brand: string;
+  color: string;
+  artCode: string;
+  monthUnits: number;
+  monthSales: number;
+  ytdUnits: number;
+  ytdSales: number;
+  priorYearUnits: number | null;
+  inventoryUnits: number | null;
+  imageUrl: string | null;
+  productUrl: string | null;
+};
 
 type TopStyle = MetricSet & {
   rank: number;
@@ -414,8 +431,9 @@ export default function Home() {
   const [inventoryPage, setInventoryPage] = useState(1);
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
-  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"sort" | "filter" | null>(null);
+  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"view" | "sort" | "filter" | null>(null);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
+  const [productGalleryView, setProductGalleryView] = useState<ProductGalleryView>("top-sellers");
   const [dashboardShell, setDashboardShell] = useState<DashboardShellSummary>(EMPTY_DASHBOARD_SHELL);
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [serverReport, setServerReport] = useState<ServerReportState | null>(null);
@@ -772,6 +790,69 @@ export default function Home() {
   const inventoryPageEnd = inventoryTrackerMeta?.pageEnd ?? 0;
   const inventoryTrackerTotalItems = inventoryTrackerMeta?.totalItems ?? inventoryTracker.length;
   const inventoryTrackerTotalUnits = inventoryTrackerMeta?.totalUnits ?? sum(inventoryTracker.map((row) => row.inventoryUnits));
+  const productGalleryUsesInventory = productGalleryView === "inventory" || productGalleryView === "low-stock";
+  const topSellerGalleryRows = useMemo<ProductGalleryItem[]>(
+    () =>
+      topArt.map((row) => ({
+        rank: row.rank,
+        key: row.key,
+        style: row.style,
+        brand: row.brand,
+        color: row.color,
+        artCode: row.artCode,
+        monthUnits: row.units,
+        monthSales: row.sales,
+        ytdUnits: row.cyUnits,
+        ytdSales: row.cySales,
+        priorYearUnits: null,
+        inventoryUnits: row.inventoryUnits,
+        imageUrl: row.imageUrl,
+        productUrl: row.productUrl,
+      })),
+    [topArt],
+  );
+  const topSellerLookup = useMemo(
+    () => new Map(topSellerGalleryRows.map((row) => [row.key, row])),
+    [topSellerGalleryRows],
+  );
+  const inventoryGalleryRows = useMemo<ProductGalleryItem[]>(
+    () =>
+      visibleInventoryTracker.map((row) => {
+        const salesRow = topSellerLookup.get(row.key);
+        return {
+          rank: row.rank,
+          key: row.key,
+          style: row.style,
+          brand: row.brand,
+          color: row.color,
+          artCode: row.artCode,
+          monthUnits: salesRow?.monthUnits ?? 0,
+          monthSales: salesRow?.monthSales ?? 0,
+          ytdUnits: row.ytdUnits,
+          ytdSales: salesRow?.ytdSales ?? 0,
+          priorYearUnits: row.priorYearUnits,
+          inventoryUnits: row.inventoryUnits,
+          imageUrl: row.imageUrl ?? salesRow?.imageUrl ?? null,
+          productUrl: row.productUrl ?? salesRow?.productUrl ?? null,
+        };
+      }),
+    [topSellerLookup, visibleInventoryTracker],
+  );
+  const productGalleryRows = productGalleryUsesInventory ? inventoryGalleryRows : topSellerGalleryRows;
+  const productGalleryPageCount = productGalleryUsesInventory ? inventoryPageCount : 1;
+  const productGalleryPage = productGalleryUsesInventory ? currentInventoryPage : 1;
+  const productGalleryPageStart = productGalleryUsesInventory ? inventoryPageStart : productGalleryRows.length ? 1 : 0;
+  const productGalleryPageEnd = productGalleryUsesInventory ? inventoryPageEnd : productGalleryRows.length;
+  const productGalleryTotalItems = productGalleryUsesInventory ? inventoryTrackerTotalItems : productGalleryRows.length;
+  const productGalleryTotalUnits = productGalleryUsesInventory ? inventoryTrackerTotalUnits : sum(productGalleryRows.map((row) => row.monthUnits));
+  const productGalleryTotalSales = sum(productGalleryRows.map((row) => row.monthSales));
+  const productGallerySortLabel = productGalleryUsesInventory
+    ? inventorySort === "highest"
+      ? "Inventory High"
+      : "Inventory Low"
+    : topArtSort === "units"
+      ? "Units"
+      : "Dollars";
   const bestDay = useMemo(
     () => (reportPayload?.bestDay as ReturnType<typeof bestSalesDay> | undefined) ?? bestSalesDay(periodRecords, dashboardData.images),
     [dashboardData.images, periodRecords, reportPayload],
@@ -788,7 +869,6 @@ export default function Home() {
     [bestDay.items, dashboardData.images, reportPayload, topArt, visibleInventoryTracker, weeklyScorecards],
   );
   const missingImageCount = imagePrefetchCandidates.filter((row) => !row.imageUrl && row.style !== "-").length;
-  const salesForecast = (reportPayload?.salesForecast ?? null) as SalesForecast | null;
   const ytdLine = useMemo(
     () => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth, period?.kind === "month" ? periodRecords : []),
     [period, periodEndMonth, periodRecords, recordsForCustomer, reportPayload],
@@ -820,6 +900,26 @@ export default function Home() {
   function applyInventorySort(sort: InventorySort) {
     setInventorySort(sort);
     setInventoryPage(1);
+    setInventoryMenuOpen(null);
+  }
+
+  function applyProductGalleryView(view: ProductGalleryView) {
+    setProductGalleryView(view);
+    setInventoryPage(1);
+    if (view === "inventory") setInventorySort("highest");
+    if (view === "low-stock") setInventorySort("lowest");
+    setInventoryMenuOpen(null);
+  }
+
+  function applyProductGallerySort(sort: ProductGallerySort) {
+    setInventoryPage(1);
+    if (sort === "units" || sort === "dollars") {
+      setTopArtSort(sort);
+      setProductGalleryView("top-sellers");
+    } else {
+      setInventorySort(sort === "inventory-high" ? "highest" : "lowest");
+      setProductGalleryView(sort === "inventory-high" ? "inventory" : "low-stock");
+    }
     setInventoryMenuOpen(null);
   }
 
@@ -1549,17 +1649,13 @@ export default function Home() {
               <span className="sideNavIcon sideNavIconChart" aria-hidden="true" />
               <span>Style Signals</span>
             </a>
-            <a className="sideNavItem" href="#top-performing">
-              <span className="sideNavIcon sideNavIconGrid" aria-hidden="true" />
-              <span>Top Performers</span>
-            </a>
             <a className="sideNavItem" href="#inventory-snapshot">
               <span className="sideNavIcon sideNavIconBox" aria-hidden="true" />
               <span>Inventory Snapshot</span>
             </a>
-            <a className="sideNavItem" href="#inventory-tracker">
+            <a className="sideNavItem" href="#product-gallery">
               <span className="sideNavIcon sideNavIconGrid" aria-hidden="true" />
-              <span>Inventory Tracker</span>
+              <span>Product Gallery</span>
             </a>
             <button className="sideNavItem" type="button" onClick={openUploadHistoryManager}>
               <span className="sideNavIcon sideNavIconUpload" aria-hidden="true" />
@@ -1873,7 +1969,7 @@ export default function Home() {
             <div>
               <p className="eyebrow">Sales Snapshot</p>
               <h2>{selectedCustomer?.name ?? "Account"}</h2>
-              <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and top-performing styles and art.</p>
+              <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and product-level performance.</p>
             </div>
 
             <div className="controlDock">
@@ -2031,19 +2127,6 @@ export default function Home() {
             </div>
           </section>
 
-          {salesForecast ? (
-            <section className="sectionBlock forecastSection">
-              <div className="sectionTitle">
-                <div>
-                  <h3>Forecast Outlook</h3>
-                  <p>Projected full-year finish using current YTD pace and prior-year seasonality when available.</p>
-                </div>
-                <strong className="changeBadge neutral">{salesForecast.confidence}</strong>
-              </div>
-              <SalesForecastGrid forecast={salesForecast} />
-            </section>
-          ) : null}
-
           <section className="sectionBlock">
             <div className="sectionTitle">
               <div>
@@ -2094,62 +2177,6 @@ export default function Home() {
             <StyleSignals styles={styleStudyMode === "month" ? periodStyleStudy : ytdStyleStudy} compareLabel="LY" />
           </section>
 
-          <section className="sectionBlock" id="top-performing">
-            <div className="sectionTitle">
-              <div>
-                <h3>Top Performing Styles</h3>
-                <p>
-                  {topArtPeriodTitle} Top 30 by {topArtSort === "units" ? "Units" : "Dollars"}: {numberText(sum(topArt.map((row) => row.units)))} Units |{" "}
-                  {currencyText(sum(topArt.map((row) => row.sales)))}
-                </p>
-              </div>
-              <div className="sortControls" aria-label="Top performing styles sort controls">
-                <span>Sort by:</span>
-                <button
-                  className={topArtSort === "units" ? "active" : ""}
-                  type="button"
-                  onClick={() => setTopArtSort("units")}
-                >
-                  Units
-                </button>
-                <button
-                  className={topArtSort === "dollars" ? "active" : ""}
-                  type="button"
-                  onClick={() => setTopArtSort("dollars")}
-                >
-                  Dollars
-                </button>
-              </div>
-            </div>
-            <div className="artGrid">
-              {topArt.map((row) => (
-                <article className="artCard" key={row.key}>
-                  <div className="artImage">
-                    <b>#{row.rank}</b>
-                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
-                  </div>
-                  <div className="artMeta">
-                    {row.productUrl ? (
-                      <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                        {row.artCode}
-                      </a>
-                    ) : (
-                      <strong>{row.artCode}</strong>
-                    )}
-                    <span>{row.style} | {row.color}</span>
-                    <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
-                    {selectedPeriodKind === "month" ? (
-                      <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
-                    ) : null}
-                    {row.inventoryUnits != null ? (
-                      <span>{inventoryLabel(row)}</span>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
           {inventorySnapshot ? (
             <section className="sectionBlock inventorySection" id="inventory-snapshot">
               <div className="sectionTitle">
@@ -2163,20 +2190,48 @@ export default function Home() {
             </section>
           ) : null}
 
-          {inventoryTracker.length || inventoryTrackerMeta ? (
-            <section className="sectionBlock" id="inventory-tracker">
+          {productGalleryRows.length || inventoryTrackerMeta || topArt.length ? (
+            <section className="sectionBlock" id="product-gallery">
               <div className="sectionTitle">
                 <div>
-                  <h3>Inventory Tracker</h3>
+                  <h3>Product Gallery</h3>
                   <p>
-                    {inventorySort === "highest" ? "Highest" : "Lowest"} {numberText(inventoryTrackerTotalItems)} current on-hand items with 5+ units, plus high-demand low-stock exceptions. Showing{" "}
-                    {numberText(inventoryPageStart)}-{numberText(inventoryPageEnd)} |{" "}
-                    {numberText(inventoryTrackerTotalUnits)} Units
+                    {productGalleryViewLabel(productGalleryView)} by {productGallerySortLabel}. Showing{" "}
+                    {numberText(productGalleryPageStart)}-{numberText(productGalleryPageEnd)} of{" "}
+                    {numberText(productGalleryTotalItems)} | {numberText(productGalleryTotalUnits)} Units
+                    {productGalleryTotalSales ? <> | {wholeCurrencyText(productGalleryTotalSales)}</> : null}
                   </p>
                 </div>
               </div>
               <div className="inventoryControls" ref={inventoryControlsRef}>
                 <div className="inventoryDropdownControls">
+                  <div className={`inventoryDropdown ${inventoryMenuOpen === "view" ? "isOpen" : ""}`}>
+                    <button
+                      aria-expanded={inventoryMenuOpen === "view"}
+                      className="inventoryDropdownTrigger"
+                      type="button"
+                      onClick={() => setInventoryMenuOpen((current) => (current === "view" ? null : "view"))}
+                    >
+                      <span>View</span>
+                      <strong>{productGalleryViewLabel(productGalleryView)}</strong>
+                    </button>
+                    {inventoryMenuOpen === "view" ? (
+                      <div className="inventoryDropdownMenu">
+                        {(["top-sellers", "inventory", "low-stock", "growth"] as ProductGalleryView[]).map((view) => (
+                          <button
+                            aria-pressed={productGalleryView === view}
+                            className={`inventoryOption ${productGalleryView === view ? "active" : ""}`}
+                            key={view}
+                            type="button"
+                            onClick={() => applyProductGalleryView(view)}
+                          >
+                            <span className="inventoryOptionMark" aria-hidden="true" />
+                            <span>{productGalleryViewLabel(view)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                   <div className={`inventoryDropdown ${inventoryMenuOpen === "sort" ? "isOpen" : ""}`}>
                     <button
                       aria-expanded={inventoryMenuOpen === "sort"}
@@ -2184,24 +2239,24 @@ export default function Home() {
                       type="button"
                       onClick={() => setInventoryMenuOpen((current) => (current === "sort" ? null : "sort"))}
                     >
-                      <span>Sort by</span>
-                      <strong>{inventorySort === "highest" ? "Highest" : "Lowest"}</strong>
+                      <span>Sort</span>
+                      <strong>{productGallerySortLabel}</strong>
                     </button>
                     {inventoryMenuOpen === "sort" ? (
-                    <div className="inventoryDropdownMenu">
-                      {(["highest", "lowest"] as InventorySort[]).map((sort) => (
-                        <button
-                          aria-pressed={inventorySort === sort}
-                          className={`inventoryOption ${inventorySort === sort ? "active" : ""}`}
-                          key={sort}
-                          type="button"
-                          onClick={() => applyInventorySort(sort)}
-                        >
-                          <span className="inventoryOptionMark" aria-hidden="true" />
-                          <span>{sort === "highest" ? "Highest" : "Lowest"}</span>
-                        </button>
-                      ))}
-                    </div>
+                      <div className="inventoryDropdownMenu">
+                        {(["units", "dollars", "inventory-high", "inventory-low"] as ProductGallerySort[]).map((sort) => (
+                          <button
+                            aria-pressed={productGallerySortLabel === productGallerySortOptionLabel(sort)}
+                            className={`inventoryOption ${productGallerySortLabel === productGallerySortOptionLabel(sort) ? "active" : ""}`}
+                            key={sort}
+                            type="button"
+                            onClick={() => applyProductGallerySort(sort)}
+                          >
+                            <span className="inventoryOptionMark" aria-hidden="true" />
+                            <span>{productGallerySortOptionLabel(sort)}</span>
+                          </button>
+                        ))}
+                      </div>
                     ) : null}
                   </div>
                   <div className={`inventoryDropdown ${inventoryMenuOpen === "filter" ? "isOpen" : ""}`}>
@@ -2257,29 +2312,29 @@ export default function Home() {
                     ) : null}
                   </div>
                 </div>
-                {inventoryPageCount > 1 ? (
+                {productGalleryPageCount > 1 ? (
                   <div className="pagerControls" aria-label="Inventory page controls">
                     <button
-                      disabled={currentInventoryPage <= 1}
+                      disabled={productGalleryPage <= 1}
                       type="button"
                       onClick={() => setInventoryPage((page) => Math.max(1, page - 1))}
                     >
                       Prev
                     </button>
-                    <span>Page {numberText(currentInventoryPage)} of {numberText(inventoryPageCount)}</span>
+                    <span>Page {numberText(productGalleryPage)} of {numberText(productGalleryPageCount)}</span>
                     <button
-                      disabled={currentInventoryPage >= inventoryPageCount}
+                      disabled={productGalleryPage >= productGalleryPageCount}
                       type="button"
-                      onClick={() => setInventoryPage((page) => Math.min(inventoryPageCount, page + 1))}
+                      onClick={() => setInventoryPage((page) => Math.min(productGalleryPageCount, page + 1))}
                     >
                       Next
                     </button>
                   </div>
                 ) : null}
               </div>
-              {visibleInventoryTracker.length ? (
+              {productGalleryRows.length ? (
                 <div className="artGrid">
-                  {visibleInventoryTracker.map((row) => (
+                  {productGalleryRows.map((row) => (
                     <article className="artCard" key={row.key}>
                       <div className="artImage">
                         <b>#{row.rank}</b>
@@ -2294,16 +2349,20 @@ export default function Home() {
                           <strong>{row.artCode}</strong>
                         )}
                         <span>{row.style} | {row.color}</span>
-                        <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
-                        <span>YTD Sold: {numberText(row.ytdUnits)} Units</span>
+                        <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.monthUnits)} Units | {wholeCurrencyText(row.monthSales)}</span>
+                        <span>
+                          YTD Sold: {numberText(row.ytdUnits)} Units
+                          {row.ytdSales ? <> | {wholeCurrencyText(row.ytdSales)}</> : null}
+                        </span>
                         <span>LY Sold: {inventoryPriorYearSoldText(row.priorYearUnits)}</span>
+                        {row.inventoryUnits != null ? <span>Current Inv: {numberText(row.inventoryUnits)} Units</span> : null}
                       </div>
                     </article>
                   ))}
                 </div>
               ) : (
                 <div className="emptyNotice">
-                  <span>No inventory items match the selected filters.</span>
+                  <span>No product gallery items match the selected filters.</span>
                   <button type="button" onClick={clearInventoryFilters}>
                     Clear filters
                   </button>
@@ -2412,32 +2471,6 @@ function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsig
         </span>
       </div>
     </article>
-  );
-}
-
-function SalesForecastGrid({ forecast }: { forecast: SalesForecast }) {
-  const projectedSalesDelta = forecast.projectedSales - forecast.priorFullYearSales;
-  const projectedUnitsDelta = forecast.projectedUnits - forecast.priorFullYearUnits;
-
-  return (
-    <div className="forecastGrid">
-      <MetricCard label={`${forecast.currentYear} Projected Sales`} value={currencyText(forecast.projectedSales)} tone={projectedSalesDelta} />
-      <MetricCard label="Remaining To Projection" value={currencyText(forecast.remainingSales)} />
-      <MetricCard label={`${forecast.currentYear} Projected Units`} value={`${numberText(Math.round(forecast.projectedUnits))} Units`} tone={projectedUnitsDelta} />
-      <MetricCard
-        label="Seasonality Used"
-        value={forecast.seasonalityPercent == null ? "Pace-Based" : `${decimalText(forecast.seasonalityPercent, 1)}%`}
-      />
-      <article className="forecastStory">
-        <p>{forecast.note}</p>
-        <span>
-          Current YTD: {currencyText(forecast.currentYtdSales)} / {numberText(forecast.currentYtdUnits)} units
-        </span>
-        <span>
-          {forecast.priorYear} full year: {currencyText(forecast.priorFullYearSales)} / {numberText(forecast.priorFullYearUnits)} units
-        </span>
-      </article>
-    </div>
   );
 }
 
@@ -4479,6 +4512,20 @@ function countText(value: number, singular: string, plural: string) {
 
 function inventoryPriorYearSoldText(value: number | null | undefined) {
   return value == null ? "NA" : `${numberText(value)} Units`;
+}
+
+function productGalleryViewLabel(view: ProductGalleryView) {
+  if (view === "top-sellers") return "Top Sellers";
+  if (view === "inventory") return "Inventory";
+  if (view === "low-stock") return "Low Stock";
+  return "Growth";
+}
+
+function productGallerySortOptionLabel(sort: ProductGallerySort) {
+  if (sort === "units") return "Units";
+  if (sort === "dollars") return "Dollars";
+  if (sort === "inventory-high") return "Inventory High";
+  return "Inventory Low";
 }
 
 function createReportToken() {
