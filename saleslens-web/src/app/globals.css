@@ -5795,3 +5795,242 @@ input {
     padding-top: 0.6rem;
   }
 }
+
+/* Minimal dashboard skin: flatter, cleaner, and closer to the light SaaS references. */
+:root {
+  --canvas: #ffffff;
+  --paper: #ffffff;
+  --paper-soft: #f5f5f2;
+  --stone: #eceae4;
+  --stone-2: #dedbd2;
+  --charcoal: #1f1f1d;
+  --taupe: #68645d;
+  --taupe-2: #8a857b;
+  --system-green: #14794f;
+  --flat-panel: #f3f3f0;
+  --flat-card: #ffffff;
+  --flat-soft: #f7f7f4;
+  --flat-border: rgba(214, 209, 198, 0.46);
+  --flat-shadow: 0 10px 28px rgba(31, 31, 29, 0.035);
+  --flat-card-shadow: 0 1px 2px rgba(31, 31, 29, 0.04);
+}
+
+body {
+  background: var(--canvas);
+}
+
+.dashboard > .sectionBlock,
+.publicReport > .sectionBlock,
+.publicAccountReport > .sectionBlock {
+  background: var(--flat-panel);
+  border: 0;
+  border-radius: 22px;
+  box-shadow: var(--flat-shadow);
+  margin-bottom: clamp(2.2rem, 3.4vw, 3.8rem);
+  padding: clamp(1.45rem, 2.3vw, 2.15rem);
+}
+
+.dashboard > .sectionBlock > .sectionTitle,
+.publicReport > .sectionBlock > .sectionTitle,
+.publicAccountReport > .sectionBlock > .sectionTitle {
+  margin-bottom: clamp(1.25rem, 1.9vw, 1.8rem);
+}
+
+.dashboard > .sectionBlock > .sectionTitle h3,
+.publicReport > .sectionBlock > .sectionTitle h3,
+.publicAccountReport > .sectionBlock > .sectionTitle h3 {
+  color: var(--soft-black);
+  font-weight: 800;
+}
+
+.dashboard > .sectionBlock > .sectionTitle p,
+.publicReport > .sectionBlock > .sectionTitle p,
+.publicAccountReport > .sectionBlock > .sectionTitle p {
+  color: var(--taupe);
+}
+
+.sectionBlock .monthlyStoryCard,
+.sectionBlock .monthlyMetricCard,
+.sectionBlock .metric,
+.sectionBlock .weeklyScorecardRow,
+.sectionBlock .styleSignalCard,
+.sectionBlock .artCard,
+.sectionBlock .inventoryCard,
+.sectionBlock .inventoryTotal,
+.sectionBlock .inventorySummaryGrid div,
+.sectionBlock .inventoryBreakout div,
+.sectionBlock .inventoryCoverage,
+.sectionBlock .inventoryPosition,
+.sectionBlock .inventoryTrendChart,
+.sectionBlock .inventoryForecastCard,
+.weeklyTopProduct,
+.bestItem,
+.statCard,
+.uploadManagerRow,
+.accountReportMeta,
+.accountReportTabs label {
+  background: var(--flat-card);
+  border: 1px solid var(--flat-border);
+  box-shadow: var(--flat-card-shadow);
+}
+
+.sectionBlock .monthlyStoryCard,
+.sectionBlock .monthlyMetricCard,
+.sectionBlock .metric,
+.sectionBlock .styleSignalCard,
+.sectionBlock .artCard,
+.sectionBlock .inventoryTotal,
+.sectionBlock .inventoryCoverage,
+.sectionBlock .inventoryPosition,
+.sectionBlock .inventoryTrendChart,
+.sectionBlock .inventoryForecastCard,
+.weeklyTopProduct,
+.bestItem,
+.statCard {
+  border-radius: 16px;
+}
+
+.weeklyScorecardRow {
+  background: var(--flat-card);
+  border-color: var(--flat-border);
+  border-radius: 18px;
+  box-shadow: var(--flat-card-shadow);
+}
+
+.weeklyPrimary,
+.weeklyMetrics,
+.weeklyTopProducts {
+  border-color: var(--flat-border);
+}
+
+.weeklyDateRail {
+  background: var(--soft-black);
+  border-left: 0;
+  border-radius: 0 0 10px 0;
+  color: var(--paper);
+  min-height: 1.7rem;
+  padding: 0.28rem 0.62rem 0.3rem;
+}
+
+.weeklyDateRail span,
+.weeklyDateRail strong,
+.weeklyDateRail em {
+  color: inherit;
+}
+
+.weeklyTopProduct {
+  background: var(--paper);
+  border-radius: 14px;
+}
+
+.monthlyStoryComparison,
+.monthlyStoryNote,
+.inventoryGaugeTrack,
+.trendChart,
+.inventoryTrendChart {
+  background-color: var(--flat-soft);
+}
+
+.inventoryDropdownTrigger,
+.inventoryDropdown summary,
+.inventoryResetOption,
+.inventoryOption,
+.accountReportTabs label,
+.controlDock button,
+.controlDock select,
+.controlDock input,
+.sideNavItem,
+.themeToggle {
+  background: var(--flat-card);
+  border-color: var(--flat-border);
+  box-shadow: none;
+}
+
+.inventoryOption.active,
+.inventoryResetOption:hover,
+.inventoryDropdown[open] summary,
+.inventoryDropdown.isOpen .inventoryDropdownTrigger,
+.accountReportTabs input:checked + label,
+.sideNavItem.active,
+.themeToggle[aria-pressed="true"] {
+  background: var(--soft-black);
+  border-color: var(--soft-black);
+  color: var(--paper);
+}
+
+.inventoryOption.active *,
+.accountReportTabs input:checked + label *,
+.sideNavItem.active * {
+  color: inherit;
+}
+
+.inventoryDropdownMenu {
+  background: var(--paper);
+  border-color: var(--flat-border);
+  border-radius: 16px;
+  box-shadow: 0 18px 42px rgba(31, 31, 29, 0.09);
+}
+
+.artCard {
+  overflow: hidden;
+}
+
+.artCard > a:first-child,
+.artCard > div:first-child {
+  background: #efeee9;
+}
+
+.artRank,
+.weeklyTopProductRank {
+  background: var(--soft-black);
+  color: var(--paper);
+}
+
+.monthlyStoryCard .monthlyStoryNote {
+  background: var(--flat-soft);
+  border-radius: 16px;
+  font-weight: 500;
+}
+
+.monthlyStoryCard .monthlyStoryNote strong,
+.monthlyStoryCard .monthlyStoryNote b {
+  font-weight: 650;
+}
+
+:root[data-theme="dark"] {
+  --flat-panel: rgba(26, 29, 27, 0.9);
+  --flat-card: rgba(32, 35, 33, 0.96);
+  --flat-soft: rgba(23, 26, 24, 0.92);
+  --flat-border: rgba(255, 255, 255, 0.09);
+  --flat-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
+  --flat-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dark"] body {
+  background:
+    linear-gradient(rgba(15, 17, 16, 0.88), rgba(18, 20, 18, 0.94)),
+    url("/images/campus-stadium-night-blur.jpg") center / cover fixed,
+    #111310;
+}
+
+:root[data-theme="dark"] .weeklyDateRail,
+:root[data-theme="dark"] .inventoryOption.active,
+:root[data-theme="dark"] .inventoryResetOption:hover,
+:root[data-theme="dark"] .inventoryDropdown[open] summary,
+:root[data-theme="dark"] .inventoryDropdown.isOpen .inventoryDropdownTrigger,
+:root[data-theme="dark"] .accountReportTabs input:checked + label,
+:root[data-theme="dark"] .sideNavItem.active {
+  background: #f4f0e8;
+  border-color: #f4f0e8;
+  color: #151714;
+}
+
+@media (max-width: 820px) {
+  .dashboard > .sectionBlock,
+  .publicReport > .sectionBlock,
+  .publicAccountReport > .sectionBlock {
+    border-radius: 18px;
+    margin-bottom: 1.45rem;
+    padding: 1rem;
+  }
+}
