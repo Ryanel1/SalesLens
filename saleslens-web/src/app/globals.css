@@ -6040,3 +6040,36 @@ body {
 :root:not([data-theme="dark"]) .publicShell {
   background: #ffffff;
 }
+
+:root:not([data-theme="dark"]) .dashboard > .sectionBlock,
+:root:not([data-theme="dark"]) .publicReport > .sectionBlock,
+:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock,
+:root:not([data-theme="dark"]) .sectionBlock .monthlyStoryCard,
+:root:not([data-theme="dark"]) .sectionBlock .monthlyMetricCard,
+:root:not([data-theme="dark"]) .sectionBlock .metric,
+:root:not([data-theme="dark"]) .sectionBlock .styleSignalCard,
+:root:not([data-theme="dark"]) .sectionBlock .artCard,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryCard,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryTotal,
+:root:not([data-theme="dark"]) .sectionBlock .inventorySummaryGrid div,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryBreakout div,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryCoverage,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryPosition,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryTrendChart,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryForecastCard,
+:root:not([data-theme="dark"]) .weeklyScorecardRow,
+:root:not([data-theme="dark"]) .weeklyPrimary,
+:root:not([data-theme="dark"]) .weeklyMetrics,
+:root:not([data-theme="dark"]) .weeklyTopProducts,
+:root:not([data-theme="dark"]) .weeklyTopProduct,
+:root:not([data-theme="dark"]) .bestItem,
+:root:not([data-theme="dark"]) .statCard,
+:root:not([data-theme="dark"]) .uploadManagerRow,
+:root:not([data-theme="dark"]) .accountReportMeta,
+:root:not([data-theme="dark"]) .accountReportTabs label,
+:root:not([data-theme="dark"]) .monthlyStoryComparison,
+:root:not([data-theme="dark"]) .monthlyStoryNote,
+:root:not([data-theme="dark"]) .inventoryGaugeTrack,
+:root:not([data-theme="dark"]) .trendChart {
+  border-color: transparent;
+}
