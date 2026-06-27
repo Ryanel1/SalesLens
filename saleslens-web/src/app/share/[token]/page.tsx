@@ -17,7 +17,6 @@ import {
   type SnapshotWeeklyScorecardRow,
   type SnapshotYtdInsights,
 } from "@/lib/reportSnapshot";
-import { StyleStudyTabs } from "./StyleStudyTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -214,17 +213,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </ReportSection>
         ) : null}
 
-        <ReportSection title="Style Signals" subtitle="Growth, decline, and assortment movement by style.">
-          <StyleStudyTabs
-            monthlyStyles={payload.styleStudyMonthly ?? payload.topStyles}
-            ytdStyles={payload.styleStudyYtd ?? payload.topStyles}
-            currentPeriodTitle={payload.periodTitle}
-            previousMonthTitle={payload.previousMonthTitle ?? "last month"}
-            currentLabel={payload.periodMode === "monthly" ? "Current Month" : "Selected Year"}
-            currentCompareLabel="LY"
-          />
-        </ReportSection>
-
         <ReportSection
           title="Top Performing Styles"
           subtitle={`${payload.topArtPeriodTitle ?? payload.periodTitle} Top 30 by ${payload.topArtSort === "dollars" ? "Dollars" : "Units"}: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
@@ -378,7 +366,7 @@ function YtdInsightCard({ label, value, detail, tone }: { label: string; value: 
 function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
   return (
     <article className="ytdInsightCard productBreadthCard">
-      <p>Styles / Colors / Artworks</p>
+      <p>Styles / Colors / Arts</p>
       <div>
         <span>
           <strong>{numberText(insights.stylesSold)}</strong>
@@ -392,7 +380,7 @@ function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
         </span>
         <span>
           <strong>{numberText(insights.artworksSold)}</strong>
-          Artworks
+          Arts
           <em>{numberText(insights.priorArtworksSold)} LY</em>
         </span>
       </div>
@@ -664,7 +652,7 @@ function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
           <strong>{numberText(snapshot.styles)}</strong>
         </div>
         <div>
-          <span>Artworks In Stock</span>
+          <span>Arts In Stock</span>
           <strong>{numberText(snapshot.artworks)}</strong>
         </div>
       </div>

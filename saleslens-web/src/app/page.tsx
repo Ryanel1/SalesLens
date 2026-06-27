@@ -15,7 +15,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
-import { StyleSignals } from "@/components/StyleSignals";
 
 type RebelRagsImageMatch = {
   style: string;
@@ -426,7 +425,6 @@ export default function Home() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("All");
-  const [styleStudyMode, setStyleStudyMode] = useState<"month" | "ytd">("month");
   const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
   const [inventoryPage, setInventoryPage] = useState(1);
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
@@ -772,8 +770,6 @@ export default function Home() {
     () => (reportPayload?.topArt ?? []) as TopArt[],
     [reportPayload],
   );
-  const periodStyleStudy = useMemo(() => (reportPayload?.styleStudyMonthly ?? []) as TopStyle[], [reportPayload]);
-  const ytdStyleStudy = useMemo(() => (reportPayload?.styleStudyYtd ?? []) as TopStyle[], [reportPayload]);
   const inventorySnapshot = useMemo(
     () => (reportPayload?.inventorySnapshot ?? null) as InventorySnapshot,
     [reportPayload],
@@ -1645,10 +1641,6 @@ export default function Home() {
               <span className="sideNavIcon sideNavIconChart" aria-hidden="true" />
               <span>Scorecards</span>
             </a>
-            <a className="sideNavItem" href="#style-signals">
-              <span className="sideNavIcon sideNavIconChart" aria-hidden="true" />
-              <span>Style Signals</span>
-            </a>
             <a className="sideNavItem" href="#inventory-snapshot">
               <span className="sideNavIcon sideNavIconBox" aria-hidden="true" />
               <span>Inventory Snapshot</span>
@@ -1837,7 +1829,7 @@ export default function Home() {
                   type="button"
                 >
                   <strong>Inventory Report</strong>
-                  <span>Standalone on-hand units by product/style/color/artwork.</span>
+                  <span>Standalone on-hand units by product/style/color/art.</span>
                 </button>
               </div>
               <div className="uploadHistoryActions">
@@ -2155,28 +2147,6 @@ export default function Home() {
             </section>
           ) : null}
 
-          <section className="sectionBlock" id="style-signals">
-            <div className="sectionTitle">
-              <div>
-                <h3>Style Signals</h3>
-                <p>
-                  {styleStudyMode === "month"
-                    ? `${selectedPeriodTitle} style movement vs ${priorPeriodTitle}`
-                    : "YTD style movement vs last year"}
-                </p>
-              </div>
-            </div>
-            <div className="studyTabs" aria-label="Style study views">
-              <button className={styleStudyMode === "month" ? "active" : ""} type="button" onClick={() => setStyleStudyMode("month")}>
-                {selectedPeriodKind === "year" ? "Selected Year" : "Current Month"}
-              </button>
-              <button className={styleStudyMode === "ytd" ? "active" : ""} type="button" onClick={() => setStyleStudyMode("ytd")}>
-                YTD
-              </button>
-            </div>
-            <StyleSignals styles={styleStudyMode === "month" ? periodStyleStudy : ytdStyleStudy} compareLabel="LY" />
-          </section>
-
           {inventorySnapshot ? (
             <section className="sectionBlock inventorySection" id="inventory-snapshot">
               <div className="sectionTitle">
@@ -2452,7 +2422,7 @@ function YtdInsightCard({ label, value, detail, tone }: { label: string; value: 
 function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsightMetrics> }) {
   return (
     <article className="ytdInsightCard productBreadthCard">
-      <p>Styles / Colors / Artworks</p>
+      <p>Styles / Colors / Arts</p>
       <div>
         <span>
           <strong>{numberText(insights.stylesSold)}</strong>
@@ -2466,7 +2436,7 @@ function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsig
         </span>
         <span>
           <strong>{numberText(insights.artworksSold)}</strong>
-          Artworks
+          Arts
           <em>{numberText(insights.priorArtworksSold)} LY</em>
         </span>
       </div>
@@ -2655,7 +2625,7 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
           <strong>{numberText(snapshot.styles)}</strong>
         </div>
         <div>
-          <span>Artworks In Stock</span>
+          <span>Arts In Stock</span>
           <strong>{numberText(snapshot.artworks)}</strong>
         </div>
       </div>
