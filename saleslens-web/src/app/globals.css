@@ -6034,3 +6034,9 @@ body {
     padding: 1rem;
   }
 }
+
+:root:not([data-theme="dark"]) body,
+:root:not([data-theme="dark"]) .appShell,
+:root:not([data-theme="dark"]) .publicShell {
+  background: #ffffff;
+}
