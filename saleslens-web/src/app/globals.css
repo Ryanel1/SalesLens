@@ -3474,59 +3474,67 @@ select {
 
 .appShell {
   display: grid;
-  grid-template-columns: 256px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
 }
 
 .topNav,
 .topNav.compact {
-  align-items: stretch;
-  align-self: start;
-  background: var(--sidebar-bg);
+  align-items: center;
+  background: var(--ink);
   border: 0;
+  border-radius: 0 0 22px 22px;
   box-shadow: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  color: #fffefa;
+  display: grid;
+  gap: clamp(0.75rem, 1.8vw, 1.5rem);
   grid-column: 1;
-  height: 100vh;
-  min-height: 100vh;
-  overflow: auto;
-  padding: 1rem;
+  grid-template-columns: minmax(130px, 0.38fr) minmax(340px, 1fr) minmax(420px, 0.56fr);
+  left: 50%;
+  min-height: 58px;
+  overflow: visible;
+  padding: 0.58rem clamp(0.95rem, 2vw, 1.4rem);
   position: sticky;
   top: 0;
-  z-index: 30;
+  transform: translateX(-50%);
+  width: min(100%, 1280px);
+  z-index: 60;
 }
 
 .navBrand {
   border: 0;
   background: transparent;
   box-shadow: none;
-  padding: 0.55rem 0.35rem 0.9rem;
+  min-width: 0;
+  padding: 0;
 }
 
 .navBrand h1 {
-  color: var(--text);
-  font-size: 1.42rem;
+  color: #fffefa;
+  font-size: 0.96rem;
   font-weight: 850;
   letter-spacing: 0;
   line-height: 1;
-  margin: 0 0 0.18rem;
+  margin: 0;
 }
 
 .navBrand p {
-  color: var(--text-faint);
-  font-size: 0.61rem;
+  color: rgba(255, 254, 250, 0.52);
+  font-size: 0.52rem;
   font-weight: 850;
-  letter-spacing: 0.1em;
-  margin: 0;
+  letter-spacing: 0.08em;
+  margin: 0.18rem 0 0;
   text-transform: uppercase;
 }
 
 .sideNavMenu {
-  display: grid;
-  gap: 0.2rem;
-  padding: 0.2rem 0;
+  align-items: center;
+  align-self: stretch;
+  display: flex;
+  gap: clamp(1rem, 2.5vw, 2rem);
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
 }
 
 .sideNavItem {
@@ -3534,25 +3542,40 @@ select {
   appearance: none;
   background: transparent;
   border: 0;
-  border-radius: var(--radius);
+  border-radius: 0;
   box-shadow: none;
-  color: var(--text-soft);
-  display: grid;
-  font-size: 0.84rem;
-  font-weight: 720;
-  gap: 0.65rem;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
-  min-height: 2.38rem;
-  padding: 0 0.7rem;
-  text-align: left;
+  color: rgba(255, 254, 250, 0.62);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 760;
+  min-height: 2.2rem;
+  padding: 0.12rem 0;
+  position: relative;
+  text-align: center;
   text-decoration: none;
-  width: 100%;
+  white-space: nowrap;
+  width: auto;
 }
 
 .sideNavItem:hover,
 .sideNavItem.active {
-  background: var(--nav-active);
-  color: var(--text);
+  background: transparent;
+  color: #fffefa;
+}
+
+.sideNavItem::after {
+  background: transparent;
+  border-radius: 999px;
+  bottom: 0.1rem;
+  content: "";
+  height: 2px;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+.sideNavItem.active::after {
+  background: #fffefa;
 }
 
 .sideNavItem.disabled {
@@ -3560,138 +3583,28 @@ select {
   opacity: 0.52;
 }
 
-.sideNavItem small {
-  color: var(--text-faint);
-  font-size: 0.58rem;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.sideNavIcon {
-  border: 1px solid currentColor;
-  border-radius: 5px;
-  display: block;
-  height: 16px;
-  opacity: 0.72;
-  position: relative;
-  width: 16px;
-}
-
-.sideNavIconHome::before,
-.sideNavIconHome::after,
-.sideNavIconBox::before,
-.sideNavIconBox::after,
-.sideNavIconChart::before,
-.sideNavIconGrid::before,
-.sideNavIconUpload::before,
-.sideNavIconUpload::after,
-.sideNavIconOrder::before {
-  background: currentColor;
-  content: "";
-  position: absolute;
-}
-
-.sideNavIconHome::before {
-  height: 2px;
-  left: 3px;
-  top: 5px;
-  transform: rotate(-38deg);
-  transform-origin: left center;
-  width: 6px;
-}
-
-.sideNavIconHome::after {
-  height: 2px;
-  right: 3px;
-  top: 5px;
-  transform: rotate(38deg);
-  transform-origin: right center;
-  width: 6px;
-}
-
-.sideNavIconHome {
-  box-shadow: inset 0 -6px 0 -4px currentColor;
-}
-
-.sideNavIconBox::before {
-  height: 2px;
-  left: 3px;
-  top: 5px;
-  transform: skewY(-25deg);
-  width: 9px;
-}
-
-.sideNavIconBox::after {
-  height: 7px;
-  left: 7px;
-  top: 5px;
-  width: 2px;
-}
-
-.sideNavIconChart::before {
-  bottom: 3px;
-  height: 6px;
-  left: 3px;
-  box-shadow: 4px -3px 0 currentColor, 8px -6px 0 currentColor;
-  width: 2px;
-}
-
-.sideNavIconGrid::before {
-  height: 3px;
-  left: 3px;
-  top: 3px;
-  width: 3px;
-  box-shadow: 7px 0 0 currentColor, 0 7px 0 currentColor, 7px 7px 0 currentColor;
-}
-
-.sideNavIconUpload::before {
-  height: 8px;
-  left: 7px;
-  top: 3px;
-  width: 2px;
-}
-
-.sideNavIconUpload::after {
-  height: 2px;
-  left: 4px;
-  top: 3px;
-  transform: rotate(-35deg);
-  transform-origin: right center;
-  width: 5px;
-  box-shadow: 3px 3px 0 currentColor;
-}
-
-.sideNavIconOrder::before {
-  height: 2px;
-  left: 3px;
-  top: 4px;
-  width: 8px;
-  box-shadow: 0 4px 0 currentColor, 0 8px 0 currentColor;
-}
-
 .sideNavBottom {
-  border-top: 1px solid var(--line-soft);
+  border-top: 0;
   display: grid;
   gap: 0;
-  margin-top: auto;
-  padding-top: 1rem;
+  min-width: 0;
+  padding-top: 0;
 }
 
 .navControls {
-  align-items: stretch;
+  align-items: center;
   display: grid;
-  gap: 0.88rem;
-  grid-template-columns: 1fr;
-  justify-content: stretch;
+  gap: 0.48rem;
+  grid-template-columns: minmax(120px, 1fr) minmax(132px, auto) minmax(100px, auto);
+  justify-content: end;
 }
 
 .navField,
 .navUploadField,
 .navSignOutField {
   display: grid;
-  gap: 0.42rem;
-  grid-template-rows: auto auto;
+  gap: 0.22rem;
+  grid-template-rows: auto;
   min-width: 0;
   width: 100%;
 }
@@ -3700,8 +3613,8 @@ select {
 .navDateMeta p,
 .navSignOutField > span,
 label {
-  color: var(--text-faint);
-  font-size: 0.62rem;
+  color: rgba(255, 254, 250, 0.48);
+  font-size: 0.5rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   line-height: 1.15;
@@ -3713,20 +3626,24 @@ label {
 .fileButton,
 .navSignOut {
   align-items: center;
-  background: var(--surface-solid);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  background: rgba(255, 254, 250, 0.1);
+  border: 1px solid rgba(255, 254, 250, 0.14);
+  border-radius: 999px;
   box-shadow: none;
-  color: var(--text);
+  color: #fffefa;
   display: inline-grid;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 850;
-  height: 42px;
+  height: 31px;
   justify-content: stretch;
-  min-height: 42px;
-  padding: 0 0.85rem;
+  min-height: 31px;
+  padding: 0 0.76rem;
   text-align: left;
   width: 100%;
+}
+
+.navField select {
+  color-scheme: dark;
 }
 
 .fileButton,
@@ -3736,21 +3653,21 @@ label {
 }
 
 .fileButton {
-  background: var(--soft-black);
-  border-color: var(--soft-black);
-  color: #ffffff;
+  background: #fffefa;
+  border-color: #fffefa;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .fileButton:hover {
-  background: #2b2925;
-  border-color: #2b2925;
+  background: #f0ece4;
+  border-color: #f0ece4;
 }
 
 .navSignOut:hover,
 .navField select:hover,
 .ghostButton:hover {
-  border-color: rgba(31, 31, 29, 0.22);
+  border-color: rgba(255, 254, 250, 0.32);
 }
 
 .navDateMeta {
@@ -3760,8 +3677,8 @@ label {
 }
 
 .navDateMeta strong {
-  color: var(--text);
-  font-size: 0.74rem;
+  color: rgba(255, 254, 250, 0.74);
+  font-size: 0.58rem;
   font-weight: 900;
   line-height: 1;
 }
@@ -3775,7 +3692,7 @@ label {
 
 .navMessage {
   align-items: center;
-  background: var(--app-bg);
+  background: #fffefa;
   border: 0;
   border-radius: 10px;
   color: var(--text-soft);
@@ -3820,7 +3737,7 @@ label {
 }
 
 .dashboard {
-  grid-column: 2;
+  grid-column: 1;
   min-width: 0;
   padding: clamp(1.25rem, 4vw, 4rem);
 }
@@ -4474,6 +4391,7 @@ label {
 }
 
 .sectionBlock .weeklyTopProduct {
+  align-items: start;
   background: rgba(255, 255, 255, 0.72);
   border-radius: 14px;
   gap: 0.72rem;
@@ -4484,6 +4402,7 @@ label {
 
 .sectionBlock .weeklyTopProduct img,
 .sectionBlock .weeklyTopProductPlaceholder {
+  align-self: start;
   border-radius: 10px;
   height: 56px;
   width: 56px;
@@ -4708,18 +4627,30 @@ label {
   .topNav,
   .topNav.compact {
     height: auto;
-    min-height: 0;
-    position: relative;
+    min-height: 58px;
+    position: sticky;
   }
 
   .dashboard {
     grid-column: 1;
   }
 
-  .sideNavMenu,
-  .navControls,
-  .sideNavBottom {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  .topNav,
+  .topNav.compact {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 0.72rem 1rem;
+    row-gap: 0.5rem;
+  }
+
+  .sideNavMenu {
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
+  }
+
+  .navControls {
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+    width: min(100%, 560px);
   }
 
   .dashboardHeader,
@@ -4813,4 +4744,3 @@ label {
     text-align: left;
   }
 }
-

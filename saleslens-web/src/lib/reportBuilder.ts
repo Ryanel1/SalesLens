@@ -776,8 +776,18 @@ function metricSet(records: SalesRecord[]): MetricSet {
   return {
     sales: sum(records.map(amountValue)),
     units: sum(records.map((record) => record.units ?? 0)),
-    transactions: records.length,
+    transactions: salesTransactionCount(records),
   };
+}
+
+function salesTransactionCount(records: SalesRecord[]) {
+  return uniqueCount(records.map(transactionKey).filter(Boolean));
+}
+
+function transactionKey(record: SalesRecord) {
+  const transactionNumber = clean(record.transaction_number);
+  if (!transactionNumber) return "";
+  return `${record.transaction_date}|${transactionNumber}`;
 }
 
 function topArtRows(
@@ -815,7 +825,7 @@ function topArtRows(
         sku: firstNonBlank(group.map((record) => record.sku)),
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
-        transactions: group.length,
+        transactions: salesTransactionCount(group),
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
         priorYearUnits: priorYearGroup.length ? sum(priorYearGroup.map((record) => record.units ?? 0)) : null,
@@ -1185,7 +1195,7 @@ function allStyleRows(records: SalesRecord[]): TopStyle[] {
       brand: brandName(group[0]),
       sales: sum(group.map(amountValue)),
       units: sum(group.map((record) => record.units ?? 0)),
-      transactions: group.length,
+      transactions: salesTransactionCount(group),
       colorCount: uniqueCount(group.map(colorName)),
       artCount: uniqueCount(group.map((record) => clean(record.art_code))),
       priorUnits: 0,
@@ -1235,7 +1245,7 @@ function bestSalesDay(records: SalesRecord[], images: ProductImage[] = []) {
         artCode,
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
-        transactions: group.length,
+        transactions: salesTransactionCount(group),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
@@ -1247,7 +1257,7 @@ function bestSalesDay(records: SalesRecord[], images: ProductImage[] = []) {
     date,
     sales: sum(dayRecords.map(amountValue)),
     units: sum(dayRecords.map((record) => record.units ?? 0)),
-    transactions: dayRecords.length,
+    transactions: salesTransactionCount(dayRecords),
     items: topItems,
     dayCount: sortedDays.length,
   };

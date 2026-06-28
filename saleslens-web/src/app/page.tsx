@@ -462,6 +462,7 @@ export default function Home() {
   const [imageCacheStatus, setImageCacheStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
+  const [activeReportSection, setActiveReportSection] = useState("scorecards");
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
   const reportCache = useRef<Map<string, ReportSnapshotPayload>>(new Map());
@@ -506,6 +507,30 @@ export default function Home() {
     updateNavSize();
     window.addEventListener("scroll", updateNavSize, { passive: true });
     return () => window.removeEventListener("scroll", updateNavSize);
+  }, []);
+
+  useEffect(() => {
+    const sectionIds = ["scorecards", "monthly-scorecard", "weekly-scorecard", "inventory-snapshot", "product-gallery"];
+    const updateActiveSection = () => {
+      const sections = sectionIds
+        .map((id) => document.getElementById(id))
+        .filter((section): section is HTMLElement => Boolean(section));
+      let currentId = "";
+
+      sections.forEach((section) => {
+        if (section.getBoundingClientRect().top <= 150) currentId = section.id;
+      });
+
+      if (currentId) setActiveReportSection(currentId);
+    };
+
+    updateActiveSection();
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
   }, []);
 
   useEffect(() => {
@@ -1640,27 +1665,28 @@ export default function Home() {
             <p>by Lester Sales</p>
           </div>
 
-          <div className="sideNavMenu" aria-label="SalesLens navigation">
-            <a className="sideNavItem active" href="#saleslens-dashboard" aria-current="page">
-              <span className="sideNavIcon sideNavIconHome" aria-hidden="true" />
-              <span>SalesLens</span>
-            </a>
-            <a className="sideNavItem" href="#scorecards">
-              <span className="sideNavIcon sideNavIconChart" aria-hidden="true" />
+          <div className="sideNavMenu" aria-label="SalesLens report sections">
+            <a className={`sideNavItem ${activeReportSection === "scorecards" ? "active" : ""}`} href="#scorecards" aria-current={activeReportSection === "scorecards" ? "page" : undefined}>
               <span>Scorecards</span>
             </a>
-            <a className="sideNavItem" href="#inventory-snapshot">
-              <span className="sideNavIcon sideNavIconBox" aria-hidden="true" />
-              <span>Inventory Snapshot</span>
+            <a className={`sideNavItem ${activeReportSection === "monthly-scorecard" ? "active" : ""}`} href="#monthly-scorecard" aria-current={activeReportSection === "monthly-scorecard" ? "page" : undefined}>
+              <span>{selectedPeriodKind === "year" ? "Selected Year" : "Monthly"}</span>
             </a>
-            <a className="sideNavItem" href="#product-gallery">
-              <span className="sideNavIcon sideNavIconGrid" aria-hidden="true" />
-              <span>Product Gallery</span>
-            </a>
-            <button className="sideNavItem" type="button" onClick={openUploadHistoryManager}>
-              <span className="sideNavIcon sideNavIconUpload" aria-hidden="true" />
-              <span>Uploads</span>
-            </button>
+            {selectedPeriodKind === "month" && weeklyScorecards.length ? (
+              <a className={`sideNavItem ${activeReportSection === "weekly-scorecard" ? "active" : ""}`} href="#weekly-scorecard" aria-current={activeReportSection === "weekly-scorecard" ? "page" : undefined}>
+                <span>Weekly</span>
+              </a>
+            ) : null}
+            {inventorySnapshot ? (
+              <a className={`sideNavItem ${activeReportSection === "inventory-snapshot" ? "active" : ""}`} href="#inventory-snapshot" aria-current={activeReportSection === "inventory-snapshot" ? "page" : undefined}>
+                <span>Inventory</span>
+              </a>
+            ) : null}
+            {productGalleryRows.length || inventoryTrackerMeta || topArt.length ? (
+              <a className={`sideNavItem ${activeReportSection === "product-gallery" ? "active" : ""}`} href="#product-gallery" aria-current={activeReportSection === "product-gallery" ? "page" : undefined}>
+                <span>Products</span>
+              </a>
+            ) : null}
           </div>
 
           <div className="sideNavBottom">
@@ -2060,7 +2086,7 @@ export default function Home() {
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
           {!dashboardStatus && serverReportStatus ? <section className="notice">{isReportUpdating ? "Updating report sections..." : serverReportStatus}</section> : null}
-          {!dashboardStatus && !serverReportStatus && reportPayload && currentMetrics.transactions === 0 ? (
+          {!dashboardStatus && !serverReportStatus && reportPayload && currentMetrics.sales === 0 && currentMetrics.units === 0 ? (
             <section className="notice">No records match the current account, period, and brand/class filters.</section>
           ) : null}
 
@@ -2090,7 +2116,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="sectionBlock">
+          <section className="sectionBlock" id="monthly-scorecard">
             <div className="sectionTitle">
               <div>
                 <h3>{selectedPeriodKind === "year" ? "Selected Year Scorecard" : "Monthly Scorecard"}</h3>
@@ -2108,7 +2134,7 @@ export default function Home() {
           </section>
 
           {selectedPeriodKind === "month" && weeklyScorecards.length ? (
-            <section className="sectionBlock">
+            <section className="sectionBlock" id="weekly-scorecard">
               <div className="sectionTitle">
                 <div>
                   <h3>Weekly Scorecard</h3>
@@ -2437,13 +2463,19 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
   const unitDelta = current.units - prior.units;
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction;
+  const avgUnitDelta = drivers.avgSalePerUnit - drivers.priorAvgSalePerUnit;
+  const hasTransactionData = current.transactions > 0 || prior.transactions > 0;
   const maxSales = Math.max(current.sales, prior.sales, 1);
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
   const takeaways = [
     `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
-    `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
-    `Average transaction is ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`,
+    hasTransactionData
+      ? `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`
+      : `Units are ${changeText(current.units, prior.units).toLowerCase()}.`,
+    hasTransactionData
+      ? `Average transaction is ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`
+      : `Average dollars per unit are ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY.`,
     `Top 5 styles drove ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
   ];
 
@@ -2483,12 +2515,14 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
       </article>
 
       <div className="monthlyDriverMetricsRow monthlyScorecardMetrics">
-        <DriverTile
-          label="Transactions"
-          value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
-          details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
-          tone={transactionDelta}
-        />
+        {hasTransactionData ? (
+          <DriverTile
+            label="Transactions"
+            value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+            details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
+            tone={transactionDelta}
+          />
+        ) : null}
         <DriverTile
           label="Units"
           value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
@@ -2498,15 +2532,24 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
           ]}
           tone={unitDelta}
         />
-        <DriverTile
-          label="Avg Transaction"
-          value={currencyText(drivers.avgSalePerTransaction)}
-          details={[
-            `${decimalText(drivers.avgUnitsPerTransaction)} units / transaction`,
-            `LY: ${currencyText(drivers.priorAvgSalePerTransaction)} | ${decimalText(drivers.priorAvgUnitsPerTransaction)} units`,
-          ]}
-          tone={avgTransactionDelta}
-        />
+        {hasTransactionData ? (
+          <DriverTile
+            label="Avg Transaction"
+            value={currencyText(drivers.avgSalePerTransaction)}
+            details={[
+              `${decimalText(drivers.avgUnitsPerTransaction)} units / transaction`,
+              `LY: ${currencyText(drivers.priorAvgSalePerTransaction)} | ${decimalText(drivers.priorAvgUnitsPerTransaction)} units`,
+            ]}
+            tone={avgTransactionDelta}
+          />
+        ) : (
+          <DriverTile
+            label="Avg $ / Unit"
+            value={currencyText(drivers.avgSalePerUnit)}
+            details={[`LY: ${currencyText(drivers.priorAvgSalePerUnit)}`]}
+            tone={avgUnitDelta}
+          />
+        )}
         <DriverTile
           label="Top Style Dependence"
           value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
@@ -2539,6 +2582,9 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
         const salesDelta = row.current.sales - row.prior.sales;
         const unitsDelta = row.current.units - row.prior.units;
         const transactionDelta = row.current.transactions - row.prior.transactions;
+        const hasSalesActivity =
+          row.current.sales !== 0 || row.current.units !== 0 || row.prior.sales !== 0 || row.prior.units !== 0;
+        const hasTransactionData = row.current.transactions > 0 || row.prior.transactions > 0;
         return (
           <article className="weeklyScorecardRow" key={row.dateRange}>
             <div className="weeklyDateRail">
@@ -2563,8 +2609,10 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
               </span>
               <span>
                 <em>Transactions</em>
-                <strong>{numberText(row.current.transactions)}</strong>
-                <small className={changeClass(transactionDelta)}>{signedNumberText(transactionDelta)} vs LY</small>
+                <strong>{hasTransactionData ? numberText(row.current.transactions) : "NA"}</strong>
+                <small className={hasTransactionData ? changeClass(transactionDelta) : ""}>
+                  {hasTransactionData ? `${signedNumberText(transactionDelta)} vs LY` : hasSalesActivity ? "No receipt data" : "0 vs LY"}
+                </small>
               </span>
             </div>
 
@@ -3230,8 +3278,18 @@ function metricSet(records: SalesRecord[]): MetricSet {
   return {
     sales: sum(records.map(amountValue)),
     units: sum(records.map((record) => record.units ?? 0)),
-    transactions: records.length,
+    transactions: salesTransactionCount(records),
   };
+}
+
+function salesTransactionCount(records: SalesRecord[]) {
+  return uniqueCount(records.map(transactionKey).filter(Boolean));
+}
+
+function transactionKey(record: SalesRecord) {
+  const transactionNumber = clean(record.transaction_number);
+  if (!transactionNumber) return "";
+  return `${record.transaction_date}|${transactionNumber}`;
 }
 
 function topArtRows(
@@ -3270,7 +3328,7 @@ function topArtRows(
         sku: firstNonBlank(group.map((record) => record.sku)),
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
-        transactions: group.length,
+        transactions: salesTransactionCount(group),
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
         priorYearUnits: priorYearGroup.length ? sum(priorYearGroup.map((record) => record.units ?? 0)) : null,
@@ -3640,7 +3698,7 @@ function allStyleRows(records: SalesRecord[]): TopStyle[] {
       brand: brandName(group[0]),
       sales: sum(group.map(amountValue)),
       units: sum(group.map((record) => record.units ?? 0)),
-      transactions: group.length,
+      transactions: salesTransactionCount(group),
       colorCount: uniqueCount(group.map(colorName)),
       artCount: uniqueCount(group.map((record) => clean(record.art_code))),
       priorUnits: 0,
@@ -3690,7 +3748,7 @@ function bestSalesDay(records: SalesRecord[], images: ProductImage[] = []) {
         artCode,
         sales: sum(group.map(amountValue)),
         units: sum(group.map((record) => record.units ?? 0)),
-        transactions: group.length,
+        transactions: salesTransactionCount(group),
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
       };
     })
@@ -3702,7 +3760,7 @@ function bestSalesDay(records: SalesRecord[], images: ProductImage[] = []) {
     date,
     sales: sum(dayRecords.map(amountValue)),
     units: sum(dayRecords.map((record) => record.units ?? 0)),
-    transactions: dayRecords.length,
+    transactions: salesTransactionCount(dayRecords),
     items: topItems,
     dayCount: sortedDays.length,
   };

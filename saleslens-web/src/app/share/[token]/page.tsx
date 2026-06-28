@@ -440,13 +440,19 @@ function SalesDriverGrid({
   const unitDelta = current.units - prior.units;
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = avgSalePerTransaction - priorAvgSalePerTransaction;
+  const avgUnitDelta = avgSalePerUnit - priorAvgSalePerUnit;
+  const hasTransactionData = current.transactions > 0 || prior.transactions > 0;
   const maxSales = Math.max(current.sales, prior.sales, 1);
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
   const takeaways = [
     `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
-    `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
-    `Average transaction is ${currencyText(avgSalePerTransaction)} vs ${currencyText(priorAvgSalePerTransaction)} LY.`,
+    hasTransactionData
+      ? `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`
+      : `Units are ${changeText(current.units, prior.units).toLowerCase()}.`,
+    hasTransactionData
+      ? `Average transaction is ${currencyText(avgSalePerTransaction)} vs ${currencyText(priorAvgSalePerTransaction)} LY.`
+      : `Average dollars per unit are ${currencyText(avgSalePerUnit)} vs ${currencyText(priorAvgSalePerUnit)} LY.`,
     `Top 5 styles drove ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
   ];
 
@@ -486,12 +492,14 @@ function SalesDriverGrid({
       </article>
 
       <div className="monthlyDriverMetricsRow monthlyScorecardMetrics">
-        <DriverTile
-          label="Transactions"
-          value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
-          details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
-          tone={transactionDelta}
-        />
+        {hasTransactionData ? (
+          <DriverTile
+            label="Transactions"
+            value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
+            details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
+            tone={transactionDelta}
+          />
+        ) : null}
         <DriverTile
           label="Units"
           value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
@@ -501,15 +509,24 @@ function SalesDriverGrid({
           ]}
           tone={unitDelta}
         />
-        <DriverTile
-          label="Avg Transaction"
-          value={currencyText(avgSalePerTransaction)}
-          details={[
-            `${decimalText(avgUnitsPerTransaction)} units / transaction`,
-            `LY: ${currencyText(priorAvgSalePerTransaction)} | ${decimalText(priorAvgUnitsPerTransaction)} units`,
-          ]}
-          tone={avgTransactionDelta}
-        />
+        {hasTransactionData ? (
+          <DriverTile
+            label="Avg Transaction"
+            value={currencyText(avgSalePerTransaction)}
+            details={[
+              `${decimalText(avgUnitsPerTransaction)} units / transaction`,
+              `LY: ${currencyText(priorAvgSalePerTransaction)} | ${decimalText(priorAvgUnitsPerTransaction)} units`,
+            ]}
+            tone={avgTransactionDelta}
+          />
+        ) : (
+          <DriverTile
+            label="Avg $ / Unit"
+            value={currencyText(avgSalePerUnit)}
+            details={[`LY: ${currencyText(priorAvgSalePerUnit)}`]}
+            tone={avgUnitDelta}
+          />
+        )}
         <DriverTile
           label="Top Style Dependence"
           value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
@@ -542,6 +559,9 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
         const salesDelta = row.current.sales - row.prior.sales;
         const unitsDelta = row.current.units - row.prior.units;
         const transactionDelta = row.current.transactions - row.prior.transactions;
+        const hasSalesActivity =
+          row.current.sales !== 0 || row.current.units !== 0 || row.prior.sales !== 0 || row.prior.units !== 0;
+        const hasTransactionData = row.current.transactions > 0 || row.prior.transactions > 0;
         const topProducts = row.topItems?.length ? row.topItems : row.topItem ? [row.topItem] : [];
         return (
           <article className="weeklyScorecardRow" key={row.dateRange}>
@@ -567,8 +587,10 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
               </span>
               <span>
                 <em>Transactions</em>
-                <strong>{numberText(row.current.transactions)}</strong>
-                <small className={changeClass(transactionDelta)}>{signedNumberText(transactionDelta)} vs LY</small>
+                <strong>{hasTransactionData ? numberText(row.current.transactions) : "NA"}</strong>
+                <small className={hasTransactionData ? changeClass(transactionDelta) : ""}>
+                  {hasTransactionData ? `${signedNumberText(transactionDelta)} vs LY` : hasSalesActivity ? "No receipt data" : "0 vs LY"}
+                </small>
               </span>
             </div>
 
