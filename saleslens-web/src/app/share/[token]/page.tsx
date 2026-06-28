@@ -213,8 +213,8 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         ) : null}
 
         <ReportSection
-          title="Top Performing Styles"
-          subtitle={`${payload.topArtPeriodTitle ?? payload.periodTitle} Top 30 by ${payload.topArtSort === "dollars" ? "Dollars" : "Units"}: ${numberText(sum(payload.topArt.map((row) => row.units)))} Units | ${currencyText(sum(payload.topArt.map((row) => row.sales)))}`}
+          title="Product Gallery"
+          subtitle={productGallerySubtitle(payload)}
         >
           <div className="artGrid">
             {payload.topArt.map((row) => (
@@ -233,11 +233,13 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                   )}
                   <span>{row.style} | {row.color}</span>
                   <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
-                  {payload.periodMode === "monthly" ? (
-                    <span>YTD: {numberText(row.cyUnits)} Units | {wholeCurrencyText(row.cySales)}</span>
-                  ) : null}
+                  <span>
+                    YTD Sold: {numberText(row.cyUnits)} Units
+                    {row.cySales ? <> | {wholeCurrencyText(row.cySales)}</> : null}
+                  </span>
+                  <span>LY Sold: {inventoryPriorYearSoldText(row)}</span>
                   {row.inventoryUnits != null ? (
-                    <span>{inventoryLabel(row)}</span>
+                    <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
                   ) : null}
                 </div>
               </article>
@@ -640,12 +642,6 @@ function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay;
   );
 }
 
-function inventoryLabel(row: Pick<SnapshotTopArt, "inventoryScope" | "inventoryUnits">) {
-  if (row.inventoryUnits == null) return "";
-  if (row.inventoryScope === "styleArt") return `Style/Art Inv: ${numberText(row.inventoryUnits)} total`;
-  return `Current Inv: ${numberText(row.inventoryUnits)}`;
-}
-
 function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
   if (!snapshot) return null;
   const position = snapshot.position ?? inventoryPositionFallback(snapshot.coverage);
@@ -893,6 +889,15 @@ function accountThemeClass(name?: string | null) {
 
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
+}
+
+function productGallerySubtitle(payload: ReportSnapshotPayload) {
+  const count = payload.topArt.length;
+  const sortLabel = payload.topArtSort === "dollars" ? "Dollars" : "Units";
+  const rangeText = count ? `1-${numberText(count)}` : "0-0";
+  const units = sum(payload.topArt.map((row) => row.units));
+  const sales = sum(payload.topArt.map((row) => row.sales));
+  return `${payload.topArtPeriodTitle ?? payload.periodTitle} Top Sellers by ${sortLabel}. Showing ${rangeText} of ${numberText(count)} | ${numberText(units)} Units${sales ? ` | ${wholeCurrencyText(sales)}` : ""}`;
 }
 
 function countText(value: number, singular: string, plural: string) {
