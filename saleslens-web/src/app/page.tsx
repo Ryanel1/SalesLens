@@ -116,6 +116,7 @@ type InventoryTrackerItem = {
   audience: InventoryAudience;
   productCategory: InventoryProductCategory;
   ytdUnits: number;
+  ytdSales: number;
   priorYearUnits: number | null;
   recentSixMonthUnits: number;
   inventoryUnits: number;
@@ -838,7 +839,7 @@ export default function Home() {
           monthUnits: salesRow?.monthUnits ?? 0,
           monthSales: salesRow?.monthSales ?? 0,
           ytdUnits: row.ytdUnits,
-          ytdSales: salesRow?.ytdSales ?? 0,
+          ytdSales: row.ytdSales ?? salesRow?.ytdSales ?? 0,
           priorYearUnits: row.priorYearUnits,
           inventoryUnits: row.inventoryUnits,
           imageUrl: row.imageUrl ?? salesRow?.imageUrl ?? null,
@@ -855,7 +856,9 @@ export default function Home() {
   const productGalleryPageEnd = productGalleryUsesInventory ? inventoryPageEnd : topSellerPageEnd;
   const productGalleryTotalItems = productGalleryUsesInventory ? inventoryTrackerTotalItems : topSellerAllRows.length;
   const productGalleryTotalUnits = productGalleryUsesInventory ? inventoryTrackerTotalUnits : sum(productGallerySourceRows.map((row) => row.monthUnits));
-  const productGalleryTotalSales = sum(productGallerySourceRows.map((row) => row.monthSales));
+  const productGalleryTotalSales = productGalleryUsesInventory
+    ? sum(productGallerySourceRows.map((row) => row.ytdSales))
+    : sum(productGallerySourceRows.map((row) => row.monthSales));
   const productGallerySortLabel = productGalleryUsesInventory
     ? inventorySort === "highest"
       ? "Inventory High"
@@ -2331,7 +2334,9 @@ export default function Home() {
                           <strong>{row.artCode}</strong>
                         )}
                         <span>{row.style} | {row.color}</span>
-                        <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.monthUnits)} Units | {wholeCurrencyText(row.monthSales)}</span>
+                        {!productGalleryUsesInventory || row.monthUnits > 0 || row.monthSales > 0 ? (
+                          <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.monthUnits)} Units | {wholeCurrencyText(row.monthSales)}</span>
+                        ) : null}
                         <span>
                           YTD Sold: {numberText(row.ytdUnits)} Units
                           {row.ytdSales ? <> | {wholeCurrencyText(row.ytdSales)}</> : null}
@@ -4279,6 +4284,7 @@ function inventoryTrackerRows(
         audience: inventoryAudienceName(first),
         productCategory: inventoryProductCategory(style),
         ytdUnits: sum((ytdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
+        ytdSales: sum((ytdGroups.get(key) ?? []).map(amountValue)),
         priorYearUnits: priorYearMatches?.length ? sum(priorYearMatches.map((record) => record.units ?? 0)) : null,
         recentSixMonthUnits: sum((recentGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),

@@ -191,6 +191,7 @@ export type SnapshotInventoryTrackerItem = {
   audience?: "Unisex" | "Womens" | "Mens" | "Youth";
   productCategory?: "Fleece" | "Reverse Weave" | "Tees" | "Other";
   ytdUnits?: number;
+  ytdSales?: number;
   priorYearUnits?: number | null;
   priorYtdUnits?: number | null;
   recentSixMonthUnits?: number;

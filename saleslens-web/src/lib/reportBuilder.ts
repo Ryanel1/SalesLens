@@ -71,6 +71,7 @@ export type InventoryTrackerItem = {
   audience: InventoryAudience;
   productCategory: InventoryProductCategory;
   ytdUnits: number;
+  ytdSales: number;
   priorYearUnits: number | null;
   recentSixMonthUnits: number;
   inventoryUnits: number;
@@ -2000,6 +2001,7 @@ function inventoryTrackerRows(
         audience: inventoryAudienceName(first),
         productCategory: inventoryProductCategory(style),
         ytdUnits: sum((ytdGroups.get(key) ?? []).map((record) => record.units ?? 0)),
+        ytdSales: sum((ytdGroups.get(key) ?? []).map(amountValue)),
         priorYearUnits: priorYearMatches?.length ? sum(priorYearMatches.map((record) => record.units ?? 0)) : null,
         recentSixMonthUnits: sum((recentGroups.get(key) ?? []).map((record) => record.units ?? 0)),
         inventoryUnits: sum(group.map((record) => record.inventory_units ?? 0)),
