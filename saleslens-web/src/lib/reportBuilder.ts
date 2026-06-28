@@ -781,11 +781,12 @@ function metricSet(records: SalesRecord[]): MetricSet {
 }
 
 function salesTransactionCount(records: SalesRecord[]) {
-  return uniqueCount(records.map(transactionKey).filter(Boolean));
+  const transactionKeys = records.map(transactionKey).filter(Boolean);
+  return transactionKeys.length ? uniqueCount(transactionKeys) : records.length;
 }
 
 function transactionKey(record: SalesRecord) {
-  const transactionNumber = clean(record.transaction_number);
+  const transactionNumber = clean(record.transaction_number) || clean(record.barcode);
   if (!transactionNumber) return "";
   return `${record.transaction_date}|${transactionNumber}`;
 }

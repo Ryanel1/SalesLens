@@ -1683,7 +1683,7 @@ export default function Home() {
             ) : null}
             {productGalleryRows.length || inventoryTrackerMeta || topArt.length ? (
               <a className={`sideNavItem ${activeReportSection === "product-gallery" ? "active" : ""}`} href="#product-gallery" aria-current={activeReportSection === "product-gallery" ? "page" : undefined}>
-                <span>Products</span>
+                <span>Top Performers</span>
               </a>
             ) : null}
           </div>
@@ -2156,7 +2156,7 @@ export default function Home() {
             <section className="sectionBlock" id="product-gallery">
               <div className="sectionTitle">
                 <div>
-                  <h3>Product Gallery</h3>
+                  <h3>Top Performers</h3>
                   <p>
                     {productGalleryViewLabel(productGalleryView)} by {productGallerySortLabel}. Showing{" "}
                     {numberText(productGalleryPageStart)}-{numberText(productGalleryPageEnd)} of{" "}
@@ -3276,11 +3276,12 @@ function metricSet(records: SalesRecord[]): MetricSet {
 }
 
 function salesTransactionCount(records: SalesRecord[]) {
-  return uniqueCount(records.map(transactionKey).filter(Boolean));
+  const transactionKeys = records.map(transactionKey).filter(Boolean);
+  return transactionKeys.length ? uniqueCount(transactionKeys) : records.length;
 }
 
 function transactionKey(record: SalesRecord) {
-  const transactionNumber = clean(record.transaction_number);
+  const transactionNumber = clean(record.transaction_number) || clean(record.barcode);
   if (!transactionNumber) return "";
   return `${record.transaction_date}|${transactionNumber}`;
 }

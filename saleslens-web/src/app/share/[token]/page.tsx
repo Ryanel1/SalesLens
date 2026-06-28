@@ -202,9 +202,18 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </ReportSection>
         ) : null}
 
+        {payload.inventorySnapshot ? (
+          <ReportSection
+            title="Inventory Snapshot"
+            subtitle="Current on-hand inventory from the latest available inventory data."
+          >
+            <InventoryCard snapshot={payload.inventorySnapshot} />
+          </ReportSection>
+        ) : null}
+
         {productGalleryRows.length ? (
           <ReportSection
-            title="Product Gallery"
+            title="Top Performers"
             subtitle={productGallerySubtitle(payload, productGalleryRows)}
           >
             <div className="artGrid">
@@ -238,15 +247,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                 </article>
               ))}
             </div>
-          </ReportSection>
-        ) : null}
-
-        {payload.inventorySnapshot ? (
-          <ReportSection
-            title="Inventory Snapshot"
-            subtitle="Current on-hand inventory from the latest available inventory data."
-          >
-            <InventoryCard snapshot={payload.inventorySnapshot} />
           </ReportSection>
         ) : null}
 

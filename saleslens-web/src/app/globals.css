@@ -2886,7 +2886,7 @@ select {
 .artGrid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .artCard {
