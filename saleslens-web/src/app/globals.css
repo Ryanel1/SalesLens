@@ -1712,12 +1712,16 @@ select {
   align-self: end;
   display: grid;
   gap: 0.2rem;
+  list-style: disc;
+  margin: 0;
+  padding-left: 1.05rem;
 }
 
-.driverMeta span {
+.driverMeta li {
   color: var(--taupe);
   font-size: 0.82rem;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .driverTile.positive {

@@ -151,8 +151,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         <ReportSection
           title={payload.periodMode === "ytd" ? "Year Scorecard" : "YTD Scorecard"}
           subtitle={`${payload.periodTitle} compared with the same date range last year.`}
-          aside={changeText(payload.ytdLine.currentTotal, payload.ytdLine.priorTotal)}
-          asideTone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
         >
           <div className="ytdTrackerLayout">
             <StaticLineChart payload={payload} />
@@ -198,7 +196,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
             <SalesDriverGrid
               current={payload.currentMetrics}
               drivers={payload.monthlyDrivers}
-              periodTitle={payload.periodTitle}
               prior={payload.priorMetrics}
             />
           ) : null}
@@ -418,12 +415,10 @@ function SalesDriverGrid({
   current,
   prior,
   drivers,
-  periodTitle,
 }: {
   current: SnapshotMetricSet;
   prior: SnapshotMetricSet;
   drivers: SnapshotMonthlyDrivers;
-  periodTitle: string;
 }) {
   const avgSalePerTransaction = drivers.avgSalePerTransaction ?? (current.transactions ? current.sales / current.transactions : 0);
   const priorAvgSalePerTransaction = drivers.priorAvgSalePerTransaction ?? (prior.transactions ? prior.sales / prior.transactions : 0);
@@ -431,51 +426,12 @@ function SalesDriverGrid({
   const priorAvgUnitsPerTransaction = drivers.priorAvgUnitsPerTransaction ?? (prior.transactions ? prior.units / prior.transactions : 0);
   const avgSalePerUnit = drivers.avgSalePerUnit ?? (current.units ? current.sales / current.units : 0);
   const priorAvgSalePerUnit = drivers.priorAvgSalePerUnit ?? (prior.units ? prior.sales / prior.units : 0);
-  const salesDelta = current.sales - prior.sales;
   const unitDelta = current.units - prior.units;
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = avgSalePerTransaction - priorAvgSalePerTransaction;
-  const maxSales = Math.max(current.sales, prior.sales, 1);
-  const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
-  const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
-  const monthlyStory = [
-    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
-    `Units are ${changeText(current.units, prior.units).toLowerCase()} while transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
-    `Average transaction is ${currencyText(avgSalePerTransaction)}, compared with ${currencyText(priorAvgSalePerTransaction)} LY.`,
-  ].join(" ");
 
   return (
     <div className="salesDriverGrid">
-      <article className="driverTile monthlySalesCard monthlyStoryCard">
-        <div className="monthlySalesHeader">
-          <p>Monthly Story</p>
-          <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
-        </div>
-        <div className="monthlyStoryBoard">
-          <div className="monthlyStoryLead">
-            <span>{periodTitle}</span>
-            <strong>{currencyText(current.sales)}</strong>
-            <em className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)} vs LY</em>
-          </div>
-          <div className="monthlyComparisonBars" aria-label="Current sales compared with last year">
-            <div className="monthlyComparisonRow">
-              <span>{periodTitle}</span>
-              <div className="monthlyBarTrack">
-                <i style={{ width: `${currentSalesWidth}%` }} />
-              </div>
-              <strong>{currencyText(current.sales)}</strong>
-            </div>
-            <div className="monthlyComparisonRow prior">
-              <span>Last Year</span>
-              <div className="monthlyBarTrack">
-                <i style={{ width: `${priorSalesWidth}%` }} />
-              </div>
-              <strong>{currencyText(prior.sales)}</strong>
-            </div>
-          </div>
-          <p className="monthlyStoryNote">{monthlyStory}</p>
-        </div>
-      </article>
       <div className="monthlyDriverMetricsRow">
         <DriverTile
           label="Transactions"
@@ -517,11 +473,11 @@ function DriverTile({ label, value, details, tone }: { label: string; value: str
     <article className={`driverTile ${changeClass(tone)}`}>
       <p>{label}</p>
       <strong>{value}</strong>
-      <div className="driverMeta">
+      <ul className="driverMeta">
         {details.map((detail) => (
-          <span key={detail}>{detail}</span>
+          <li key={detail}>{detail}</li>
         ))}
-      </div>
+      </ul>
     </article>
   );
 }

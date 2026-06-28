@@ -2096,9 +2096,6 @@ export default function Home() {
                 <h3>{selectedPeriodKind === "year" ? "Year Scorecard" : "YTD Scorecard"}</h3>
                 <p>{ytdTitle(periodEndMonth)} compared with the same date range last year.</p>
               </div>
-              <strong className={`changeBadge ${changeClass(ytdLine.currentTotal - ytdLine.priorTotal)}`}>
-                {changeText(ytdLine.currentTotal, ytdLine.priorTotal)}
-              </strong>
             </div>
 
             <div className="ytdTrackerLayout">
@@ -2130,7 +2127,6 @@ export default function Home() {
             <SalesDriverGrid
               current={currentMetrics}
               drivers={monthlyDrivers}
-              periodTitle={selectedPeriodTitle}
               prior={priorMetrics}
             />
           </section>
@@ -2444,57 +2440,17 @@ function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsig
   );
 }
 
-function SalesDriverGrid({ current, prior, drivers, periodTitle }: {
+function SalesDriverGrid({ current, prior, drivers }: {
   current: MetricSet;
   prior: MetricSet;
   drivers: ReturnType<typeof monthlyDriverMetrics>;
-  periodTitle: string;
 }) {
-  const salesDelta = current.sales - prior.sales;
   const unitDelta = current.units - prior.units;
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction;
-  const maxSales = Math.max(current.sales, prior.sales, 1);
-  const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
-  const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
-  const monthlyStory = [
-    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
-    `Units are ${changeText(current.units, prior.units).toLowerCase()} while transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
-    `Average transaction is ${currencyText(drivers.avgSalePerTransaction)}, compared with ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`,
-  ].join(" ");
 
   return (
     <div className="salesDriverGrid">
-      <article className="driverTile monthlySalesCard monthlyStoryCard">
-        <div className="monthlySalesHeader">
-          <p>Monthly Story</p>
-          <strong className={changeClass(salesDelta)}>{changeText(current.sales, prior.sales)}</strong>
-        </div>
-        <div className="monthlyStoryBoard">
-          <div className="monthlyStoryLead">
-            <span>{periodTitle}</span>
-            <strong>{currencyText(current.sales)}</strong>
-            <em className={changeClass(salesDelta)}>{signedCurrencyText(salesDelta)} vs LY</em>
-          </div>
-          <div className="monthlyComparisonBars" aria-label="Current sales compared with last year">
-            <div className="monthlyComparisonRow">
-              <span>{periodTitle}</span>
-              <div className="monthlyBarTrack">
-                <i style={{ width: `${currentSalesWidth}%` }} />
-              </div>
-              <strong>{currencyText(current.sales)}</strong>
-            </div>
-            <div className="monthlyComparisonRow prior">
-              <span>Last Year</span>
-              <div className="monthlyBarTrack">
-                <i style={{ width: `${priorSalesWidth}%` }} />
-              </div>
-              <strong>{currencyText(prior.sales)}</strong>
-            </div>
-          </div>
-          <p className="monthlyStoryNote">{monthlyStory}</p>
-        </div>
-      </article>
       <div className="monthlyDriverMetricsRow">
         <DriverTile
           label="Transactions"
@@ -2536,11 +2492,11 @@ function DriverTile({ label, value, details, tone }: { label: string; value: str
     <article className={`driverTile ${changeClass(tone)}`}>
       <p>{label}</p>
       <strong>{value}</strong>
-      <div className="driverMeta">
+      <ul className="driverMeta">
         {details.map((detail) => (
-          <span key={detail}>{detail}</span>
+          <li key={detail}>{detail}</li>
         ))}
-      </div>
+      </ul>
     </article>
   );
 }
