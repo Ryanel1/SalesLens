@@ -3538,7 +3538,8 @@ function knownProductPageUrl(style: string, artCode: string, color: string) {
 }
 
 const knownVolshopImages: Record<string, string> = {
-  [imageKey("CS3050", "AEC03612724", "GREY")]: "https://www.utvolshop.com/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200",
+  [imageKey("CS3050", "AEC03612724", "SILVERGREY")]: "https://www.utvolshop.com/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200",
+  [imageKey("CS3051", "AEC03612724", "SILVERGREY")]: "https://www.utvolshop.com/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200",
 };
 
 const knownRebelRagsImages: Record<string, string> = {
@@ -3572,8 +3573,8 @@ function colorSearchTerms(color: string) {
   if (normalizedColor === "HEATHERGRAY") terms.push("HEATHERGREY");
   if (normalizedColor === "OXFORDGREY") terms.push("OXFORDGRAY");
   if (normalizedColor === "OXFORDGRAY") terms.push("OXFORDGREY");
-  if (normalizedColor === "SILVERGREY") terms.push("SILVERGRAY");
-  if (normalizedColor === "SILVERGRAY") terms.push("SILVERGREY");
+  if (normalizedColor === "SILVERGREY") terms.push("SILVERGRAY", "GREY", "GRAY");
+  if (normalizedColor === "SILVERGRAY") terms.push("SILVERGREY", "GREY", "GRAY");
   if (normalizedColor === "NAVY") terms.push("MIDNIGHTNAVY");
   if (normalizedColor === "MIDNIGHTNAVY") terms.push("NAVY");
   if (normalizedColor === "SCARLET") terms.push("RED");
@@ -4029,7 +4030,13 @@ function compactImagePart(value: string | null | undefined) {
 }
 
 function colorName(record: MerchandiseRecord) {
+  if (isReverseWeaveSilverGrey(record)) return "Silver Grey";
   return displayColorName(clean(record.catalog_color_name) || clean(record.color)) || "-";
+}
+
+function isReverseWeaveSilverGrey(record: MerchandiseRecord) {
+  return INVENTORY_REVERSE_WEAVE_STYLES.has(normalizedStyle(record))
+    && (colorCodeFromStyleIdentifier(record) === "940" || compactImagePart(record.color_code) === "940");
 }
 
 const STYLE_NUMBER_ALIASES: Record<string, string> = {

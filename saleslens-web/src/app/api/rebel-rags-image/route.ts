@@ -599,8 +599,8 @@ function colorSearchTerms(colorName: string) {
   if (color === "HEATHERGRAY") terms.push("HEATHERGREY");
   if (color === "OXFORDGREY") terms.push("OXFORDGRAY");
   if (color === "OXFORDGRAY") terms.push("OXFORDGREY");
-  if (color === "SILVERGREY") terms.push("SILVERGRAY");
-  if (color === "SILVERGRAY") terms.push("SILVERGREY");
+  if (color === "SILVERGREY") terms.push("SILVERGRAY", "GREY", "GRAY");
+  if (color === "SILVERGRAY") terms.push("SILVERGREY", "GREY", "GRAY");
   if (color === "NAVY") terms.push("MIDNIGHTNAVY");
   if (color === "MIDNIGHTNAVY") terms.push("NAVY");
   if (color === "SCARLET") terms.push("RED");
@@ -651,7 +651,8 @@ function knownRebelRagsProductImageUrl(item: ImageRequestItem) {
 }
 
 const knownVolshopImages: Record<string, string> = {
-  [imageKey("CS3050", "AEC03612724", "GREY")]: `${VOLSHOP_BASE_URL}/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200`,
+  [imageKey("CS3050", "AEC03612724", "SILVERGREY")]: `${VOLSHOP_BASE_URL}/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200`,
+  [imageKey("CS3051", "AEC03612724", "SILVERGREY")]: `${VOLSHOP_BASE_URL}/site/product-images/368238p_02.jpg?resizeid=3&resizeh=1200&resizew=1200`,
 };
 
 const knownRebelRagsImages: Record<string, string> = {

@@ -64,7 +64,7 @@ const COLOR_NAMES_BY_CODE: Record<string, string> = {
   "000": "White",
   "001": "Black",
   "035": "Oxford Grey",
-  "940": "Heather Grey",
+  "940": "Silver Grey",
   "1616": "Light Blue",
 };
 
