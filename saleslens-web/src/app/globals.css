@@ -6847,3 +6847,112 @@ body {
   object-fit: contain;
   width: 100%;
 }
+
+/* Option 2 flat dashboard: light grey page canvas with white content cards. */
+:root:not([data-theme="dark"]) {
+  --canvas: #f4f3f0;
+  --paper: #ffffff;
+  --paper-soft: #ffffff;
+  --flat-panel: transparent;
+  --flat-card: #ffffff;
+  --flat-soft: #f8f7f4;
+  --flat-border: transparent;
+  --flat-shadow: none;
+  --flat-card-shadow: none;
+}
+
+:root:not([data-theme="dark"]) body,
+:root:not([data-theme="dark"]) .appShell,
+:root:not([data-theme="dark"]) .dashboard,
+:root:not([data-theme="dark"]) .publicShell {
+  background: #f4f3f0;
+}
+
+:root:not([data-theme="dark"]) .topNav,
+:root:not([data-theme="dark"]) .topNav.compact {
+  background: #ffffff;
+}
+
+:root:not([data-theme="dark"]) .dashboardHeader,
+:root:not([data-theme="dark"]) .dashboardTopSection {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: clamp(0.35rem, 1vw, 0.75rem) 0 clamp(0.65rem, 1.6vw, 1rem);
+}
+
+:root:not([data-theme="dark"]) .dashboard > .sectionBlock,
+:root:not([data-theme="dark"]) .publicReport > .sectionBlock,
+:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: clamp(2.45rem, 4vw, 4.4rem);
+  padding: 0;
+}
+
+:root:not([data-theme="dark"]) .dashboard > .sectionBlock > .sectionTitle,
+:root:not([data-theme="dark"]) .publicReport > .sectionBlock > .sectionTitle,
+:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock > .sectionTitle {
+  margin-bottom: clamp(1.25rem, 1.8vw, 1.7rem);
+}
+
+:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardHero,
+:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardTakeaways,
+:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardMetrics .driverTile,
+:root:not([data-theme="dark"]) .sectionBlock .metric,
+:root:not([data-theme="dark"]) .sectionBlock .styleSignalCard,
+:root:not([data-theme="dark"]) .sectionBlock .artCard,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryTotal,
+:root:not([data-theme="dark"]) .sectionBlock .inventorySummaryGrid div,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryBreakout div,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryCoverage,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryPosition,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryTrendChart,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryForecastCard,
+:root:not([data-theme="dark"]) .sectionBlock .weeklyScorecardRow,
+:root:not([data-theme="dark"]) .sectionBlock .weeklyTopProduct,
+:root:not([data-theme="dark"]) .topSalesProduct,
+:root:not([data-theme="dark"]) .insightCard,
+:root:not([data-theme="dark"]) .lineCard,
+:root:not([data-theme="dark"]) .notice,
+:root:not([data-theme="dark"]) .emptyNotice,
+:root:not([data-theme="dark"]) .publicEmpty,
+:root:not([data-theme="dark"]) .uploadHistoryRow,
+:root:not([data-theme="dark"]) .bestItem,
+:root:not([data-theme="dark"]) .statCard,
+:root:not([data-theme="dark"]) .uploadManagerRow,
+:root:not([data-theme="dark"]) .accountReportMeta,
+:root:not([data-theme="dark"]) .accountReportTabs label {
+  background: #ffffff;
+  border: 0;
+  box-shadow: none;
+}
+
+:root:not([data-theme="dark"]) .publicReport,
+:root:not([data-theme="dark"]) .publicAccountReport {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+:root:not([data-theme="dark"]) .controlDock select,
+:root:not([data-theme="dark"]) .inventoryDropdownTrigger,
+:root:not([data-theme="dark"]) .inventoryDropdownMenu,
+:root:not([data-theme="dark"]) .paginationControls button,
+:root:not([data-theme="dark"]) .shareLinkBox,
+:root:not([data-theme="dark"]) .fileButton {
+  background: #ffffff;
+  border: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 820px) {
+  :root:not([data-theme="dark"]) .dashboard > .sectionBlock,
+  :root:not([data-theme="dark"]) .publicReport > .sectionBlock,
+  :root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock {
+    border-radius: 0;
+    padding: 0;
+  }
+}

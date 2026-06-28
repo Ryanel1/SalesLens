@@ -2163,7 +2163,6 @@ export default function Home() {
                 </div>
                 {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
                   <div className="productGalleryHeaderActions">
-                    <span>Image Cache</span>
                     <strong>{missingImageCount ? `${numberText(missingImageCount)} missing in view` : "Images current"}</strong>
                     <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
                       {imageCacheRunning ? "Caching..." : missingImageCount ? "Cache Missing Images" : "Cache Current"}
