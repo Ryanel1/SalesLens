@@ -1669,11 +1669,6 @@ export default function Home() {
               <span className="sideNavIcon sideNavIconUpload" aria-hidden="true" />
               <span>Uploads</span>
             </button>
-            <button className="sideNavItem disabled" type="button" disabled>
-              <span className="sideNavIcon sideNavIconOrder" aria-hidden="true" />
-              <span>Order Entry</span>
-              <small>soon</small>
-            </button>
           </div>
 
           <div className="sideNavBottom">
