@@ -2020,26 +2020,6 @@ export default function Home() {
               </button>
             </div>
 
-            <section className="dashboardHeroStats" aria-label="Current dashboard context">
-              <article>
-                <span>Imported Transactions</span>
-                <strong>{numberText(currentMetrics.transactions)}</strong>
-              </article>
-              <article>
-                <span>Last Date Uploaded</span>
-                <strong>{dateText(lastUploaded)}</strong>
-              </article>
-              {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
-                <article className="operatorOverview">
-                  <span>Image Cache</span>
-                  <strong>{missingImageCount ? `${numberText(missingImageCount)} missing in view` : "Current view cached"}</strong>
-                  <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
-                    {imageCacheRunning ? "Caching..." : "Cache Missing Images"}
-                  </button>
-                  {imageCacheStatus ? <small>{imageCacheStatus}</small> : null}
-                </article>
-              ) : null}
-            </section>
           </header>
 
           {shareModalOpen ? (
@@ -2181,6 +2161,16 @@ export default function Home() {
                     {productGalleryTotalSales ? <> | {wholeCurrencyText(productGalleryTotalSales)}</> : null}
                   </p>
                 </div>
+                {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
+                  <div className="productGalleryHeaderActions">
+                    <span>Image Cache</span>
+                    <strong>{missingImageCount ? `${numberText(missingImageCount)} missing in view` : "Images current"}</strong>
+                    <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
+                      {imageCacheRunning ? "Caching..." : missingImageCount ? "Cache Missing Images" : "Cache Current"}
+                    </button>
+                    {imageCacheStatus ? <small>{imageCacheStatus}</small> : null}
+                  </div>
+                ) : null}
               </div>
               <div className="inventoryControls" ref={inventoryControlsRef}>
                 <div className="inventoryDropdownControls">
