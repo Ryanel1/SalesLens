@@ -1968,8 +1968,8 @@ export default function Home() {
         ) : null}
 
         <section className="dashboard" id="saleslens-dashboard">
-          <header className="dashboardHeader">
-            <div>
+          <header className="dashboardHeader dashboardTopSection">
+            <div className="dashboardHeroIntro">
               <p className="eyebrow">Sales Snapshot</p>
               <h2>{selectedCustomer?.name ?? "Account"}</h2>
               <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and product-level performance.</p>
@@ -2019,6 +2019,27 @@ export default function Home() {
                 Share Report
               </button>
             </div>
+
+            <section className="dashboardHeroStats" aria-label="Current dashboard context">
+              <article>
+                <span>Imported Transactions</span>
+                <strong>{numberText(currentMetrics.transactions)}</strong>
+              </article>
+              <article>
+                <span>Last Date Uploaded</span>
+                <strong>{dateText(lastUploaded)}</strong>
+              </article>
+              {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
+                <article className="operatorOverview">
+                  <span>Image Cache</span>
+                  <strong>{missingImageCount ? `${numberText(missingImageCount)} missing in view` : "Current view cached"}</strong>
+                  <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
+                    {imageCacheRunning ? "Caching..." : "Cache Missing Images"}
+                  </button>
+                  {imageCacheStatus ? <small>{imageCacheStatus}</small> : null}
+                </article>
+              ) : null}
+            </section>
           </header>
 
           {shareModalOpen ? (
@@ -2073,27 +2094,6 @@ export default function Home() {
               </section>
             </div>
           ) : null}
-
-          <section className="overviewStrip" aria-label="Current dashboard context">
-            <article>
-              <span>Imported Transactions</span>
-              <strong>{numberText(currentMetrics.transactions)}</strong>
-            </article>
-            <article>
-              <span>Last Date Uploaded</span>
-              <strong>{dateText(lastUploaded)}</strong>
-            </article>
-            {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
-              <article className="operatorOverview">
-                <span>Image Cache</span>
-                <strong>{missingImageCount ? `${numberText(missingImageCount)} missing in view` : "Current view cached"}</strong>
-                <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
-                  {imageCacheRunning ? "Caching..." : "Cache Missing Images"}
-                </button>
-                {imageCacheStatus ? <small>{imageCacheStatus}</small> : null}
-              </article>
-            ) : null}
-          </section>
 
           {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
           {!dashboardStatus && serverReportStatus ? <section className="notice">{isReportUpdating ? "Updating report sections..." : serverReportStatus}</section> : null}

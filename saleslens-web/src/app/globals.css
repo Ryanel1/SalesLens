@@ -6627,3 +6627,134 @@ body {
   border: 0;
   box-shadow: none;
 }
+
+/* Rebuilt dashboard top section: compact, balanced, and flat. */
+.dashboardTopSection {
+  align-items: start;
+  background: #ffffff;
+  border: 0;
+  box-shadow: none;
+  display: grid;
+  gap: clamp(1.35rem, 2.2vw, 2rem) clamp(2rem, 5vw, 5.5rem);
+  grid-template-areas:
+    "intro controls"
+    "stats stats";
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+  margin-bottom: clamp(1.6rem, 2.4vw, 2.2rem);
+  padding: clamp(1.25rem, 2.2vw, 2rem) clamp(1.25rem, 2.8vw, 2.4rem);
+}
+
+.dashboardTopSection .dashboardHeroIntro {
+  align-self: start;
+  display: grid;
+  gap: 0.62rem;
+  grid-area: intro;
+  max-width: 48rem;
+}
+
+.dashboardTopSection .eyebrow {
+  color: var(--taupe);
+  margin: 0;
+}
+
+.dashboardTopSection h2 {
+  color: var(--clay);
+  font-size: clamp(2.9rem, 5.2vw, 5.4rem);
+  line-height: 0.9;
+  margin: 0;
+}
+
+.dashboardTopSection .muted {
+  color: var(--taupe);
+  font-size: clamp(0.95rem, 1vw, 1.05rem);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 46rem;
+}
+
+.dashboardTopSection .controlDock {
+  align-content: start;
+  align-self: start;
+  grid-area: controls;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1.2rem;
+}
+
+.dashboardTopSection .controlDock label {
+  gap: 0.42rem;
+}
+
+.dashboardTopSection .controlDock select {
+  background: #ffffff;
+  min-height: 42px;
+}
+
+.dashboardTopSection .controlDock .shareButton {
+  min-height: 42px;
+}
+
+.dashboardHeroStats {
+  align-items: start;
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 4rem);
+  grid-area: stats;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding-top: clamp(0.55rem, 1vw, 1rem);
+}
+
+.dashboardHeroStats article {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0;
+}
+
+.dashboardHeroStats span {
+  color: var(--taupe);
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.dashboardHeroStats strong {
+  color: var(--soft-black);
+  display: block;
+  font-size: clamp(1rem, 1.2vw, 1.18rem);
+  line-height: 1.2;
+}
+
+.dashboardHeroStats .operatorOverview button {
+  justify-self: start;
+  margin-top: 0.35rem;
+}
+
+.dashboardHeroStats .operatorOverview small {
+  color: var(--taupe);
+  line-height: 1.35;
+}
+
+@media (max-width: 980px) {
+  .dashboardTopSection {
+    grid-template-areas:
+      "intro"
+      "controls"
+      "stats";
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardTopSection .controlDock {
+    margin-top: 0;
+    max-width: 440px;
+  }
+
+  .dashboardHeroStats {
+    grid-template-columns: 1fr;
+  }
+}
