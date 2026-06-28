@@ -903,7 +903,6 @@ export default function Home() {
     () => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth, period?.kind === "month" ? periodRecords : []),
     [period, periodEndMonth, periodRecords, recordsForCustomer, reportPayload],
   );
-  const lastUploaded = reportPayload?.lastUploaded ?? lastUploadedForShell(dashboardShell, brandFilter);
 
   const brandOptions = useMemo(() => ["All", ...dashboardShell.brandOptions], [dashboardShell.brandOptions]);
 
@@ -1692,8 +1691,8 @@ export default function Home() {
           <div className="sideNavBottom">
             <div className="navControls">
               <label className="navField">
-                <span>Account</span>
                 <select
+                  aria-label="Account"
                   value={selectedCustomerId ?? ""}
                   onChange={(event) => {
                     setSelectedCustomerId(event.target.value);
@@ -1710,11 +1709,8 @@ export default function Home() {
               </label>
 
               <div className="navUploadField">
-                <div className="navDateMeta">
-                  <p>Last Upload:</p>
-                  <strong>{compactDateText(lastUploaded)}</strong>
-                </div>
                 <button
+                  aria-label="Upload or import"
                   className="fileButton"
                   onClick={() => {
                     setCustomerStatus("");
@@ -1742,7 +1738,6 @@ export default function Home() {
               </div>
 
               <div className="navSignOutField">
-                <span>{user.email ?? "Signed in"}</span>
                 <button className="ghostButton navSignOut" type="button" onClick={signOut}>
                   Sign Out
                 </button>
@@ -4452,18 +4447,6 @@ function topInventoryStyles(records: Array<SalesRecord | InventoryRecord>) {
 
 function latestDate(records: DatedRecord[]) {
   return records.map((record) => record.transaction_date).sort().at(-1) ?? null;
-}
-
-function lastUploadedForShell(shell: DashboardShellSummary, brandFilter: string) {
-  if (brandFilter !== "All") return shell.lastUploadedByBrand[brandFilter] ?? shell.lastUploaded;
-  return shell.lastUploaded;
-}
-
-function compactDateText(value: string | null) {
-  if (!value) return "-";
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return "-";
-  return `${date.getMonth() + 1}.${date.getDate()}.${String(date.getFullYear()).slice(-2)}`;
 }
 
 function dateInputValue(value: string | null) {

@@ -3489,15 +3489,14 @@ select {
   display: grid;
   gap: clamp(0.75rem, 1.8vw, 1.5rem);
   grid-column: 1;
-  grid-template-columns: minmax(130px, 0.38fr) minmax(340px, 1fr) minmax(420px, 0.56fr);
-  left: 50%;
+  grid-template-columns: minmax(130px, 0.38fr) minmax(340px, 1fr) minmax(460px, 0.56fr);
+  justify-self: center;
   min-height: 58px;
   overflow: visible;
   padding: 0.58rem clamp(0.95rem, 2vw, 1.4rem);
   position: sticky;
   top: 0;
-  transform: translateX(-50%);
-  width: min(100%, 1280px);
+  width: min(calc(100% - 56px), 1280px);
   z-index: 60;
 }
 
@@ -3592,19 +3591,20 @@ select {
 }
 
 .navControls {
-  align-items: center;
+  align-items: end;
   display: grid;
-  gap: 0.48rem;
-  grid-template-columns: minmax(120px, 1fr) minmax(132px, auto) minmax(100px, auto);
+  gap: 0.46rem;
+  grid-template-columns: 144px 144px 132px;
   justify-content: end;
 }
 
 .navField,
 .navUploadField,
 .navSignOutField {
+  align-self: end;
   display: grid;
-  gap: 0.22rem;
-  grid-template-rows: auto;
+  gap: 0.28rem;
+  grid-template-rows: 34px;
   min-width: 0;
   width: 100%;
 }
@@ -3614,10 +3614,10 @@ select {
 .navSignOutField > span,
 label {
   color: rgba(255, 254, 250, 0.48);
-  font-size: 0.5rem;
+  font-size: 0.48rem;
   font-weight: 900;
   letter-spacing: 0.08em;
-  line-height: 1.15;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -3626,24 +3626,29 @@ label {
 .fileButton,
 .navSignOut {
   align-items: center;
-  background: rgba(255, 254, 250, 0.1);
-  border: 1px solid rgba(255, 254, 250, 0.14);
+  appearance: none;
+  background: #fffefa;
+  border: 1px solid #fffefa;
   border-radius: 999px;
   box-shadow: none;
-  color: #fffefa;
+  box-sizing: border-box;
+  color: var(--ink);
   display: inline-grid;
-  font-size: 0.7rem;
-  font-weight: 850;
-  height: 31px;
-  justify-content: stretch;
-  min-height: 31px;
-  padding: 0 0.76rem;
-  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 900;
+  height: 34px;
+  justify-content: center;
+  line-height: 1;
+  min-height: 34px;
+  padding: 0 0.82rem;
+  text-align: center;
   width: 100%;
 }
 
 .navField select {
-  color-scheme: dark;
+  color-scheme: light;
+  cursor: pointer;
+  text-align: left;
 }
 
 .fileButton,
@@ -3653,32 +3658,27 @@ label {
 }
 
 .fileButton {
-  background: #fffefa;
-  border-color: #fffefa;
-  color: var(--ink);
   cursor: pointer;
 }
 
-.fileButton:hover {
+.fileButton:hover,
+.navSignOut:hover,
+.navField select:hover {
   background: #f0ece4;
   border-color: #f0ece4;
 }
 
-.navSignOut:hover,
-.navField select:hover,
-.ghostButton:hover {
-  border-color: rgba(255, 254, 250, 0.32);
-}
-
 .navDateMeta {
-  align-items: baseline;
+  align-items: center;
   display: flex;
   gap: 0.34rem;
+  min-height: 0.62rem;
+  overflow: hidden;
 }
 
 .navDateMeta strong {
   color: rgba(255, 254, 250, 0.74);
-  font-size: 0.58rem;
+  font-size: 0.48rem;
   font-weight: 900;
   line-height: 1;
 }
