@@ -6888,7 +6888,7 @@ body {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  margin-bottom: clamp(2.45rem, 4vw, 4.4rem);
+  margin-bottom: clamp(3.25rem, 5.4vw, 6rem);
   padding: 0;
 }
 
@@ -6953,6 +6953,99 @@ body {
   :root:not([data-theme="dark"]) .publicReport > .sectionBlock,
   :root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock {
     border-radius: 0;
+    margin-bottom: 2.55rem;
     padding: 0;
   }
+}
+
+/* Sidebar utility cleanup: account, upload, and logout only. */
+:root:not([data-theme="dark"]) .sideNavBottom {
+  border-top: 1px solid rgba(31, 31, 29, 0.08);
+  gap: 0;
+  padding-top: 1rem;
+}
+
+:root:not([data-theme="dark"]) .navControls {
+  gap: 0.88rem;
+}
+
+:root:not([data-theme="dark"]) .navField,
+:root:not([data-theme="dark"]) .navUploadField,
+:root:not([data-theme="dark"]) .navSignOutField {
+  gap: 0.42rem;
+}
+
+:root:not([data-theme="dark"]) .navField span,
+:root:not([data-theme="dark"]) .navDateMeta p,
+:root:not([data-theme="dark"]) .navSignOutField > span {
+  color: #858178;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+}
+
+:root:not([data-theme="dark"]) .navField select,
+:root:not([data-theme="dark"]) .fileButton,
+:root:not([data-theme="dark"]) .navSignOut {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(31, 31, 29, 0.1);
+  border-radius: 12px;
+  box-shadow: none;
+  color: var(--soft-black);
+  display: inline-grid;
+  font-size: 0.78rem;
+  font-weight: 850;
+  height: 42px;
+  justify-content: stretch;
+  min-height: 42px;
+  padding: 0 0.85rem;
+  text-align: left;
+  width: 100%;
+}
+
+:root:not([data-theme="dark"]) .fileButton,
+:root:not([data-theme="dark"]) .navSignOut {
+  justify-content: center;
+  text-align: center;
+}
+
+:root:not([data-theme="dark"]) .fileButton {
+  background: var(--soft-black);
+  border-color: var(--soft-black);
+  color: #ffffff;
+}
+
+:root:not([data-theme="dark"]) .fileButton:hover {
+  background: #2b2925;
+  border-color: #2b2925;
+}
+
+:root:not([data-theme="dark"]) .navSignOut:hover,
+:root:not([data-theme="dark"]) .navField select:hover {
+  border-color: rgba(31, 31, 29, 0.22);
+}
+
+:root:not([data-theme="dark"]) .navDateMeta {
+  gap: 0.34rem;
+}
+
+:root:not([data-theme="dark"]) .navDateMeta strong {
+  color: var(--soft-black);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+:root:not([data-theme="dark"]) .navSignOutField > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root:not([data-theme="dark"]) .navMessage {
+  background: #f4f3f0;
+  border: 0;
+  border-radius: 10px;
+  color: var(--taupe);
 }

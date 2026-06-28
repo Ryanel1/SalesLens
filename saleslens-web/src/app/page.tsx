@@ -462,22 +462,14 @@ export default function Home() {
   const [imageCacheStatus, setImageCacheStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [navCompact, setNavCompact] = useState(false);
-  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
   const reportCache = useRef<Map<string, ReportSnapshotPayload>>(new Map());
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem("saleslens-theme");
-    if (storedTheme === "light" || storedTheme === "dark") {
-      setThemeMode(storedTheme);
-    }
+    document.documentElement.removeAttribute("data-theme");
+    window.localStorage.removeItem("saleslens-theme");
   }, []);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = themeMode;
-    window.localStorage.setItem("saleslens-theme", themeMode);
-  }, [themeMode]);
 
   useEffect(() => {
     imageFetchAttempts.current.clear();
@@ -1730,15 +1722,6 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <button
-              className="themeSwitch"
-              type="button"
-              aria-label={`Switch to ${themeMode === "dark" ? "light" : "dark"} theme`}
-              onClick={() => setThemeMode((current) => (current === "dark" ? "light" : "dark"))}
-            >
-              <span>Theme</span>
-              <strong>{themeMode === "dark" ? "Dark" : "Light"}</strong>
-            </button>
           </div>
         </nav>
 
@@ -2143,7 +2126,6 @@ export default function Home() {
                   <h3>Inventory Snapshot</h3>
                   <p>Current on-hand inventory from the latest available inventory data.</p>
                 </div>
-                <strong>{dateText(inventorySnapshot.date)}</strong>
               </div>
               <InventoryCard snapshot={inventorySnapshot} />
             </section>

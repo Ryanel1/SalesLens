@@ -251,7 +251,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           <ReportSection
             title="Inventory Snapshot"
             subtitle="Current on-hand inventory from the latest available inventory data."
-            aside={dateText(payload.inventorySnapshot.date)}
           >
             <InventoryCard snapshot={payload.inventorySnapshot} />
           </ReportSection>
