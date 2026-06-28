@@ -6324,3 +6324,176 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Weekly Scorecard polish: keep the week system, but align columns and add breathing room. */
+.sectionBlock .weeklyScorecardList {
+  gap: clamp(1rem, 1.5vw, 1.35rem);
+}
+
+.sectionBlock .weeklyScorecardRow {
+  background: var(--flat-card);
+  border: 1px solid var(--flat-border);
+  border-radius: 18px;
+  box-shadow: var(--flat-card-shadow);
+  display: grid;
+  gap: 0;
+  grid-template-areas: "sales metrics products";
+  grid-template-columns: minmax(250px, 0.72fr) minmax(260px, 0.72fr) minmax(560px, 1.56fr);
+  min-height: 168px;
+  overflow: visible;
+  padding-top: 0.72rem;
+}
+
+.sectionBlock .weeklyDateRail {
+  align-items: baseline;
+  background: var(--soft-black);
+  border: 0;
+  border-radius: 10px 10px 10px 0;
+  color: var(--paper);
+  display: inline-flex;
+  gap: 0.45rem;
+  left: 0;
+  max-width: calc(100% - 2rem);
+  min-height: 1.8rem;
+  padding: 0.32rem 0.72rem;
+  position: absolute;
+  top: 0;
+  width: max-content;
+  z-index: 1;
+}
+
+.sectionBlock .weeklyDateRail span,
+.sectionBlock .weeklyDateRail strong,
+.sectionBlock .weeklyDateRail em {
+  color: inherit;
+  line-height: 1;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.sectionBlock .weeklyPrimary,
+.sectionBlock .weeklyMetrics span,
+.sectionBlock .weeklyTopProducts {
+  align-content: start;
+  padding: clamp(1.95rem, 2.2vw, 2.35rem) clamp(1.15rem, 1.55vw, 1.45rem) clamp(1.25rem, 1.65vw, 1.6rem);
+}
+
+.sectionBlock .weeklyPrimary {
+  border-right: 1px solid var(--flat-border);
+  gap: 0.62rem;
+}
+
+.sectionBlock .weeklyMetrics {
+  border-right: 1px solid var(--flat-border);
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0;
+}
+
+.sectionBlock .weeklyMetrics span {
+  border-left: 0;
+  gap: 0.52rem;
+}
+
+.sectionBlock .weeklyMetrics span + span {
+  border-left: 1px solid var(--flat-border);
+}
+
+.sectionBlock .weeklyPrimary span,
+.sectionBlock .weeklyMetrics em,
+.sectionBlock .weeklyTopProducts > span {
+  display: block;
+  min-height: 1rem;
+}
+
+.sectionBlock .weeklyPrimary strong {
+  font-size: clamp(1.65rem, 2.2vw, 2.2rem);
+}
+
+.sectionBlock .weeklyMetrics strong {
+  font-size: clamp(1.25rem, 1.7vw, 1.6rem);
+}
+
+.sectionBlock .weeklyPrimary em,
+.sectionBlock .weeklyMetrics small {
+  line-height: 1.35;
+}
+
+.sectionBlock .weeklyTopProducts {
+  border-left: 0;
+  border-top: 0;
+  gap: 0.88rem;
+}
+
+.sectionBlock .weeklyTopProductList {
+  align-items: stretch;
+  display: grid;
+  gap: clamp(0.72rem, 1vw, 1rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sectionBlock .weeklyTopProduct {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--flat-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(31, 31, 29, 0.025);
+  gap: 0.72rem;
+  grid-template-columns: 56px minmax(0, 1fr);
+  min-height: 74px;
+  padding: 0.58rem;
+}
+
+.sectionBlock .weeklyTopProduct img,
+.sectionBlock .weeklyTopProductPlaceholder {
+  border-radius: 10px;
+  height: 56px;
+  width: 56px;
+}
+
+.sectionBlock .weeklyTopProduct strong {
+  font-size: 0.92rem;
+  line-height: 1.1;
+}
+
+.sectionBlock .weeklyTopProduct em,
+.sectionBlock .weeklyTopProduct small {
+  line-height: 1.32;
+}
+
+@media (max-width: 1180px) {
+  .sectionBlock .weeklyScorecardRow {
+    grid-template-areas:
+      "sales metrics"
+      "products products";
+    grid-template-columns: minmax(230px, 0.9fr) minmax(320px, 1.1fr);
+  }
+
+  .sectionBlock .weeklyPrimary,
+  .sectionBlock .weeklyMetrics {
+    border-bottom: 1px solid var(--flat-border);
+  }
+
+  .sectionBlock .weeklyMetrics {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .sectionBlock .weeklyScorecardRow {
+    grid-template-areas:
+      "sales"
+      "metrics"
+      "products";
+    grid-template-columns: 1fr;
+  }
+
+  .sectionBlock .weeklyPrimary,
+  .sectionBlock .weeklyMetrics {
+    border-right: 0;
+  }
+
+  .sectionBlock .weeklyTopProductList {
+    grid-template-columns: 1fr;
+  }
+}
