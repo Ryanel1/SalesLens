@@ -196,6 +196,8 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
             <SalesDriverGrid
               current={payload.currentMetrics}
               drivers={payload.monthlyDrivers}
+              periodTitle={payload.periodTitle}
+              priorPeriodTitle={payload.priorPeriodTitle}
               prior={payload.priorMetrics}
             />
           ) : null}
@@ -415,10 +417,14 @@ function SalesDriverGrid({
   current,
   prior,
   drivers,
+  periodTitle,
+  priorPeriodTitle,
 }: {
   current: SnapshotMetricSet;
   prior: SnapshotMetricSet;
   drivers: SnapshotMonthlyDrivers;
+  periodTitle: string;
+  priorPeriodTitle: string;
 }) {
   const avgSalePerTransaction = drivers.avgSalePerTransaction ?? (current.transactions ? current.sales / current.transactions : 0);
   const priorAvgSalePerTransaction = drivers.priorAvgSalePerTransaction ?? (prior.transactions ? prior.sales / prior.transactions : 0);
@@ -426,13 +432,60 @@ function SalesDriverGrid({
   const priorAvgUnitsPerTransaction = drivers.priorAvgUnitsPerTransaction ?? (prior.transactions ? prior.units / prior.transactions : 0);
   const avgSalePerUnit = drivers.avgSalePerUnit ?? (current.units ? current.sales / current.units : 0);
   const priorAvgSalePerUnit = drivers.priorAvgSalePerUnit ?? (prior.units ? prior.sales / prior.units : 0);
+  const salesDelta = current.sales - prior.sales;
   const unitDelta = current.units - prior.units;
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = avgSalePerTransaction - priorAvgSalePerTransaction;
+  const maxSales = Math.max(current.sales, prior.sales, 1);
+  const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
+  const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
+  const takeaways = [
+    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
+    `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
+    `Average transaction is ${currencyText(avgSalePerTransaction)} vs ${currencyText(priorAvgSalePerTransaction)} LY.`,
+    `Top 5 styles drove ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
+  ];
 
   return (
-    <div className="salesDriverGrid">
-      <div className="monthlyDriverMetricsRow">
+    <div className="salesDriverGrid monthlyScorecardGrid">
+      <article className={`monthlyScorecardHero ${changeClass(salesDelta)}`}>
+        <div className="monthlyScorecardHeader">
+          <span>Sales Movement</span>
+          <strong>{changeText(current.sales, prior.sales)}</strong>
+        </div>
+        <div className="monthlyScorecardTotal">
+          <span>{periodTitle}</span>
+          <strong>{currencyText(current.sales)}</strong>
+          <em>{signedCurrencyText(salesDelta)} vs {priorPeriodTitle}</em>
+        </div>
+        <div className="monthlyScorecardBars" aria-label="Current sales compared with last year">
+          <div className="monthlyScorecardBarRow">
+            <span>{periodTitle}</span>
+            <div className="monthlyScorecardTrack">
+              <i style={{ width: `${currentSalesWidth}%` }} />
+            </div>
+            <strong>{currencyText(current.sales)}</strong>
+          </div>
+          <div className="monthlyScorecardBarRow prior">
+            <span>{priorPeriodTitle}</span>
+            <div className="monthlyScorecardTrack">
+              <i style={{ width: `${priorSalesWidth}%` }} />
+            </div>
+            <strong>{currencyText(prior.sales)}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article className="monthlyScorecardTakeaways">
+        <p>Summary</p>
+        <ul>
+          {takeaways.map((takeaway) => (
+            <li key={takeaway}>{takeaway}</li>
+          ))}
+        </ul>
+      </article>
+
+      <div className="monthlyDriverMetricsRow monthlyScorecardMetrics">
         <DriverTile
           label="Transactions"
           value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}

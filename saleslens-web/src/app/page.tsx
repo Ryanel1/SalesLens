@@ -2141,6 +2141,8 @@ export default function Home() {
             <SalesDriverGrid
               current={currentMetrics}
               drivers={monthlyDrivers}
+              periodTitle={selectedPeriodTitle}
+              priorPeriodTitle={priorPeriodTitle}
               prior={priorMetrics}
             />
           </section>
@@ -2454,18 +2456,67 @@ function ProductBreadthCard({ insights }: { insights: ReturnType<typeof ytdInsig
   );
 }
 
-function SalesDriverGrid({ current, prior, drivers }: {
+function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitle }: {
   current: MetricSet;
   prior: MetricSet;
   drivers: ReturnType<typeof monthlyDriverMetrics>;
+  periodTitle: string;
+  priorPeriodTitle: string;
 }) {
+  const salesDelta = current.sales - prior.sales;
   const unitDelta = current.units - prior.units;
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction;
+  const maxSales = Math.max(current.sales, prior.sales, 1);
+  const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
+  const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
+  const takeaways = [
+    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
+    `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`,
+    `Average transaction is ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`,
+    `Top 5 styles drove ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
+  ];
 
   return (
-    <div className="salesDriverGrid">
-      <div className="monthlyDriverMetricsRow">
+    <div className="salesDriverGrid monthlyScorecardGrid">
+      <article className={`monthlyScorecardHero ${changeClass(salesDelta)}`}>
+        <div className="monthlyScorecardHeader">
+          <span>Sales Movement</span>
+          <strong>{changeText(current.sales, prior.sales)}</strong>
+        </div>
+        <div className="monthlyScorecardTotal">
+          <span>{periodTitle}</span>
+          <strong>{currencyText(current.sales)}</strong>
+          <em>{signedCurrencyText(salesDelta)} vs {priorPeriodTitle}</em>
+        </div>
+        <div className="monthlyScorecardBars" aria-label="Current sales compared with last year">
+          <div className="monthlyScorecardBarRow">
+            <span>{periodTitle}</span>
+            <div className="monthlyScorecardTrack">
+              <i style={{ width: `${currentSalesWidth}%` }} />
+            </div>
+            <strong>{currencyText(current.sales)}</strong>
+          </div>
+          <div className="monthlyScorecardBarRow prior">
+            <span>{priorPeriodTitle}</span>
+            <div className="monthlyScorecardTrack">
+              <i style={{ width: `${priorSalesWidth}%` }} />
+            </div>
+            <strong>{currencyText(prior.sales)}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article className="monthlyScorecardTakeaways">
+        <p>Summary</p>
+        <ul>
+          {takeaways.map((takeaway) => (
+            <li key={takeaway}>{takeaway}</li>
+          ))}
+        </ul>
+      </article>
+
+      <div className="monthlyDriverMetricsRow monthlyScorecardMetrics">
         <DriverTile
           label="Transactions"
           value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}

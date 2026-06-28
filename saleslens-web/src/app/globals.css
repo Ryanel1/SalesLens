@@ -1732,6 +1732,142 @@ select {
   border-left: 4px solid var(--clay);
 }
 
+.monthlyScorecardGrid {
+  gap: 1rem;
+  grid-template-columns: minmax(360px, 1.35fr) minmax(300px, 0.9fr);
+}
+
+.monthlyScorecardHero,
+.monthlyScorecardTakeaways {
+  background: rgba(255, 253, 248, 0.92);
+  border: 1px solid rgba(231, 222, 209, 0.78);
+  border-radius: 18px;
+  box-shadow: var(--soft-tile-shadow);
+  min-width: 0;
+  padding: clamp(1.05rem, 1.8vw, 1.45rem);
+}
+
+.monthlyScorecardHero {
+  display: grid;
+  gap: clamp(1rem, 1.6vw, 1.4rem);
+}
+
+.monthlyScorecardHeader {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.monthlyScorecardHeader span,
+.monthlyScorecardTotal span,
+.monthlyScorecardBarRow span,
+.monthlyScorecardTakeaways p {
+  color: var(--taupe);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.monthlyScorecardHeader strong {
+  color: var(--soft-black);
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.monthlyScorecardHero.positive .monthlyScorecardHeader strong {
+  color: var(--steel-dark);
+}
+
+.monthlyScorecardHero.negative .monthlyScorecardHeader strong {
+  color: var(--clay);
+}
+
+.monthlyScorecardTotal {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.monthlyScorecardTotal strong {
+  color: var(--soft-black);
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+  line-height: 0.94;
+  white-space: nowrap;
+}
+
+.monthlyScorecardTotal em {
+  color: var(--taupe);
+  font-size: 0.92rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.monthlyScorecardBars {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.monthlyScorecardBarRow {
+  align-items: center;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(7rem, 0.6fr) minmax(120px, 1fr) minmax(7.6rem, auto);
+}
+
+.monthlyScorecardBarRow strong {
+  color: var(--soft-black);
+  font-size: 1rem;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.monthlyScorecardTrack {
+  background: rgba(215, 208, 196, 0.72);
+  border-radius: 999px;
+  height: 9px;
+  overflow: hidden;
+}
+
+.monthlyScorecardTrack i {
+  background: var(--accent);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.monthlyScorecardBarRow.prior .monthlyScorecardTrack i {
+  background: var(--steel);
+}
+
+.monthlyScorecardTakeaways {
+  align-content: center;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.monthlyScorecardTakeaways ul {
+  display: grid;
+  gap: 0.62rem;
+  list-style: disc;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.monthlyScorecardTakeaways li {
+  color: var(--taupe);
+  font-size: 0.96rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.monthlyScorecardMetrics {
+  grid-column: 1 / -1;
+}
+
 .weeklyScorecardList {
   display: grid;
   gap: 0.85rem;
@@ -6110,4 +6246,65 @@ body {
 
 .sectionBlock .inventoryGaugeTrack {
   border-radius: 999px;
+}
+
+/* Monthly Scorecard refresh: preserve the rebuilt sales summary layout after theme overrides. */
+.sectionBlock .monthlyScorecardGrid {
+  background: transparent;
+  border: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(360px, 1.35fr) minmax(300px, 0.9fr);
+  overflow: visible;
+}
+
+.sectionBlock .monthlyScorecardHero,
+.sectionBlock .monthlyScorecardTakeaways,
+.sectionBlock .monthlyScorecardMetrics .driverTile {
+  background: var(--flat-card);
+  border: 1px solid var(--flat-border);
+  border-radius: 18px;
+  box-shadow: var(--flat-card-shadow);
+}
+
+.sectionBlock .monthlyScorecardHero,
+.sectionBlock .monthlyScorecardTakeaways {
+  overflow: hidden;
+}
+
+.sectionBlock .monthlyScorecardMetrics {
+  background: transparent;
+  border: 0;
+  grid-column: 1 / -1;
+}
+
+.sectionBlock .monthlyScorecardTrack {
+  background: rgba(215, 208, 196, 0.72);
+  border-radius: 999px;
+}
+
+@media (max-width: 1040px) {
+  .sectionBlock .monthlyScorecardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionBlock .monthlyScorecardMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .sectionBlock .monthlyScorecardBarRow {
+    align-items: start;
+    gap: 0.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  .sectionBlock .monthlyScorecardBarRow strong {
+    text-align: left;
+  }
+
+  .sectionBlock .monthlyScorecardMetrics {
+    grid-template-columns: 1fr;
+  }
 }
