@@ -6570,3 +6570,60 @@ body {
 .sectionBlock .monthlyScorecardTakeaways li {
   line-height: 1.68;
 }
+
+/* Flat container pass: white sidebar and no remaining container borders/shadows. */
+:root:not([data-theme="dark"]) .topNav,
+:root:not([data-theme="dark"]) .topNav.compact {
+  background: #ffffff;
+  border: 0;
+  box-shadow: none;
+}
+
+:root:not([data-theme="dark"]) .navBrand {
+  border: 0;
+}
+
+:root:not([data-theme="dark"]) .sideNavItem,
+:root:not([data-theme="dark"]) .sideNavItem:hover,
+:root:not([data-theme="dark"]) .sideNavItem.active,
+:root:not([data-theme="dark"]) .sideNavItem.disabled {
+  border: 0;
+  box-shadow: none;
+}
+
+:root:not([data-theme="dark"]) .dashboardHeader,
+:root:not([data-theme="dark"]) .overviewStrip article,
+:root:not([data-theme="dark"]) .dashboard > .sectionBlock,
+:root:not([data-theme="dark"]) .publicReport > .sectionBlock,
+:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock,
+:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardHero,
+:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardTakeaways,
+:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardMetrics .driverTile,
+:root:not([data-theme="dark"]) .sectionBlock .metric,
+:root:not([data-theme="dark"]) .sectionBlock .styleSignalCard,
+:root:not([data-theme="dark"]) .sectionBlock .artCard,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryCard,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryTotal,
+:root:not([data-theme="dark"]) .sectionBlock .inventorySummaryGrid div,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryBreakout div,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryCoverage,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryPosition,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryTrendChart,
+:root:not([data-theme="dark"]) .sectionBlock .inventoryForecastCard,
+:root:not([data-theme="dark"]) .sectionBlock .weeklyScorecardRow,
+:root:not([data-theme="dark"]) .sectionBlock .weeklyTopProduct,
+:root:not([data-theme="dark"]) .topSalesProduct,
+:root:not([data-theme="dark"]) .insightCard,
+:root:not([data-theme="dark"]) .lineCard,
+:root:not([data-theme="dark"]) .notice,
+:root:not([data-theme="dark"]) .publicEmpty,
+:root:not([data-theme="dark"]) .publicReport,
+:root:not([data-theme="dark"]) .publicAccountReport,
+:root:not([data-theme="dark"]) .shareModal,
+:root:not([data-theme="dark"]) .inventoryDropdownMenu,
+:root:not([data-theme="dark"]) .shareLinkBox,
+:root:not([data-theme="dark"]) .uploadHistoryRow,
+:root:not([data-theme="dark"]) .emptyNotice {
+  border: 0;
+  box-shadow: none;
+}
