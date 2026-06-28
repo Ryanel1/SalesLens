@@ -3420,61 +3420,42 @@ tbody tr:nth-child(even) {
   }
 }
 
-/* SalesLens 2026 app-suite shell refresh */
+/* Current SalesLens flat dashboard system */
 :root {
-  --app-bg: #e9e9e5;
-  --app-bg-2: #f5f5f2;
-  --sidebar-bg: rgba(248, 248, 245, 0.92);
-  --surface: rgba(255, 255, 252, 0.92);
-  --surface-solid: #fffefa;
-  --surface-muted: #f2f1ed;
-  --line: #dfddd6;
+  --app-bg: #f4f3f0;
+  --app-bg-2: #f4f3f0;
+  --sidebar-bg: #ffffff;
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --surface-muted: #f8f7f4;
+  --line: rgba(31, 31, 29, 0.1);
   --line-soft: rgba(31, 31, 29, 0.08);
   --text: #141413;
   --text-soft: #5f5b53;
-  --text-faint: #8a857a;
-  --nav-active: #ecebe7;
-  --ink: #171716;
-  --tech-shadow: 0 18px 50px rgba(26, 26, 24, 0.08);
-  --tight-shadow: 0 8px 24px rgba(26, 26, 24, 0.06);
-  --radius: 8px;
+  --text-faint: #858178;
+  --nav-active: #f3f2ee;
+  --ink: #15120f;
+  --flat-panel: transparent;
+  --flat-card: #ffffff;
+  --flat-soft: #f8f7f4;
+  --flat-border: transparent;
+  --flat-shadow: none;
+  --flat-card-shadow: none;
+  --radius: 12px;
   --hairline: 1px solid var(--line);
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --canvas: #111312;
-  --paper: #171918;
-  --paper-soft: #1d201f;
-  --stone: #2d302e;
-  --stone-2: #3a3d3b;
-  --charcoal: #f2f0ea;
-  --soft-black: #fffefa;
-  --taupe: #aaa59b;
-  --taupe-2: #7f7a72;
-  --app-bg: #111312;
-  --app-bg-2: #191b1a;
-  --sidebar-bg: rgba(20, 22, 21, 0.94);
-  --surface: rgba(25, 27, 26, 0.9);
-  --surface-solid: #191b1a;
-  --surface-muted: #222523;
-  --line: #303431;
-  --line-soft: rgba(255, 255, 250, 0.08);
-  --text: #f5f2eb;
-  --text-soft: #beb8ae;
-  --text-faint: #89847a;
-  --nav-active: #262a28;
-  --ink: #f5f2eb;
-  --tech-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
-  --tight-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-}
-
 body {
-  background:
-    radial-gradient(circle at 76% 8%, rgba(111, 135, 149, 0.12), transparent 24rem),
-    linear-gradient(135deg, var(--app-bg), var(--app-bg-2));
+  background: var(--app-bg);
   color: var(--text);
   font-size: 14px;
+}
+
+body,
+.appShell,
+.dashboard,
+.publicShell {
+  background: var(--app-bg);
 }
 
 h1,
@@ -3492,9 +3473,6 @@ select {
 }
 
 .appShell {
-  background:
-    radial-gradient(circle at 72% 10%, var(--account-glow, rgba(111, 135, 149, 0.12)), transparent 28rem),
-    linear-gradient(135deg, var(--app-bg), var(--app-bg-2));
   display: grid;
   grid-template-columns: 256px minmax(0, 1fr);
   min-height: 100vh;
@@ -3505,8 +3483,7 @@ select {
   align-items: stretch;
   align-self: start;
   background: var(--sidebar-bg);
-  border-bottom: 0;
-  border-right: 1px solid var(--line);
+  border: 0;
   box-shadow: none;
   display: flex;
   flex-direction: column;
@@ -3522,11 +3499,10 @@ select {
 }
 
 .navBrand {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--tight-shadow);
-  padding: 0.9rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.55rem 0.35rem 0.9rem;
 }
 
 .navBrand h1 {
@@ -3559,6 +3535,7 @@ select {
   background: transparent;
   border: 0;
   border-radius: var(--radius);
+  box-shadow: none;
   color: var(--text-soft);
   display: grid;
   font-size: 0.84rem;
@@ -3694,15 +3671,17 @@ select {
 }
 
 .sideNavBottom {
+  border-top: 1px solid var(--line-soft);
   display: grid;
-  gap: 0.7rem;
+  gap: 0;
   margin-top: auto;
+  padding-top: 1rem;
 }
 
 .navControls {
   align-items: stretch;
   display: grid;
-  gap: 0.7rem;
+  gap: 0.88rem;
   grid-template-columns: 1fr;
   justify-content: stretch;
 }
@@ -3711,7 +3690,7 @@ select {
 .navUploadField,
 .navSignOutField {
   display: grid;
-  gap: 0.38rem;
+  gap: 0.42rem;
   grid-template-rows: auto auto;
   min-width: 0;
   width: 100%;
@@ -3723,68 +3702,87 @@ select {
 label {
   color: var(--text-faint);
   font-size: 0.62rem;
-  font-weight: 850;
+  font-weight: 900;
   letter-spacing: 0.08em;
+  line-height: 1.15;
   text-transform: uppercase;
 }
 
 .navField select,
 .navField input,
 .fileButton,
-.navSignOut,
-.themeSwitch {
+.navSignOut {
+  align-items: center;
   background: var(--surface-solid);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  box-shadow: none;
   color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 800;
-  height: 40px;
-  min-height: 40px;
-  padding: 0 0.75rem;
-}
-
-.fileButton,
-.navSignOut,
-.themeSwitch {
-  align-items: center;
   display: inline-grid;
-  justify-content: start;
+  font-size: 0.78rem;
+  font-weight: 850;
+  height: 42px;
+  justify-content: stretch;
+  min-height: 42px;
+  padding: 0 0.85rem;
   text-align: left;
   width: 100%;
 }
 
-.fileButton:hover,
+.fileButton,
+.navSignOut {
+  justify-content: center;
+  text-align: center;
+}
+
+.fileButton {
+  background: var(--soft-black);
+  border-color: var(--soft-black);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.fileButton:hover {
+  background: #2b2925;
+  border-color: #2b2925;
+}
+
 .navSignOut:hover,
-.themeSwitch:hover,
-.shareButton:hover,
+.navField select:hover,
 .ghostButton:hover {
-  border-color: var(--text);
+  border-color: rgba(31, 31, 29, 0.22);
 }
 
 .navDateMeta {
   align-items: baseline;
   display: flex;
-  gap: 0.25rem;
+  gap: 0.34rem;
 }
 
 .navDateMeta strong {
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.74rem;
+  font-weight: 900;
   line-height: 1;
 }
 
 .navSignOutField > span {
   max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .navMessage {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  align-items: center;
+  background: var(--app-bg);
+  border: 0;
+  border-radius: 10px;
   color: var(--text-soft);
+  display: flex;
   font-size: 0.72rem;
   font-weight: 700;
+  gap: 0.65rem;
   justify-content: space-between;
   margin-top: 0.45rem;
   min-width: 0;
@@ -3797,39 +3795,61 @@ label {
   width: 100%;
 }
 
-.themeSwitch {
-  grid-template-columns: 1fr auto;
+.navMessage button {
+  align-items: center;
+  appearance: none;
+  background: rgba(39, 36, 31, 0.08);
+  border: 1px solid rgba(39, 36, 31, 0.12);
+  border-radius: 999px;
+  color: var(--charcoal);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1rem;
+  font-weight: 900;
+  height: 1.35rem;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  width: 1.35rem;
 }
 
-.themeSwitch span {
-  color: var(--text-faint);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.themeSwitch strong {
-  color: var(--text);
-  font-size: 0.78rem;
+.ghostButton {
+  background: transparent;
+  border: 1px solid var(--line);
 }
 
 .dashboard {
   grid-column: 2;
   min-width: 0;
-  padding: 1.1rem;
+  padding: clamp(1.25rem, 4vw, 4rem);
 }
 
 .dashboardHeader,
 .publicDashboardHeader {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--tech-shadow);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   display: grid;
-  gap: 1.2rem;
-  grid-template-columns: minmax(0, 1fr) minmax(290px, 0.42fr);
-  margin-bottom: 1rem;
-  padding: 1.25rem;
+  gap: clamp(1.35rem, 2.2vw, 2rem) clamp(2rem, 5vw, 5.5rem);
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+  margin-bottom: clamp(1.6rem, 2.4vw, 2.2rem);
+  padding: clamp(0.35rem, 1vw, 0.75rem) 0 clamp(0.65rem, 1.6vw, 1rem);
+}
+
+.dashboardTopSection {
+  align-items: start;
+  grid-template-areas: "intro controls";
+  grid-template-rows: auto;
+}
+
+.dashboardTopSection .dashboardHeroIntro {
+  align-self: start;
+  display: grid;
+  gap: 0.62rem;
+  grid-area: intro;
+  max-width: 48rem;
 }
 
 .dashboardHeader .eyebrow,
@@ -3843,12 +3863,11 @@ label {
 
 .dashboardHeader h2,
 .publicDashboardHeader h1 {
-  color: var(--steel);
-  font-size: 2.7rem;
+  color: var(--clay);
+  font-size: clamp(2.9rem, 5.2vw, 5.4rem);
   font-weight: 860;
-  letter-spacing: 0;
-  line-height: 0.96;
-  margin: 0.35rem 0 0.55rem;
+  line-height: 0.9;
+  margin: 0;
 }
 
 .dashboardHeader .muted,
@@ -3860,21 +3879,23 @@ label {
 }
 
 .controlDock {
-  align-content: end;
-  align-self: end;
+  align-content: start;
+  align-self: start;
   display: grid;
   gap: 0.65rem;
-  grid-template-columns: 1fr 1fr;
+  grid-area: controls;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1.2rem;
 }
 
 .controlDock label {
   display: grid;
-  gap: 0.36rem;
+  gap: 0.42rem;
 }
 
 .controlDock select,
 .controlDock input {
-  min-height: 40px;
+  min-height: 42px;
   padding: 0 0.75rem;
 }
 
@@ -3887,7 +3908,7 @@ label {
   color: var(--surface-solid);
   font-size: 0.76rem;
   font-weight: 850;
-  min-height: 40px;
+  min-height: 42px;
   text-transform: uppercase;
 }
 
@@ -3896,67 +3917,71 @@ label {
   padding: 0 0.85rem;
 }
 
+.dashboardHeader .controlDock .shareButton:not(:disabled):hover {
+  background: var(--charcoal);
+  border-color: var(--charcoal);
+  color: var(--paper);
+}
+
+.dashboardHeader .controlDock .shareButton:disabled {
+  background: var(--flat-card);
+  border-color: var(--flat-border);
+  color: var(--taupe);
+}
+
 .notice,
-.sectionBlock,
 .overviewStrip article,
 .publicEmpty,
 .publicReport,
-.publicAccountReport {
+.publicAccountReport,
+.shareModal,
+.inventoryDropdownMenu,
+.shareLinkBox,
+.uploadHistoryRow,
+.emptyNotice {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--radius);
-  box-shadow: var(--tight-shadow);
+  box-shadow: none;
 }
 
-.overviewStrip {
-  gap: 0.65rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  margin-bottom: 1rem;
+.publicReport,
+.publicAccountReport {
+  background: transparent;
+  margin: 0 auto;
+  max-width: 1480px;
+  padding: 1.1rem;
 }
 
-.overviewStrip article {
-  padding: 0.8rem;
+.dashboard > .sectionBlock,
+.publicReport > .sectionBlock,
+.publicAccountReport > .sectionBlock {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: clamp(3.25rem, 5.4vw, 6rem);
+  padding: 0;
 }
 
-.overviewStrip span,
-.metric p,
-.insightCard h4,
-.driverTile h4,
-.ytdInsightCard p,
-.inventorySummaryGrid span,
-.inventoryBreakout span,
-.inventoryCoverage span,
-.styleCompareMeta,
-.weeklyPrimary span,
-.weeklyMetrics span,
-.cardHeading span,
-.artMeta span {
-  color: var(--text-soft);
-}
-
-.overviewStrip strong {
-  color: var(--text);
-  font-size: 1rem;
-}
-
-.sectionBlock {
-  margin-bottom: 1rem;
-  padding: 1.05rem;
+.dashboard > .sectionBlock > .sectionTitle,
+.publicReport > .sectionBlock > .sectionTitle,
+.publicAccountReport > .sectionBlock > .sectionTitle {
+  border-bottom: 0;
+  margin-bottom: clamp(1.25rem, 1.8vw, 1.7rem);
+  padding-bottom: 0;
 }
 
 .sectionTitle {
   align-items: start;
-  border-bottom: 1px solid var(--line);
   display: grid;
-  gap: 0.8rem;
+  gap: 1rem;
   grid-template-columns: minmax(0, 1fr) auto;
-  margin-bottom: 1rem;
-  padding-bottom: 0.85rem;
 }
 
 .sectionTitle h3 {
   color: var(--text);
-  font-size: 1.72rem;
+  font-size: clamp(1.9rem, 3vw, 3.2rem);
   font-weight: 860;
   letter-spacing: 0;
   margin-bottom: 0.28rem;
@@ -3968,31 +3993,35 @@ label {
   margin: 0;
 }
 
-.changeBadge {
-  background: var(--surface-solid);
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--steel);
-  border-radius: var(--radius);
-  box-shadow: none;
-  color: var(--text);
-  font-size: 1.05rem;
-  padding: 0.65rem 0.85rem;
-}
-
+.changeBadge,
 .metric,
 .lineCard,
 .insightCard,
 .driverTile,
 .styleCompareCard,
+.styleSignalCard,
 .artCard,
-.inventoryCard,
+.inventoryTotal,
+.inventorySummaryGrid div,
+.inventoryBreakout div,
+.inventoryCoverage,
+.inventoryPosition,
+.inventoryTrendChart,
+.inventoryForecastCard,
 .weeklyScorecardRow,
+.weeklyTopProduct,
 .forecastStory,
 .forecastMetric,
-.ytdInsightCard {
-  background: var(--surface-solid);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+.ytdInsightCard,
+.topSalesProduct,
+.bestItem,
+.statCard,
+.uploadManagerRow,
+.accountReportMeta,
+.accountReportTabs label {
+  background: var(--flat-card);
+  border: 0;
+  border-radius: 18px;
   box-shadow: none;
 }
 
@@ -4000,10 +4029,30 @@ label {
   padding: 0.85rem;
 }
 
+.metric p,
+.insightCard h4,
+.driverTile h4,
+.ytdInsightCard p,
+.inventorySummaryGrid span,
+.inventoryBreakout span,
+.inventoryCoverage span,
+.inventoryPositionHeader span,
+.inventoryGaugeLabels span,
+.inventoryTopStyles span,
+.weeklyPrimary span,
+.weeklyMetrics span,
+.weeklyTopProducts > span,
+.cardHeading span,
+.artMeta span {
+  color: var(--text-soft);
+}
+
 .metric strong,
 .ytdInsightCard strong,
 .driverTile strong,
-.inventoryTotal strong {
+.inventoryTotal strong,
+.artMeta strong,
+.artCodeLink {
   color: var(--text);
 }
 
@@ -4032,35 +4081,14 @@ label {
   overflow: visible;
 }
 
-.monthlyDriverMetricsRow,
-.salesDriverGrid {
-  gap: 0;
-}
-
-.driverTile,
-.monthlySalesCard,
-.topSalesItemsCard,
-.weeklyScorecardRow {
-  border-radius: 0;
-}
-
-.salesDriverGrid > *:first-child,
-.monthlyDriverMetricsRow > *:first-child {
-  border-top-left-radius: var(--radius);
-}
-
-.salesDriverGrid > *:last-child,
-.monthlyDriverMetricsRow > *:last-child {
-  border-top-right-radius: var(--radius);
-}
-
 .studyTabs button,
 .sortControls button,
 .inventoryDropdownTrigger,
 .pagerControls button,
+.paginationControls button,
 .ghostButton {
   background: var(--surface-solid);
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: var(--radius);
   color: var(--text);
   font-size: 0.74rem;
@@ -4096,12 +4124,12 @@ label {
 .inventoryControls {
   align-items: start;
   border-bottom: 0;
-  border-top: 1px solid var(--line);
+  border-top: 0;
   display: grid;
   gap: 0.8rem;
   grid-template-columns: minmax(0, 1fr) auto;
   margin: 0 0 0.95rem;
-  padding-top: 0.95rem;
+  padding-top: 0;
 }
 
 .inventoryDropdownControls {
@@ -4111,2122 +4139,115 @@ label {
   gap: 0.65rem;
 }
 
-.inventoryDropdownMenu {
-  background: var(--surface-solid);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--tech-shadow);
-  margin-top: 0.4rem;
-  overflow: hidden;
-}
-
-.inventoryOption,
-.inventoryResetOption {
-  background: transparent;
-  color: var(--text);
-  font-size: 0.78rem;
-  min-height: 34px;
-}
-
-.artGrid {
-  gap: 0.85rem;
-}
-
-.artCard {
-  overflow: hidden;
-}
-
-.artImage {
-  background: var(--surface-muted);
-}
-
-.artImage b,
-.topSalesRank {
-  background: var(--ink);
-  border-radius: 0;
-  color: var(--surface-solid);
-}
-
-.artMeta {
-  background: var(--surface-solid);
-  padding: 0.85rem;
-}
-
-.artMeta strong,
-.artCodeLink {
-  color: var(--text);
-  font-size: 1.08rem;
-}
-
-.artCodeLink {
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.16em;
-}
-
-.weeklyScorecardList {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.weeklyScorecardRow {
-  overflow: hidden;
-}
-
-.weeklyDateRail {
-  background: var(--surface-muted);
-  border-left-color: var(--steel);
-}
-
-.weeklyDateRail strong {
-  color: var(--text);
-}
-
-.weeklyTopProduct,
-.topSalesProduct {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.inventoryCard {
-  background: transparent;
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.inventoryGaugeTrack {
-  background: linear-gradient(90deg, #9db8c7, #d6d0c2, var(--steel));
-}
-
-.siteCopyright {
-  color: var(--text-faint);
-  font-size: 0.72rem;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  margin: 1.5rem 0 0;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.publicShell {
-  background:
-    radial-gradient(circle at 80% 10%, rgba(111, 135, 149, 0.12), transparent 26rem),
-    linear-gradient(135deg, var(--app-bg), var(--app-bg-2));
-  color: var(--text);
-  padding: 1.15rem;
-}
-
-.publicReport,
-.publicAccountReport {
-  margin: 0 auto;
-  max-width: 1480px;
-  padding: 1.1rem;
-}
-
-.publicDashboardHeader {
-  box-shadow: none;
-}
-
-.publicShareBrand {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  padding: 0;
-}
-
-.publicShareBrand h1 {
-  color: var(--text);
-  font-size: 1.35rem;
-}
-
-.publicHeaderAside {
-  align-content: end;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.publicContactCard,
-.publicContextCard {
-  background: var(--surface-solid);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  color: var(--text-soft);
-  padding: 0.85rem;
-}
-
-.publicContextCard {
-  display: grid;
-  gap: 1px;
-  grid-template-columns: 1fr 1fr;
-  padding: 0;
-}
-
-.publicContextCard > div {
-  padding: 0.85rem;
-}
-
-.publicContextCard span,
-.publicContactCard span {
-  font-size: 0.72rem;
-}
-
-.publicContextCard strong {
-  color: var(--text);
-}
-
-.accountReportTabs {
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  overflow: hidden;
-}
-
-.accountReportTabs label {
-  align-items: center;
-  color: var(--text-soft);
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  min-height: 44px;
-}
-
-.accountReportSwitcher input:nth-of-type(1):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(1),
-.accountReportSwitcher input:nth-of-type(2):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(2),
-.accountReportSwitcher input:nth-of-type(3):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(3) {
-  background: var(--steel);
-  color: #fffefa;
-}
-
-.loginPanel,
-.shareModal {
-  border-radius: var(--radius);
-}
-
-@media (max-width: 1120px) {
-  .appShell {
-    grid-template-columns: 1fr;
-  }
-
-  .topNav,
-  .topNav.compact {
-    height: auto;
-    min-height: 0;
-    position: relative;
-  }
-
-  .dashboard {
-    grid-column: 1;
-  }
-
-  .sideNavMenu,
-  .navControls,
-  .sideNavBottom {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  }
-
-  .dashboardHeader,
-  .publicDashboardHeader,
-  .controlDock {
-    grid-template-columns: 1fr;
-  }
-
-  .ytdTrackerTiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 820px) {
-  .dashboard {
-    padding: 0.75rem;
-  }
-
-  .dashboardHeader h2,
-  .publicDashboardHeader h1 {
-    font-size: 2.1rem;
-  }
-
-  .sectionTitle,
-  .inventoryControls,
-  .publicContextCard,
-  .ytdTrackerTiles {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* SalesLens app-suite polish pass */
-:root {
-  --app-bg: #eeeeea;
-  --app-bg-2: #faf9f5;
-  --sidebar-bg: rgba(250, 250, 247, 0.96);
-  --surface: rgba(255, 255, 252, 0.9);
-  --surface-solid: #fffefa;
-  --surface-muted: #f2f1ec;
-  --surface-faint: #f8f7f2;
-  --line: #e3e0d8;
-  --line-soft: rgba(20, 20, 18, 0.06);
-  --tech-shadow: 0 20px 55px rgba(30, 30, 28, 0.07);
-  --tight-shadow: 0 7px 22px rgba(30, 30, 28, 0.045);
-}
-
-:root[data-theme="dark"] {
-  --app-bg: #101211;
-  --app-bg-2: #171918;
-  --sidebar-bg: rgba(18, 20, 19, 0.96);
-  --surface: rgba(24, 27, 25, 0.91);
-  --surface-solid: #181b19;
-  --surface-muted: #202421;
-  --surface-faint: #151715;
-  --line: #30342f;
-  --line-soft: rgba(255, 255, 248, 0.06);
-  --tech-shadow: 0 20px 55px rgba(0, 0, 0, 0.3);
-  --tight-shadow: 0 7px 22px rgba(0, 0, 0, 0.22);
-}
-
-body {
-  font-size: 13px;
-}
-
-button,
-input,
-select {
-  font: inherit;
-}
-
-.appShell {
-  background:
-    radial-gradient(circle at 80% 7%, var(--account-glow, rgba(111, 135, 149, 0.11)), transparent 28rem),
-    radial-gradient(circle at 42% 96%, rgba(255, 255, 255, 0.72), transparent 28rem),
-    linear-gradient(135deg, var(--app-bg), var(--app-bg-2));
-  grid-template-columns: 238px minmax(0, 1fr);
-}
-
-:root[data-theme="dark"] .appShell {
-  background:
-    radial-gradient(circle at 80% 7%, var(--account-glow, rgba(111, 135, 149, 0.12)), transparent 28rem),
-    linear-gradient(135deg, var(--app-bg), var(--app-bg-2));
-}
-
-.topNav,
-.topNav.compact {
-  gap: 0.75rem;
-  padding: 0.78rem;
-}
-
-.navBrand {
-  align-items: center;
-  box-shadow: none;
-  display: grid;
-  gap: 0.62rem;
-  grid-template-columns: 34px minmax(0, 1fr);
-  padding: 0.68rem;
-}
-
-.navBrand::before {
-  align-items: center;
-  background:
-    linear-gradient(135deg, var(--steel), var(--accent)),
-    var(--ink);
-  border-radius: 8px;
-  color: #fffefa;
-  content: "SL";
-  display: grid;
-  font-size: 0.72rem;
-  font-weight: 850;
-  height: 34px;
-  justify-items: center;
-  letter-spacing: 0;
-  grid-row: 1 / span 2;
-  width: 34px;
-}
-
-.navBrand h1 {
-  font-size: 1.1rem;
-  grid-column: 2;
-  margin: 0;
-}
-
-.navBrand p {
-  font-size: 0.54rem;
-  grid-column: 2;
-  letter-spacing: 0.08em;
-}
-
-.sideNavMenu {
-  border-top: 1px solid var(--line-soft);
-  gap: 0.16rem;
-  padding-top: 0.62rem;
-}
-
-.sideNavItem {
-  font-size: 0.76rem;
-  gap: 0.58rem;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
-  min-height: 2.1rem;
-  padding: 0 0.58rem;
-}
-
-.sideNavIcon {
-  border-radius: 4px;
-  height: 14px;
-  width: 14px;
-}
-
-.sideNavBottom {
-  border-top: 1px solid var(--line-soft);
-  gap: 0.58rem;
-  padding-top: 0.72rem;
-}
-
-.navControls {
-  gap: 0.55rem;
-}
-
-.navField,
-.navUploadField,
-.navSignOutField {
-  gap: 0.28rem;
-}
-
-.navField span,
-.navDateMeta p,
-.navSignOutField > span,
-label,
-.sortControls span,
-.inventoryDropdownTrigger span,
-.pagerControls span,
-.overviewStrip span,
-.metric p,
-.cardHeading span,
-.artMeta span {
-  font-size: 0.56rem;
-  letter-spacing: 0.07em;
-}
-
-.navField select,
-.navField input,
-.fileButton,
-.navSignOut,
-.themeSwitch,
-.controlDock select,
-.controlDock input,
-.shareButton,
-.shareGenerateButton,
-.browseButton,
-.studyTabs button,
-.sortControls button,
-.inventoryDropdownTrigger,
-.pagerControls button,
-.ghostButton {
-  border-radius: 7px;
-  font-size: 0.7rem;
-  min-height: 34px;
-}
-
-.navField select,
-.navField input,
-.fileButton,
-.navSignOut,
-.themeSwitch {
-  height: 34px;
-  min-height: 34px;
-  padding: 0 0.62rem;
-}
-
-.fileButton,
-.navSignOut {
-  justify-content: center;
-  text-align: center;
-}
-
-.themeSwitch {
-  padding: 0 0.62rem;
-}
-
-.themeSwitch span,
-.themeSwitch strong {
-  font-size: 0.66rem;
-}
-
-.dashboard {
-  margin: 0 auto;
-  max-width: 1720px;
-  padding: 0.92rem;
-  width: 100%;
-}
-
-.dashboardHeader,
-.publicDashboardHeader {
-  box-shadow: var(--tight-shadow);
-  gap: 0.95rem;
-  margin-bottom: 0.74rem;
-  min-height: 158px;
-  padding: 1rem;
-}
-
-.dashboardHeader h2,
-.publicDashboardHeader h1 {
-  font-size: 2.25rem;
-  line-height: 0.95;
-  margin: 0.28rem 0 0.44rem;
-}
-
-.dashboardHeader .muted,
-.publicDashboardHeader .muted,
-.intro,
-.status {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  max-width: 40rem;
-}
-
-.controlDock {
-  align-self: center;
-  gap: 0.52rem;
-}
-
-.controlDock label {
-  gap: 0.28rem;
-}
-
-.controlDock select,
-.controlDock input {
-  min-height: 34px;
-  padding: 0 0.62rem;
-}
-
-.overviewStrip {
-  gap: 0.52rem;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  margin-bottom: 0.74rem;
-}
-
-.overviewStrip article {
-  min-height: 76px;
-  padding: 0.68rem;
-}
-
-.overviewStrip strong {
-  font-size: 0.94rem;
-}
-
-.notice,
-.sectionBlock,
-.overviewStrip article,
-.publicEmpty,
-.publicReport,
-.publicAccountReport {
-  box-shadow: none;
-}
-
-.sectionBlock {
-  margin-bottom: 0.74rem;
-  padding: 0.82rem;
-}
-
-.sectionTitle {
-  gap: 0.62rem;
-  margin-bottom: 0.72rem;
-  padding-bottom: 0.62rem;
-}
-
-.sectionTitle h3 {
-  font-size: 1.38rem;
-  margin-bottom: 0.18rem;
-}
-
-.sectionTitle p {
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.changeBadge {
-  align-self: start;
-  font-size: 0.92rem;
-  padding: 0.52rem 0.68rem;
-}
-
-.ytdTrackerLayout {
-  gap: 0.62rem;
-}
-
-.lineCard {
-  min-height: 365px;
-}
-
-.ytdTrackerTiles {
-  gap: 0;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.metric,
-.ytdInsightCard,
-.driverTile,
-.monthlySalesCard,
-.forecastMetric {
-  padding: 0.68rem;
-}
-
-.metric strong,
-.ytdInsightCard strong,
-.driverTile strong {
-  font-size: 1.32rem;
-}
-
-.salesDriverGrid,
-.monthlyDriverMetricsRow {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.salesDriverGrid .driverTile,
-.salesDriverGrid .monthlySalesCard,
-.salesDriverGrid .topSalesItemsCard,
-.monthlyDriverMetricsRow .driverTile {
-  border-width: 0 1px 1px 0;
-}
-
-.weeklyScorecardList {
-  gap: 0.58rem;
-}
-
-.weeklyScorecardRow {
-  border-radius: var(--radius);
-}
-
-.weeklyDateRail {
-  padding: 0.72rem;
-}
-
-.weeklyDateRail strong {
-  font-size: 1.1rem;
-}
-
-.weeklyPrimary,
-.weeklyMetrics,
-.weeklyTopProducts {
-  padding: 0.72rem;
-}
-
-.weeklyPrimary strong,
-.weeklyMetrics strong {
-  font-size: 1.2rem;
-}
-
-.weeklyTopProduct,
-.topSalesProduct {
-  padding: 0.46rem;
-}
-
-.weeklyTopProduct img,
-.topSalesProduct img {
-  height: 48px;
-  width: 48px;
-}
-
-.studyTabs {
-  gap: 0.42rem;
-  margin-bottom: 0.72rem;
-}
-
-.styleComparisonGrid {
-  gap: 0.58rem;
-}
-
-.styleCompareCard {
-  padding: 0.72rem;
-}
-
-.styleSignalPanel {
-  padding: 0.78rem;
-}
-
-.styleSignalRow {
-  min-height: 44px;
-  padding: 0.4rem 0;
-}
-
-.inventoryControls {
-  gap: 0.62rem;
-  margin-bottom: 0.72rem;
-  padding-top: 0.72rem;
-}
-
-.inventoryDropdownControls {
-  gap: 0.45rem;
-}
-
-.inventoryOption,
-.inventoryResetOption {
-  font-size: 0.72rem;
-  min-height: 32px;
-}
-
-.pagerControls {
-  gap: 0.42rem;
-}
-
-.artGrid {
-  gap: 0.66rem;
-  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
-}
-
-.artCard {
-  min-width: 0;
-}
-
-.artImage {
-  min-height: 172px;
-}
-
-.artImage img {
-  max-height: 172px;
-}
-
-.artImage b,
-.topSalesRank {
-  font-size: 0.66rem;
-  min-width: 26px;
-  padding: 0.28rem 0.38rem;
-}
-
-.artMeta {
-  padding: 0.68rem;
-}
-
-.artMeta strong,
-.artCodeLink {
-  font-size: 0.92rem;
-}
-
-.artMeta span {
-  font-size: 0.78rem;
-  letter-spacing: 0;
-  line-height: 1.45;
-}
-
-.inventoryCard {
-  border: 1px solid var(--line);
-}
-
-.inventorySummaryGrid,
-.inventoryForecastCard {
-  background: var(--surface-solid);
-}
-
-.inventoryTotal strong {
-  font-size: 3.8rem;
-}
-
-.publicShell {
-  padding: 0.92rem;
-}
-
-.publicReport,
-.publicAccountReport {
-  max-width: 1720px;
-  padding: 0.92rem;
-}
-
-.publicDashboardHeader {
-  min-height: 150px;
-}
-
-.publicShareBrand h1 {
-  font-size: 1.12rem;
-}
-
-.publicContactCard,
-.publicContextCard > div {
-  padding: 0.68rem;
-}
-
-.accountReportTabs label {
-  font-size: 0.72rem;
-  min-height: 38px;
-}
-
-@media (min-width: 1500px) {
-  .artGrid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1120px) {
-  .appShell {
-    grid-template-columns: 1fr;
-  }
-
-  .topNav,
-  .topNav.compact {
-    border-bottom: 1px solid var(--line);
-    border-right: 0;
-  }
-}
-
-@media (max-width: 820px) {
-  .dashboard,
-  .publicShell,
-  .publicReport,
-  .publicAccountReport {
-    padding: 0.62rem;
-  }
-
-  .dashboardHeader h2,
-  .publicDashboardHeader h1 {
-    font-size: 1.85rem;
-  }
-
-  .lineCard {
-    min-height: 280px;
-  }
-
-  .artGrid {
-    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-  }
-}
-
-/* Weekly scorecard tab layout */
-.weeklyScorecardList {
-  gap: 0.82rem;
-}
-
-.weeklyScorecardRow {
-  align-items: stretch;
-  border-radius: var(--radius);
-  display: grid;
-  gap: 1px;
-  grid-template-areas: "sales metrics products";
-  grid-template-columns: minmax(230px, 0.78fr) minmax(280px, 0.78fr) minmax(390px, 1.28fr);
-  margin-top: 0;
-  min-height: 118px;
-  overflow: hidden;
+.inventoryDropdown {
   position: relative;
 }
 
-.weeklyDateRail {
+.inventoryDropdownTrigger {
   align-items: center;
-  background: #171715;
-  border: 1px solid #171715;
-  border-left: 4px solid var(--account-accent, var(--accent));
-  border-radius: 0 0 8px 0;
-  display: flex;
-  gap: 0.46rem;
-  grid-area: auto;
-  left: 0;
-  max-width: calc(100% - 1rem);
-  padding: 0.26rem 0.56rem 0.28rem;
-  position: absolute;
-  top: 0;
-  width: auto;
-  z-index: 2;
+  display: inline-flex;
+  gap: 0.65rem;
+  min-height: 42px;
+  padding: 0.42rem 0.72rem;
 }
 
-.weeklyDateRail span,
-.weeklyDateRail em {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.62rem;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  margin: 0;
+.inventoryDropdownTrigger::after {
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--taupe);
+  content: "";
+  margin-left: 0.15rem;
+}
+
+.inventoryDropdown.isOpen .inventoryDropdownTrigger {
+  background: var(--surface-solid);
+}
+
+.inventoryDropdownTrigger strong {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 900;
   text-transform: uppercase;
 }
 
-.weeklyDateRail strong {
-  color: #fffefa;
-  font-size: 0.9rem;
-  line-height: 1;
-  margin: 0;
-  white-space: nowrap;
-}
-
-.weeklyDateRail em {
-  color: rgba(255, 255, 255, 0.62);
-  letter-spacing: 0.03em;
-  text-transform: none;
-}
-
-.weeklyPrimary,
-.weeklyMetrics,
-.weeklyTopProducts {
-  min-width: 0;
-  padding: 1.42rem 1rem 0.82rem;
-}
-
-.weeklyPrimary {
-  grid-area: sales;
-}
-
-.weeklyMetrics {
-  grid-area: metrics;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.weeklyMetrics span {
-  border-left: 1px solid var(--line);
-  padding: 1.28rem 0.9rem 0.78rem;
-}
-
-.weeklyPrimary strong {
-  font-size: clamp(1.45rem, 1.62vw, 1.95rem);
-}
-
-.weeklyMetrics strong {
-  font-size: clamp(1.05rem, 1.18vw, 1.35rem);
-}
-
-.weeklyTopProducts {
-  border-left: 1px solid var(--line);
-  border-top: 0;
-  grid-area: products;
-}
-
-.weeklyTopProductList {
-  align-items: stretch;
-  display: grid;
-  gap: 0.46rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.weeklyTopProduct {
-  align-items: center;
-  display: grid;
-  gap: 0.46rem;
-  grid-template-columns: 44px minmax(0, 1fr);
-  min-height: 58px;
-  padding: 0.36rem;
-}
-
-.weeklyTopProduct img,
-.weeklyTopProductPlaceholder {
-  height: 44px;
-  width: 44px;
-}
-
-.weeklyTopProduct strong {
-  font-size: 0.8rem;
-  line-height: 1.12;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.weeklyTopProduct em,
-.weeklyTopProduct small {
-  font-size: 0.68rem;
-  line-height: 1.25;
-}
-
-@media (max-width: 1320px) {
-  .weeklyScorecardRow {
-    grid-template-areas: "sales metrics products";
-    grid-template-columns: minmax(220px, 0.76fr) minmax(260px, 0.74fr) minmax(350px, 1.22fr);
-  }
-
-  .weeklyTopProducts {
-    border-left: 1px solid var(--line);
-    border-top: 0;
-  }
-}
-
-@media (max-width: 820px) {
-  .weeklyScorecardRow {
-    grid-template-areas:
-      "sales"
-      "metrics"
-      "products";
-    grid-template-columns: 1fr;
-  }
-
-  .weeklyDateRail {
-    max-width: 100%;
-  }
-
-  .weeklyMetrics,
-  .weeklyTopProductList {
-    grid-template-columns: 1fr;
-  }
-
-  .weeklyMetrics span,
-  .weeklyTopProducts {
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-}
-
-/* Soft dashboard reskin: lighter cards, more air, less heavy type. */
-:root {
-  --soft-card-bg: rgba(255, 255, 252, 0.82);
-  --soft-card-bg-strong: rgba(255, 255, 252, 0.94);
-  --soft-card-border: rgba(219, 213, 202, 0.68);
-  --soft-card-shadow: 0 18px 52px rgba(24, 24, 22, 0.055);
-  --soft-tile-shadow: 0 10px 28px rgba(24, 24, 22, 0.038);
-  --soft-muted-fill: rgba(244, 241, 235, 0.64);
-}
-
-:root[data-theme="dark"] {
-  --soft-card-bg: rgba(25, 27, 26, 0.78);
-  --soft-card-bg-strong: rgba(25, 27, 26, 0.92);
-  --soft-card-border: rgba(255, 255, 248, 0.11);
-  --soft-card-shadow: 0 20px 56px rgba(0, 0, 0, 0.28);
-  --soft-tile-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  --soft-muted-fill: rgba(255, 255, 255, 0.045);
-}
-
-body,
-button,
-input,
-select,
-textarea {
-  font-family: var(--font-main);
-}
-
-body {
-  font-size: 14.5px;
-  font-weight: 500;
-  line-height: 1.52;
-}
-
-b,
-strong {
-  font-weight: 700;
-}
-
-.appShell {
-  background:
-    radial-gradient(circle at 84% 10%, rgba(117, 134, 146, 0.16), transparent 32rem),
-    radial-gradient(circle at 14% 88%, rgba(255, 255, 255, 0.76), transparent 30rem),
-    linear-gradient(135deg, var(--app-bg), var(--app-bg-2));
-}
-
-.dashboard,
-.publicShell,
-.publicReport,
-.publicAccountReport {
-  max-width: 1740px;
-}
-
-.dashboard {
-  padding: clamp(1.35rem, 2.25vw, 2.65rem);
-}
-
-.publicShell,
-.publicReport,
-.publicAccountReport {
-  padding: clamp(1.2rem, 2.15vw, 2.35rem);
-}
-
-.dashboardHeader,
-.publicDashboardHeader,
-.notice,
-.publicEmpty {
-  background: var(--soft-card-bg-strong);
-  border: 1px solid var(--soft-card-border);
-  border-radius: 24px;
-  box-shadow: var(--soft-card-shadow);
-}
-
-.dashboardHeader,
-.publicDashboardHeader {
-  gap: clamp(1.1rem, 2vw, 2rem);
-  margin-bottom: clamp(1.45rem, 2.2vw, 2.25rem);
-  min-height: 166px;
-  padding: clamp(1.45rem, 2.4vw, 2.5rem);
-}
-
-.dashboardHeader h2,
-.publicDashboardHeader h1 {
-  font-size: clamp(2.3rem, 4vw, 5.8rem);
-  font-weight: 800;
-  letter-spacing: 0;
-  line-height: 0.95;
-}
-
-.dashboardHeader .muted,
-.publicDashboardHeader .muted,
-.sectionTitle p {
-  font-size: 0.94rem;
-  line-height: 1.6;
-}
-
-.overviewStrip {
-  gap: 1rem;
-  margin-bottom: clamp(1.8rem, 2.8vw, 3rem);
-}
-
-.overviewStrip article,
-.publicContactCard,
-.publicContextCard,
-.publicContextCard > div {
-  background: var(--soft-card-bg);
-  border: 1px solid var(--soft-card-border);
-  border-radius: 18px;
-  box-shadow: var(--soft-tile-shadow);
-  padding: 1rem;
-}
-
-.sectionBlock {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  margin-bottom: clamp(2rem, 3vw, 3.3rem);
-  padding: 0;
-}
-
-.sectionTitle {
-  border-bottom: 0;
-  margin-bottom: 1.08rem;
-  padding-bottom: 0;
-}
-
-.sectionTitle h3 {
-  font-size: clamp(1.75rem, 2.15vw, 2.45rem);
-  font-weight: 800;
-  letter-spacing: 0;
-  line-height: 1.02;
-}
-
-.sectionTitle .eyebrow,
-.eyebrow,
-.metric p,
-.driverTile p,
-.monthlySalesCard p,
-.forecastMetric p,
-.inventorySummaryGrid span,
-.inventoryBreakout span,
-.inventoryCoverage span,
-.inventoryPositionHeader span,
-.inventoryTopStyles span,
-.weeklyDateRail span,
-.weeklyDateRail em,
-.artMeta span,
-.navLabel,
-.sideNavItem {
-  font-weight: 650;
-  letter-spacing: 0;
-}
-
-.metric,
-.ytdInsightCard,
-.forecastMetric,
-.driverTile,
-.monthlySalesCard,
-.topSalesItemsCard,
-.styleCompareCard,
-.styleSignalPanel,
-.weeklyScorecardRow,
-.artCard,
-.inventoryCard,
-.lineCard,
 .inventoryDropdownMenu {
-  background: var(--soft-card-bg);
-  border: 1px solid var(--soft-card-border);
-  border-radius: 18px;
-  box-shadow: var(--soft-tile-shadow);
+  display: grid;
+  gap: 0.35rem;
+  left: 0;
+  min-width: 190px;
+  overflow: hidden;
+  padding: 0.65rem;
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  z-index: 20;
 }
 
-.metric,
-.ytdInsightCard,
-.forecastMetric,
-.driverTile,
-.monthlySalesCard,
-.topSalesItemsCard,
-.styleCompareCard,
-.styleSignalPanel {
-  padding: 1rem;
+.inventoryDropdownMenu.wide {
+  min-width: 250px;
 }
 
-.metric strong,
-.forecastMetric strong,
-.driverTile > strong,
-.monthlySalesCard strong,
-.ytdInsightCard strong {
-  font-weight: 700;
-}
-
-.metric p,
-.driverTile p,
-.monthlySalesCard p,
-.forecastMetric p {
-  font-size: 0.84rem;
-}
-
-.metric strong,
-.driverTile > strong,
-.monthlySalesCard strong {
-  font-size: clamp(1.42rem, 1.9vw, 2.05rem);
-}
-
-.salesDriverGrid,
-.monthlyDriverMetricsRow,
-.ytdTrackerTiles,
-.inventorySummaryGrid,
-.inventoryForecastCard,
-.forecastGrid {
+.inventoryOption,
+.inventoryResetOption {
+  align-items: center;
   background: transparent;
   border: 0;
-  border-radius: 0;
-  gap: 1rem;
-  overflow: visible;
-}
-
-.salesDriverGrid .driverTile,
-.salesDriverGrid .monthlySalesCard,
-.salesDriverGrid .topSalesItemsCard,
-.monthlyDriverMetricsRow .driverTile,
-.forecastGrid .metric,
-.ytdTrackerTiles .metric {
-  border: 1px solid var(--soft-card-border);
-}
-
-.ytdTrackerLayout,
-.monthlyStoryBoard {
-  gap: 1.05rem;
-}
-
-.lineCard {
-  min-height: 390px;
-  padding: 1rem;
-}
-
-.weeklyScorecardList {
-  gap: 1.25rem;
-}
-
-.weeklyScorecardRow {
-  border-radius: 18px;
-  gap: 0;
-  min-height: 134px;
-}
-
-.weeklyDateRail {
-  border-radius: 0 0 10px 0;
-  font-weight: 700;
-}
-
-.weeklyPrimary,
-.weeklyMetrics,
-.weeklyTopProducts {
-  padding: 1.72rem 1.2rem 1.08rem;
-}
-
-.weeklyPrimary strong,
-.weeklyMetrics strong {
-  font-weight: 700;
-}
-
-.weeklyTopProduct {
-  background: rgba(255, 255, 252, 0.72);
-  border: 1px solid var(--soft-card-border);
-  border-radius: 14px;
-  padding: 0.48rem;
-}
-
-:root[data-theme="dark"] .weeklyTopProduct {
-  background: rgba(255, 255, 255, 0.045);
-}
-
-.weeklyTopProduct strong {
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.weeklyTopProduct em,
-.weeklyTopProduct small {
-  font-size: 0.76rem;
-  font-weight: 550;
-}
-
-.monthlyStoryLead,
-.monthlyStoryNote {
-  background: var(--soft-muted-fill);
-  border: 1px solid var(--soft-card-border);
-  border-radius: 16px;
-  padding: 1rem;
-}
-
-.artGrid {
-  gap: 1rem;
-}
-
-.artCard {
-  overflow: hidden;
-}
-
-.artImage {
-  background: rgba(239, 235, 228, 0.72);
-  min-height: 184px;
-}
-
-.artImage img {
-  max-height: 184px;
-}
-
-.artMeta {
-  padding: 0.92rem;
-}
-
-.artMeta strong,
-.artCodeLink {
-  font-size: 1.06rem;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.artMeta span {
-  font-size: 0.88rem;
-  line-height: 1.48;
-}
-
-.inventoryControls {
-  border-top: 0;
-  gap: 0.8rem;
-  margin-bottom: 1.14rem;
-  padding-top: 0;
-}
-
-.inventoryDropdownTrigger,
-.inventoryResetOption,
-.inventoryOption,
-.navField select,
-.fileButton,
-.navSignOut,
-.themeSwitch,
-.accountReportTabs label,
-button {
-  font-weight: 650;
-  letter-spacing: 0;
-}
-
-.inventoryTotal strong {
-  font-weight: 700;
-}
-
-.inventoryCard,
-.inventorySummaryGrid,
-.inventoryForecastCard {
-  background: transparent;
-}
-
-.inventorySummaryGrid div,
-.inventoryBreakout div,
-.inventoryCoverage,
-.inventoryPosition,
-.inventoryTopStyles {
-  background: var(--soft-card-bg);
-  border: 1px solid var(--soft-card-border);
-  border-radius: 18px;
-  box-shadow: var(--soft-tile-shadow);
-}
-
-.topNav,
-.topNav.compact {
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--line-soft);
-  padding: 1rem;
-}
-
-.navBrand,
-.sideNavItem,
-.navField select,
-.fileButton,
-.navSignOut,
-.themeSwitch {
-  border-radius: 14px;
-}
-
-.sideNavMenu {
-  gap: 0.32rem;
-}
-
-.sideNavItem {
-  min-height: 2.36rem;
-}
-
-@media (max-width: 820px) {
-  body {
-    font-size: 14px;
-  }
-
-  .dashboard,
-  .publicShell,
-  .publicReport,
-  .publicAccountReport {
-    padding: 1rem;
-  }
-
-  .sectionBlock {
-    margin-bottom: 2.15rem;
-  }
-
-  .artGrid {
-    gap: 0.82rem;
-  }
-}
-
-.monthlyStoryCard .monthlyStoryNote {
-  color: var(--taupe);
-  font-size: 0.98rem;
-  font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1.65;
-  text-transform: none;
-}
-
-.monthlyStoryLead span,
-.monthlyStoryLead em {
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-transform: none;
-}
-
-.weeklyDateRail {
-  border-radius: 0 0 12px 0;
-  gap: 0.58rem;
-  min-height: 2.05rem;
-  padding: 0.42rem 0.78rem 0.44rem;
-}
-
-.weeklyDateRail span {
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.weeklyDateRail strong {
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.weeklyDateRail em {
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
   font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.styleSignalHeader h4 {
-  font-size: 1.12rem;
-  font-weight: 700;
-}
-
-.styleSignalHeader p,
-.styleSignalEmpty {
-  font-size: 0.84rem;
-  font-weight: 550;
-}
-
-.styleSignalHeader > span {
-  font-size: 0.76rem;
-  height: 1.72rem;
-  min-width: 1.72rem;
-}
-
-.styleSignalRow {
-  min-height: 50px;
-  padding: 0.5rem 0;
-}
-
-.styleSignalRank {
-  font-size: 0.82rem;
-}
-
-.styleSignalIdentity strong {
-  font-size: 1.04rem;
-}
-
-.styleSignalIdentity span,
-.styleSignalMeasure span,
-.styleSignalBreadth span,
-.styleSignalDelta span {
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.styleSignalMeasure strong,
-.styleSignalBreadth span,
-.styleSignalDelta strong {
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-@media (min-width: 1181px) {
-  .artGrid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .artMeta span {
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: 1180px) {
-  .artMeta span {
-    white-space: normal;
-  }
-}
-
-/* Inventory snapshot should match the softer scorecard tile system. */
-.inventoryCard {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  gap: clamp(0.95rem, 1.35vw, 1.25rem);
-  grid-template-columns: minmax(260px, 0.82fr) minmax(180px, 0.58fr) minmax(180px, 0.58fr) minmax(340px, 1.12fr);
-  overflow: visible;
-}
-
-.inventoryTotal,
-.inventorySummaryGrid div,
-.inventoryBreakout div,
-.inventoryCoverage,
-.inventoryPosition,
-.inventoryTrendChart {
-  background: var(--soft-card-bg);
-  border: 1px solid var(--soft-card-border);
-  border-radius: 20px;
-  box-shadow: var(--soft-tile-shadow);
-}
-
-.inventorySummaryGrid,
-.inventoryBreakout {
-  background: transparent;
-  gap: clamp(0.95rem, 1.35vw, 1.25rem);
-}
-
-.inventoryTotal {
-  min-height: 320px;
-  padding: clamp(1.6rem, 3vw, 2.55rem);
-}
-
-.inventorySummaryGrid div,
-.inventoryBreakout div,
-.inventoryCoverage,
-.inventoryPosition {
-  padding: clamp(1.15rem, 1.65vw, 1.5rem);
-}
-
-.inventorySummaryGrid div,
-.inventoryBreakout div {
-  min-height: 112px;
-}
-
-.inventoryCoverage,
-.inventoryPosition {
-  min-height: 220px;
-}
-
-.inventoryTrendChart {
-  grid-column: 1 / -1;
-  margin: 0;
-  min-height: 430px;
-  padding: clamp(1rem, 1.5vw, 1.4rem);
-}
-
-@media (max-width: 1120px) {
-  .inventoryCard {
-    gap: 1rem;
-  }
-
-  .inventoryTotal,
-  .inventoryCoverage,
-  .inventoryPosition {
-    min-height: 0;
-  }
-
-  .inventoryTrendChart {
-    min-height: 340px;
-  }
-}
-
-/* Weekly rows need more room for product callouts than for the date tab area. */
-.weeklyScorecardRow {
-  grid-template-columns: minmax(190px, 0.62fr) minmax(230px, 0.62fr) minmax(560px, 1.9fr);
-}
-
-.weeklyTopProducts {
-  padding-left: clamp(1.1rem, 1.6vw, 1.45rem);
-  padding-right: clamp(1.1rem, 1.6vw, 1.45rem);
-}
-
-.weeklyTopProductList {
-  gap: clamp(0.6rem, 0.9vw, 0.8rem);
-}
-
-.weeklyTopProduct {
-  gap: 0.58rem;
-  grid-template-columns: 50px minmax(0, 1fr);
-  min-height: 66px;
-  padding: 0.42rem 0.52rem;
-}
-
-.weeklyTopProduct img,
-.weeklyTopProductPlaceholder {
-  height: 50px;
-  width: 50px;
-}
-
-.weeklyTopProduct strong,
-.weeklyTopProduct em,
-.weeklyTopProduct small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.weeklyTopProduct em,
-.weeklyTopProduct small {
-  font-size: 0.72rem;
-}
-
-@media (max-width: 1320px) {
-  .weeklyScorecardRow {
-    grid-template-columns: minmax(180px, 0.58fr) minmax(220px, 0.6fr) minmax(500px, 1.82fr);
-  }
-}
-
-/* Global readable type floor. Keep detail text crisp without dropping into fine print. */
-:root {
-  --type-caption: 0.82rem;
-  --type-small: 0.88rem;
-  --type-body-copy: 1rem;
-}
-
-body {
-  font-size: 15.5px;
-}
-
-.eyebrow,
-.dashboardHeader .eyebrow,
-.sectionTitle .eyebrow,
-.controlDock label,
-.uploadManagerToolbar label span,
-.uploadManagerRange label span,
-.inventoryDropdownTrigger span,
-.inventoryDropdown summary span,
-.inventoryOptionGroup p,
-.inventoryResetOption,
-.metric p,
-.metric small,
-.operatorOverview small,
-.bestItem small,
-.inventoryTotal span,
-.inventorySummaryGrid span,
-.inventoryBreakout span,
-.inventoryCoverage span,
-.inventoryPositionHeader span,
-.inventoryGaugeLabels span,
-.inventoryTopStyles span,
-.weeklyDateRail span,
-.weeklyDateRail em,
-.weeklyPrimary span,
-.weeklyMetrics span,
-.weeklyTopProducts > span,
-.weeklyMetrics em,
-.styleSignalHeader > span,
-.styleSignalIdentity span,
-.styleSignalMeasure span,
-.styleSignalBreadth span,
-.styleSignalDelta span,
-.artMeta,
-.artMeta span,
-.sideNavItem small {
-  font-size: var(--type-caption);
-  letter-spacing: 0.02em;
-}
-
-.monthlyStoryLead span,
-.monthlyStoryLead em,
-.weeklyPrimary em,
-.weeklyTopProducts em,
-.weeklyTopProducts small,
-.weeklyTopProduct em,
-.weeklyTopProduct small,
-.weeklyMetrics small,
-.styleSignalHeader p,
-.styleSignalEmpty,
-.inventoryPosition small,
-.inventoryPosition em,
-.inventoryTopStyles em,
-.inventoryTopStyles small,
-.uploadStatus,
-.importSummary,
-.fileMeta,
-.dashboardSubtitle,
-.sectionTitle p,
-.metric span,
-.metric em,
-.artCard p,
-.artCard small {
-  font-size: var(--type-small);
-}
-
-.inventoryDropdownTrigger,
-.inventoryDropdown summary,
-.inventoryOption,
-.inventoryResetOption,
-.accountReportTabs label,
-.sideNavItem,
-.controlDock button,
-.controlDock select,
-.controlDock input,
-.loginPanel input,
-.loginPanel button,
-button,
-select,
-input {
-  font-size: var(--type-small);
-}
-
-.weeklyDateRail {
-  min-height: 2.34rem;
-  padding: 0.62rem 0.95rem 0.56rem;
-}
-
-.weeklyDateRail span,
-.weeklyDateRail em {
-  font-size: 0.84rem;
-}
-
-.weeklyDateRail strong {
-  font-size: 1.16rem;
-}
-
-.weeklyTopProduct strong {
-  font-size: 1rem;
-}
-
-.weeklyTopProduct em,
-.weeklyTopProduct small {
-  font-size: 0.86rem;
-}
-
-.styleSignalIdentity strong {
-  font-size: 1.1rem;
-}
-
-.styleSignalMeasure strong,
-.styleSignalBreadth span,
-.styleSignalDelta strong {
-  font-size: 0.94rem;
-}
-
-.artCard h3,
-.artCodeLink,
-.artCard strong {
-  font-size: 1.08rem;
-}
-
-.artMeta {
-  line-height: 1.55;
-}
-
-@media (max-width: 820px) {
-  body {
-    font-size: 15px;
-  }
-}
-
-/* Section grouping polish: keep each report area visually separate without adding heavy boxes. */
-.dashboard > .sectionBlock,
-.publicReport > .sectionBlock,
-.publicAccountReport > .sectionBlock {
-  background: rgba(255, 253, 248, 0.64);
-  border: 1px solid rgba(218, 210, 198, 0.72);
-  border-radius: 24px;
-  box-shadow: 0 18px 44px rgba(34, 32, 28, 0.055);
-  margin-bottom: clamp(1.9rem, 3.1vw, 3.35rem);
-  padding: clamp(1.15rem, 2vw, 1.85rem);
-}
-
-:root[data-theme="dark"] .dashboard > .sectionBlock,
-:root[data-theme="dark"] .publicReport > .sectionBlock,
-:root[data-theme="dark"] .publicAccountReport > .sectionBlock {
-  background: rgba(22, 22, 20, 0.7);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
-}
-
-.dashboard > .sectionBlock > .sectionTitle,
-.publicReport > .sectionBlock > .sectionTitle,
-.publicAccountReport > .sectionBlock > .sectionTitle {
-  margin-bottom: clamp(1rem, 1.65vw, 1.45rem);
-  padding-bottom: 0;
-}
-
-.dashboard > .sectionBlock > .sectionTitle h3,
-.publicReport > .sectionBlock > .sectionTitle h3,
-.publicAccountReport > .sectionBlock > .sectionTitle h3 {
-  margin-bottom: 0.34rem;
-}
-
-.dashboard > .sectionBlock > .sectionTitle p,
-.publicReport > .sectionBlock > .sectionTitle p,
-.publicAccountReport > .sectionBlock > .sectionTitle p {
-  line-height: 1.55;
-  max-width: 74rem;
-}
-
-.sectionBlock .monthlyStoryCard,
-.sectionBlock .monthlyMetricCard,
-.sectionBlock .metric,
-.sectionBlock .inventoryTotal,
-.sectionBlock .inventorySummaryGrid article,
-.sectionBlock .inventoryBreakout,
-.sectionBlock .inventoryCoverage,
-.sectionBlock .inventoryPosition,
-.sectionBlock .inventoryTrendChart,
-.sectionBlock .weeklyScorecardRow,
-.sectionBlock .styleSignalCard,
-.sectionBlock .artCard {
-  box-shadow: 0 10px 24px rgba(34, 32, 28, 0.035);
-}
-
-.weeklyScorecardList {
-  gap: clamp(1.35rem, 2.1vw, 1.8rem);
-}
-
-.weeklyScorecardRow {
-  border-radius: 20px;
-  min-height: 128px;
-  overflow: visible;
-  padding-top: 0.42rem;
-}
-
-.weeklyPrimary,
-.weeklyMetrics,
-.weeklyTopProducts {
-  padding-top: clamp(1.45rem, 1.8vw, 1.75rem);
-}
-
-.weeklyDateRail {
-  border-left-width: 3px;
-  border-radius: 0 0 10px 0;
-  gap: 0.48rem;
-  min-height: 1.82rem;
-  padding: 0.3rem 0.62rem 0.32rem;
-}
-
-.weeklyDateRail span,
-.weeklyDateRail em {
-  font-size: 0.72rem;
-}
-
-.weeklyDateRail strong {
-  font-size: 0.98rem;
-}
-
-@media (max-width: 820px) {
-  .dashboard > .sectionBlock,
-  .publicReport > .sectionBlock,
-  .publicAccountReport > .sectionBlock {
-    border-radius: 18px;
-    margin-bottom: 1.25rem;
-    padding: 0.9rem;
-  }
-
-  .weeklyScorecardRow {
-    padding-top: 0.6rem;
-  }
-}
-
-/* Minimal dashboard skin: flatter, cleaner, and closer to the light SaaS references. */
-:root {
-  --canvas: #ffffff;
-  --paper: #ffffff;
-  --paper-soft: #f5f5f2;
-  --stone: #eceae4;
-  --stone-2: #dedbd2;
-  --charcoal: #1f1f1d;
-  --taupe: #68645d;
-  --taupe-2: #8a857b;
-  --system-green: #14794f;
-  --flat-panel: #f3f3f0;
-  --flat-card: #ffffff;
-  --flat-soft: #f7f7f4;
-  --flat-border: rgba(214, 209, 198, 0.46);
-  --flat-shadow: 0 10px 28px rgba(31, 31, 29, 0.035);
-  --flat-card-shadow: 0 1px 2px rgba(31, 31, 29, 0.04);
-}
-
-body {
-  background: var(--canvas);
-}
-
-.dashboard > .sectionBlock,
-.publicReport > .sectionBlock,
-.publicAccountReport > .sectionBlock {
-  background: var(--flat-panel);
-  border: 0;
-  border-radius: 22px;
-  box-shadow: var(--flat-shadow);
-  margin-bottom: clamp(2.2rem, 3.4vw, 3.8rem);
-  padding: clamp(1.45rem, 2.3vw, 2.15rem);
-}
-
-.dashboard > .sectionBlock > .sectionTitle,
-.publicReport > .sectionBlock > .sectionTitle,
-.publicAccountReport > .sectionBlock > .sectionTitle {
-  margin-bottom: clamp(1.25rem, 1.9vw, 1.8rem);
-}
-
-.dashboard > .sectionBlock > .sectionTitle h3,
-.publicReport > .sectionBlock > .sectionTitle h3,
-.publicAccountReport > .sectionBlock > .sectionTitle h3 {
-  color: var(--soft-black);
-  font-weight: 800;
-}
-
-.dashboard > .sectionBlock > .sectionTitle p,
-.publicReport > .sectionBlock > .sectionTitle p,
-.publicAccountReport > .sectionBlock > .sectionTitle p {
-  color: var(--taupe);
-}
-
-.sectionBlock .monthlyStoryCard,
-.sectionBlock .monthlyMetricCard,
-.sectionBlock .metric,
-.sectionBlock .weeklyScorecardRow,
-.sectionBlock .styleSignalCard,
-.sectionBlock .artCard,
-.sectionBlock .inventoryCard,
-.sectionBlock .inventoryTotal,
-.sectionBlock .inventorySummaryGrid div,
-.sectionBlock .inventoryBreakout div,
-.sectionBlock .inventoryCoverage,
-.sectionBlock .inventoryPosition,
-.sectionBlock .inventoryTrendChart,
-.sectionBlock .inventoryForecastCard,
-.weeklyTopProduct,
-.bestItem,
-.statCard,
-.uploadManagerRow,
-.accountReportMeta,
-.accountReportTabs label {
-  background: var(--flat-card);
-  border: 1px solid var(--flat-border);
-  box-shadow: var(--flat-card-shadow);
-}
-
-.sectionBlock .monthlyStoryCard,
-.sectionBlock .monthlyMetricCard,
-.sectionBlock .metric,
-.sectionBlock .styleSignalCard,
-.sectionBlock .artCard,
-.sectionBlock .inventoryTotal,
-.sectionBlock .inventoryCoverage,
-.sectionBlock .inventoryPosition,
-.sectionBlock .inventoryTrendChart,
-.sectionBlock .inventoryForecastCard,
-.weeklyTopProduct,
-.bestItem,
-.statCard {
-  border-radius: 16px;
-}
-
-.weeklyScorecardRow {
-  background: var(--flat-card);
-  border-color: var(--flat-border);
-  border-radius: 18px;
-  box-shadow: var(--flat-card-shadow);
-}
-
-.weeklyPrimary,
-.weeklyMetrics,
-.weeklyTopProducts {
-  border-color: var(--flat-border);
-}
-
-.weeklyDateRail {
-  background: var(--soft-black);
-  border-left: 0;
-  border-radius: 0 0 10px 0;
-  color: var(--paper);
-  min-height: 1.7rem;
-  padding: 0.28rem 0.62rem 0.3rem;
-}
-
-.weeklyDateRail span,
-.weeklyDateRail strong,
-.weeklyDateRail em {
-  color: inherit;
-}
-
-.weeklyTopProduct {
-  background: var(--paper);
-  border-radius: 14px;
-}
-
-.monthlyStoryComparison,
-.monthlyStoryNote,
-.inventoryGaugeTrack,
-.trendChart,
-.inventoryTrendChart {
-  background-color: var(--flat-soft);
-}
-
-.inventoryDropdownTrigger,
-.inventoryDropdown summary,
-.inventoryResetOption,
-.inventoryOption,
-.accountReportTabs label,
-.controlDock button,
-.controlDock select,
-.controlDock input,
-.sideNavItem,
-.themeToggle {
-  background: var(--flat-card);
-  border-color: var(--flat-border);
-  box-shadow: none;
+  font-weight: 850;
+  gap: 0.5rem;
+  min-height: 34px;
+  padding: 0.26rem 0.1rem;
+  text-align: left;
+  width: 100%;
 }
 
 .inventoryResetOption {
-  color: var(--soft-black);
+  background: var(--ink);
+  color: var(--surface-solid);
+  padding: 0.48rem 0.62rem;
+  text-transform: uppercase;
 }
 
-.inventoryOption.active,
-.inventoryResetOption:hover,
-.inventoryDropdown[open] summary,
-.inventoryDropdown.isOpen .inventoryDropdownTrigger,
-.accountReportTabs input:checked + label,
-.sideNavItem.active,
-.themeToggle[aria-pressed="true"] {
-  background: var(--soft-black);
-  border-color: var(--soft-black);
-  color: var(--paper);
+.inventoryOptionMark {
+  border: 1px solid rgba(113, 105, 96, 0.72);
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 11px;
+  position: relative;
+  width: 11px;
 }
 
-.inventoryOption.active *,
-.accountReportTabs input:checked + label *,
-.sideNavItem.active * {
-  color: inherit;
+.inventoryOptionMark.square {
+  border-radius: 2px;
 }
 
-.inventoryDropdownMenu {
-  background: var(--paper);
-  border-color: var(--flat-border);
-  border-radius: 16px;
-  box-shadow: 0 18px 42px rgba(31, 31, 29, 0.09);
+.inventoryOption.active .inventoryOptionMark::after {
+  background: var(--charcoal);
+  border-radius: inherit;
+  content: "";
+  inset: 2px;
+  position: absolute;
 }
 
-.artCard {
-  overflow: hidden;
+.inventoryOptionGroup {
+  border-top: 1px solid rgba(216, 207, 193, 0.82);
+  display: grid;
+  gap: 0.24rem;
+  padding-top: 0.48rem;
 }
 
-.artCard > a:first-child,
-.artCard > div:first-child {
-  background: #efeee9;
+.inventoryOptionGroup p {
+  color: var(--text-faint);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.12rem;
+  text-transform: uppercase;
 }
 
-.artRank,
-.weeklyTopProductRank {
-  background: var(--soft-black);
-  color: var(--paper);
-}
-
-.monthlyStoryCard .monthlyStoryNote {
-  background: var(--flat-soft);
-  border-radius: 16px;
-  font-weight: 500;
-}
-
-.monthlyStoryCard .monthlyStoryLead,
-.monthlyStoryCard .monthlyComparisonBars,
-.monthlyStoryCard .monthlyStoryNote {
-  background: #ffffff;
-  border-color: #ffffff;
-  box-shadow: none;
-}
-
-.monthlyStoryCard .monthlyStoryNote strong,
-.monthlyStoryCard .monthlyStoryNote b {
-  font-weight: 650;
-}
-
-:root[data-theme="dark"] {
-  --flat-panel: rgba(26, 29, 27, 0.9);
-  --flat-card: rgba(32, 35, 33, 0.96);
-  --flat-soft: rgba(23, 26, 24, 0.92);
-  --flat-border: rgba(255, 255, 255, 0.09);
-  --flat-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
-  --flat-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-}
-
-:root[data-theme="dark"] body {
-  background:
-    linear-gradient(rgba(15, 17, 16, 0.88), rgba(18, 20, 18, 0.94)),
-    url("/images/campus-stadium-night-blur.jpg") center / cover fixed,
-    #111310;
-}
-
-:root[data-theme="dark"] .weeklyDateRail,
-:root[data-theme="dark"] .inventoryOption.active,
-:root[data-theme="dark"] .inventoryResetOption:hover,
-:root[data-theme="dark"] .inventoryDropdown[open] summary,
-:root[data-theme="dark"] .inventoryDropdown.isOpen .inventoryDropdownTrigger,
-:root[data-theme="dark"] .accountReportTabs input:checked + label,
-:root[data-theme="dark"] .sideNavItem.active {
-  background: #f4f0e8;
-  border-color: #f4f0e8;
-  color: #151714;
-}
-
-@media (max-width: 820px) {
-  .dashboard > .sectionBlock,
-  .publicReport > .sectionBlock,
-  .publicAccountReport > .sectionBlock {
-    border-radius: 18px;
-    margin-bottom: 1.45rem;
-    padding: 1rem;
-  }
-}
-
-:root:not([data-theme="dark"]) body,
-:root:not([data-theme="dark"]) .appShell,
-:root:not([data-theme="dark"]) .publicShell {
-  background: #ffffff;
-}
-
-:root:not([data-theme="dark"]) .dashboard > .sectionBlock,
-:root:not([data-theme="dark"]) .publicReport > .sectionBlock,
-:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock,
-:root:not([data-theme="dark"]) .sectionBlock .monthlyStoryCard,
-:root:not([data-theme="dark"]) .sectionBlock .monthlyMetricCard,
-:root:not([data-theme="dark"]) .sectionBlock .metric,
-:root:not([data-theme="dark"]) .sectionBlock .styleSignalCard,
-:root:not([data-theme="dark"]) .sectionBlock .artCard,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryCard,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryTotal,
-:root:not([data-theme="dark"]) .sectionBlock .inventorySummaryGrid div,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryBreakout div,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryCoverage,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryPosition,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryTrendChart,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryForecastCard,
-:root:not([data-theme="dark"]) .weeklyScorecardRow,
-:root:not([data-theme="dark"]) .weeklyPrimary,
-:root:not([data-theme="dark"]) .weeklyMetrics,
-:root:not([data-theme="dark"]) .weeklyTopProducts,
-:root:not([data-theme="dark"]) .weeklyTopProduct,
-:root:not([data-theme="dark"]) .bestItem,
-:root:not([data-theme="dark"]) .statCard,
-:root:not([data-theme="dark"]) .uploadManagerRow,
-:root:not([data-theme="dark"]) .accountReportMeta,
-:root:not([data-theme="dark"]) .accountReportTabs label,
-:root:not([data-theme="dark"]) .monthlyStoryComparison,
-:root:not([data-theme="dark"]) .monthlyStoryNote,
-:root:not([data-theme="dark"]) .inventoryGaugeTrack,
-:root:not([data-theme="dark"]) .trendChart {
-  border-color: transparent;
-}
-
-/* Keep Inventory Snapshot on the same rounded tile system as the scorecards. */
 .sectionBlock .inventoryCard {
   background: transparent;
   border: 0;
@@ -6241,10 +4262,6 @@ body {
 .sectionBlock .inventoryCoverage,
 .sectionBlock .inventoryPosition,
 .sectionBlock .inventoryTrendChart {
-  background: var(--flat-card);
-  border: 1px solid var(--flat-border);
-  border-radius: 18px;
-  box-shadow: var(--flat-card-shadow);
   overflow: hidden;
 }
 
@@ -6252,7 +4269,10 @@ body {
   border-radius: 999px;
 }
 
-/* Monthly Scorecard refresh: preserve the rebuilt sales summary layout after theme overrides. */
+.inventoryGaugeTrack {
+  background: linear-gradient(90deg, #9db8c7, #d6d0c2, var(--steel));
+}
+
 .sectionBlock .monthlyScorecardGrid {
   background: transparent;
   border: 0;
@@ -6266,14 +4286,52 @@ body {
 .sectionBlock .monthlyScorecardTakeaways,
 .sectionBlock .monthlyScorecardMetrics .driverTile {
   background: var(--flat-card);
-  border: 1px solid var(--flat-border);
+  border: 0;
   border-radius: 18px;
-  box-shadow: var(--flat-card-shadow);
+  box-shadow: none;
+}
+
+.sectionBlock .monthlyScorecardHero {
+  gap: clamp(1.35rem, 2vw, 1.9rem);
+  padding: clamp(1.35rem, 2vw, 1.85rem);
 }
 
 .sectionBlock .monthlyScorecardHero,
 .sectionBlock .monthlyScorecardTakeaways {
   overflow: hidden;
+}
+
+.sectionBlock .monthlyScorecardTotal {
+  gap: 0.65rem;
+}
+
+.sectionBlock .monthlyScorecardTotal span {
+  line-height: 1.25;
+}
+
+.sectionBlock .monthlyScorecardTotal strong {
+  line-height: 1;
+}
+
+.sectionBlock .monthlyScorecardTotal em {
+  line-height: 1.45;
+}
+
+.sectionBlock .monthlyScorecardBars,
+.sectionBlock .monthlyScorecardBarRow {
+  gap: 1rem;
+}
+
+.sectionBlock .monthlyScorecardTakeaways {
+  padding: clamp(1.35rem, 2vw, 1.85rem);
+}
+
+.sectionBlock .monthlyScorecardTakeaways ul {
+  gap: 0.72rem;
+}
+
+.sectionBlock .monthlyScorecardTakeaways li {
+  line-height: 1.68;
 }
 
 .sectionBlock .monthlyScorecardMetrics {
@@ -6310,42 +4368,13 @@ body {
   border-radius: 999px;
 }
 
-@media (max-width: 1040px) {
-  .sectionBlock .monthlyScorecardGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .sectionBlock .monthlyScorecardMetrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
-  .sectionBlock .monthlyScorecardBarRow {
-    align-items: start;
-    gap: 0.5rem;
-    grid-template-columns: 1fr;
-  }
-
-  .sectionBlock .monthlyScorecardBarRow strong {
-    text-align: left;
-  }
-
-  .sectionBlock .monthlyScorecardMetrics {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Weekly Scorecard polish: keep the week system, but align columns and add breathing room. */
+.weeklyScorecardList,
 .sectionBlock .weeklyScorecardList {
+  display: grid;
   gap: clamp(1rem, 1.5vw, 1.35rem);
 }
 
 .sectionBlock .weeklyScorecardRow {
-  background: var(--flat-card);
-  border: 1px solid var(--flat-border);
-  border-radius: 18px;
-  box-shadow: var(--flat-card-shadow);
   display: grid;
   gap: 0;
   grid-template-areas: "sales metrics products";
@@ -6390,12 +4419,12 @@ body {
 }
 
 .sectionBlock .weeklyPrimary {
-  border-right: 1px solid var(--flat-border);
+  border-right: 1px solid var(--line-soft);
   gap: 0.62rem;
 }
 
 .sectionBlock .weeklyMetrics {
-  border-right: 1px solid var(--flat-border);
+  border-right: 1px solid var(--line-soft);
   display: grid;
   gap: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6408,7 +4437,7 @@ body {
 }
 
 .sectionBlock .weeklyMetrics span + span {
-  border-left: 1px solid var(--flat-border);
+  border-left: 1px solid var(--line-soft);
 }
 
 .sectionBlock .weeklyPrimary span,
@@ -6446,9 +4475,7 @@ body {
 
 .sectionBlock .weeklyTopProduct {
   background: rgba(255, 255, 255, 0.72);
-  border: 1px solid var(--flat-border);
   border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(31, 31, 29, 0.025);
   gap: 0.72rem;
   grid-template-columns: 56px minmax(0, 1fr);
   min-height: 74px;
@@ -6472,297 +4499,49 @@ body {
   line-height: 1.32;
 }
 
-@media (max-width: 1180px) {
-  .sectionBlock .weeklyScorecardRow {
-    grid-template-areas:
-      "sales metrics"
-      "products products";
-    grid-template-columns: minmax(230px, 0.9fr) minmax(320px, 1.1fr);
-  }
-
-  .sectionBlock .weeklyPrimary,
-  .sectionBlock .weeklyMetrics {
-    border-bottom: 1px solid var(--flat-border);
-  }
-
-  .sectionBlock .weeklyMetrics {
-    border-right: 0;
-  }
+.artGrid {
+  gap: 0.85rem;
 }
 
-@media (max-width: 760px) {
-  .sectionBlock .weeklyScorecardRow {
-    grid-template-areas:
-      "sales"
-      "metrics"
-      "products";
-    grid-template-columns: 1fr;
-  }
-
-  .sectionBlock .weeklyPrimary,
-  .sectionBlock .weeklyMetrics {
-    border-right: 0;
-  }
-
-  .sectionBlock .weeklyTopProductList {
-    grid-template-columns: 1fr;
-  }
+.artCard {
+  overflow: hidden;
 }
 
-/* Keep the primary report action readable after the flat control skin. */
-.dashboardHeader .controlDock .shareButton {
-  background: var(--soft-black);
-  border: 1px solid var(--soft-black);
-  color: var(--paper);
-  font-weight: 900;
-}
-
-.dashboardHeader .controlDock .shareButton:not(:disabled):hover {
-  background: var(--charcoal);
-  border-color: var(--charcoal);
-  color: var(--paper);
-}
-
-.dashboardHeader .controlDock .shareButton:disabled {
-  background: var(--flat-card);
-  border-color: var(--flat-border);
-  color: var(--taupe);
-}
-
-/* Monthly hero cleanup: remove duplicate header clutter and let the data breathe. */
-.sectionBlock .monthlyScorecardHero {
-  gap: clamp(1.35rem, 2vw, 1.9rem);
-  padding: clamp(1.35rem, 2vw, 1.85rem);
-}
-
-.sectionBlock .monthlyScorecardTotal {
-  gap: 0.65rem;
-}
-
-.sectionBlock .monthlyScorecardTotal span {
-  line-height: 1.25;
-}
-
-.sectionBlock .monthlyScorecardTotal strong {
-  line-height: 1;
-}
-
-.sectionBlock .monthlyScorecardTotal em {
-  line-height: 1.45;
-}
-
-.sectionBlock .monthlyScorecardBars {
-  gap: 1rem;
-}
-
-.sectionBlock .monthlyScorecardBarRow {
-  gap: 1rem;
-}
-
-.sectionBlock .monthlyScorecardTakeaways {
-  padding: clamp(1.35rem, 2vw, 1.85rem);
-}
-
-.sectionBlock .monthlyScorecardTakeaways ul {
-  gap: 0.72rem;
-}
-
-.sectionBlock .monthlyScorecardTakeaways li {
-  line-height: 1.68;
-}
-
-/* Flat container pass: white sidebar and no remaining container borders/shadows. */
-:root:not([data-theme="dark"]) .topNav,
-:root:not([data-theme="dark"]) .topNav.compact {
+.sectionBlock .artImage,
+.sectionBlock .artImage img {
   background: #ffffff;
-  border: 0;
-  box-shadow: none;
 }
 
-:root:not([data-theme="dark"]) .navBrand {
-  border: 0;
+.sectionBlock .artImage {
+  padding: 0.8rem;
 }
 
-:root:not([data-theme="dark"]) .sideNavItem,
-:root:not([data-theme="dark"]) .sideNavItem:hover,
-:root:not([data-theme="dark"]) .sideNavItem.active,
-:root:not([data-theme="dark"]) .sideNavItem.disabled {
-  border: 0;
-  box-shadow: none;
+.sectionBlock .artImage img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
 }
 
-:root:not([data-theme="dark"]) .dashboardHeader,
-:root:not([data-theme="dark"]) .overviewStrip article,
-:root:not([data-theme="dark"]) .dashboard > .sectionBlock,
-:root:not([data-theme="dark"]) .publicReport > .sectionBlock,
-:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock,
-:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardHero,
-:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardTakeaways,
-:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardMetrics .driverTile,
-:root:not([data-theme="dark"]) .sectionBlock .metric,
-:root:not([data-theme="dark"]) .sectionBlock .styleSignalCard,
-:root:not([data-theme="dark"]) .sectionBlock .artCard,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryCard,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryTotal,
-:root:not([data-theme="dark"]) .sectionBlock .inventorySummaryGrid div,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryBreakout div,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryCoverage,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryPosition,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryTrendChart,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryForecastCard,
-:root:not([data-theme="dark"]) .sectionBlock .weeklyScorecardRow,
-:root:not([data-theme="dark"]) .sectionBlock .weeklyTopProduct,
-:root:not([data-theme="dark"]) .topSalesProduct,
-:root:not([data-theme="dark"]) .insightCard,
-:root:not([data-theme="dark"]) .lineCard,
-:root:not([data-theme="dark"]) .notice,
-:root:not([data-theme="dark"]) .publicEmpty,
-:root:not([data-theme="dark"]) .publicReport,
-:root:not([data-theme="dark"]) .publicAccountReport,
-:root:not([data-theme="dark"]) .shareModal,
-:root:not([data-theme="dark"]) .inventoryDropdownMenu,
-:root:not([data-theme="dark"]) .shareLinkBox,
-:root:not([data-theme="dark"]) .uploadHistoryRow,
-:root:not([data-theme="dark"]) .emptyNotice {
-  border: 0;
-  box-shadow: none;
+.artImage b,
+.topSalesRank {
+  background: var(--ink);
+  border-radius: 0;
+  color: var(--surface-solid);
 }
 
-/* Rebuilt dashboard top section: compact, balanced, and flat. */
-.dashboardTopSection {
-  align-items: start;
-  background: #ffffff;
-  border: 0;
-  box-shadow: none;
-  display: grid;
-  gap: clamp(1.35rem, 2.2vw, 2rem) clamp(2rem, 5vw, 5.5rem);
-  grid-template-areas:
-    "intro controls"
-    "stats stats";
-  grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
-  margin-bottom: clamp(1.6rem, 2.4vw, 2.2rem);
-  padding: clamp(1.25rem, 2.2vw, 2rem) clamp(1.25rem, 2.8vw, 2.4rem);
+.artMeta {
+  background: var(--surface-solid);
+  padding: 0.85rem;
 }
 
-.dashboardTopSection .dashboardHeroIntro {
-  align-self: start;
-  display: grid;
-  gap: 0.62rem;
-  grid-area: intro;
-  max-width: 48rem;
+.artMeta strong,
+.artCodeLink {
+  font-size: 1.08rem;
 }
 
-.dashboardTopSection .eyebrow {
-  color: var(--taupe);
-  margin: 0;
-}
-
-.dashboardTopSection h2 {
-  color: var(--clay);
-  font-size: clamp(2.9rem, 5.2vw, 5.4rem);
-  line-height: 0.9;
-  margin: 0;
-}
-
-.dashboardTopSection .muted {
-  color: var(--taupe);
-  font-size: clamp(0.95rem, 1vw, 1.05rem);
-  line-height: 1.5;
-  margin: 0;
-  max-width: 46rem;
-}
-
-.dashboardTopSection .controlDock {
-  align-content: start;
-  align-self: start;
-  grid-area: controls;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 1.2rem;
-}
-
-.dashboardTopSection .controlDock label {
-  gap: 0.42rem;
-}
-
-.dashboardTopSection .controlDock select {
-  background: #ffffff;
-  min-height: 42px;
-}
-
-.dashboardTopSection .controlDock .shareButton {
-  min-height: 42px;
-}
-
-.dashboardHeroStats {
-  align-items: start;
-  display: grid;
-  gap: clamp(1.25rem, 3vw, 4rem);
-  grid-area: stats;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  padding-top: clamp(0.55rem, 1vw, 1rem);
-}
-
-.dashboardHeroStats article {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  display: grid;
-  gap: 0.55rem;
-  min-width: 0;
-  padding: 0;
-}
-
-.dashboardHeroStats span {
-  color: var(--taupe);
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  line-height: 1.25;
-  margin: 0;
-  text-transform: uppercase;
-}
-
-.dashboardHeroStats strong {
-  color: var(--soft-black);
-  display: block;
-  font-size: clamp(1rem, 1.2vw, 1.18rem);
-  line-height: 1.2;
-}
-
-.dashboardHeroStats .operatorOverview button {
-  justify-self: start;
-  margin-top: 0.35rem;
-}
-
-.dashboardHeroStats .operatorOverview small {
-  color: var(--taupe);
-  line-height: 1.35;
-}
-
-@media (max-width: 980px) {
-  .dashboardTopSection {
-    grid-template-areas:
-      "intro"
-      "controls"
-      "stats";
-    grid-template-columns: 1fr;
-  }
-
-  .dashboardTopSection .controlDock {
-    margin-top: 0;
-    max-width: 440px;
-  }
-
-  .dashboardHeroStats {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Product Gallery owns image maintenance now; the top hero stays focused on report context. */
-.dashboardTopSection {
-  grid-template-areas: "intro controls";
-  grid-template-rows: auto;
+.artCodeLink {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
 }
 
 .productGalleryHeaderActions {
@@ -6772,15 +4551,6 @@ body {
   justify-items: end;
   min-width: min(18rem, 100%);
   text-align: right;
-}
-
-.productGalleryHeaderActions span {
-  color: var(--taupe);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.07em;
-  line-height: 1.2;
-  text-transform: uppercase;
 }
 
 .productGalleryHeaderActions strong {
@@ -6815,15 +4585,216 @@ body {
   max-width: 18rem;
 }
 
-@media (max-width: 980px) {
+.siteCopyright {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  margin: 1.5rem 0 0;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.publicShell {
+  color: var(--text);
+  padding: 1.15rem;
+}
+
+.publicDashboardHeader {
+  box-shadow: none;
+}
+
+.publicShareBrand {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.publicShareBrand h1 {
+  color: var(--text);
+  font-size: 1.35rem;
+}
+
+.publicHeaderAside {
+  align-content: end;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.publicContactCard,
+.publicContextCard {
+  background: var(--surface-solid);
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--text-soft);
+  padding: 0.85rem;
+}
+
+.publicContextCard {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: 1fr 1fr;
+  padding: 0;
+}
+
+.publicContextCard > div {
+  padding: 0.85rem;
+}
+
+.publicContextCard span,
+.publicContactCard span {
+  font-size: 0.72rem;
+}
+
+.publicContextCard strong {
+  color: var(--text);
+}
+
+.accountReportTabs {
+  background: var(--surface-muted);
+  border: 0;
+  border-radius: var(--radius);
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  overflow: hidden;
+}
+
+.accountReportTabs label {
+  align-items: center;
+  color: var(--text-soft);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.accountReportSwitcher input:nth-of-type(1):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(1),
+.accountReportSwitcher input:nth-of-type(2):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(2),
+.accountReportSwitcher input:nth-of-type(3):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(3) {
+  background: var(--steel);
+  color: #fffefa;
+}
+
+.loginPanel,
+.shareModal {
+  border-radius: var(--radius);
+}
+
+@media (max-width: 1180px) {
+  .sectionBlock .weeklyScorecardRow {
+    grid-template-areas:
+      "sales metrics"
+      "products products";
+    grid-template-columns: minmax(230px, 0.9fr) minmax(320px, 1.1fr);
+  }
+
+  .sectionBlock .weeklyPrimary,
+  .sectionBlock .weeklyMetrics {
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .sectionBlock .weeklyMetrics {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 1120px) {
+  .appShell {
+    grid-template-columns: 1fr;
+  }
+
+  .topNav,
+  .topNav.compact {
+    height: auto;
+    min-height: 0;
+    position: relative;
+  }
+
+  .dashboard {
+    grid-column: 1;
+  }
+
+  .sideNavMenu,
+  .navControls,
+  .sideNavBottom {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .dashboardHeader,
+  .publicDashboardHeader,
+  .controlDock,
+  .dashboardTopSection {
+    grid-template-columns: 1fr;
+  }
+
   .dashboardTopSection {
     grid-template-areas:
       "intro"
       "controls";
   }
+
+  .dashboardTopSection .controlDock {
+    margin-top: 0;
+    max-width: 440px;
+  }
+
+  .ytdTrackerTiles,
+  .sectionBlock .monthlyScorecardMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sectionBlock .monthlyScorecardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .dashboard {
+    padding: 0.75rem;
+  }
+
+  .dashboard > .sectionBlock,
+  .publicReport > .sectionBlock,
+  .publicAccountReport > .sectionBlock {
+    border-radius: 0;
+    margin-bottom: 2.55rem;
+    padding: 0;
+  }
+
+  .dashboardHeader h2,
+  .publicDashboardHeader h1 {
+    font-size: 2.1rem;
+  }
+
+  .sectionTitle,
+  .inventoryControls,
+  .publicContextCard,
+  .ytdTrackerTiles,
+  .sectionBlock .monthlyScorecardMetrics {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
+  .sectionBlock .weeklyScorecardRow {
+    grid-template-areas:
+      "sales"
+      "metrics"
+      "products";
+    grid-template-columns: 1fr;
+  }
+
+  .sectionBlock .weeklyPrimary,
+  .sectionBlock .weeklyMetrics {
+    border-right: 0;
+  }
+
+  .sectionBlock .weeklyTopProductList {
+    grid-template-columns: 1fr;
+  }
+
   .productGalleryHeaderActions {
     justify-items: start;
     min-width: 0;
@@ -6831,221 +4802,15 @@ body {
   }
 }
 
-/* Product Gallery image surface: one clean white card color, no visible image box. */
-:root:not([data-theme="dark"]) .sectionBlock .artCard {
-  background: #ffffff;
-}
+@media (max-width: 700px) {
+  .sectionBlock .monthlyScorecardBarRow {
+    align-items: start;
+    gap: 0.5rem;
+    grid-template-columns: 1fr;
+  }
 
-:root:not([data-theme="dark"]) .sectionBlock .artImage {
-  background: #ffffff;
-  padding: 0.8rem;
-}
-
-:root:not([data-theme="dark"]) .sectionBlock .artImage img {
-  background: #ffffff;
-  height: 100%;
-  object-fit: contain;
-  width: 100%;
-}
-
-/* Option 2 flat dashboard: light grey page canvas with white content cards. */
-:root:not([data-theme="dark"]) {
-  --canvas: #f4f3f0;
-  --paper: #ffffff;
-  --paper-soft: #ffffff;
-  --flat-panel: transparent;
-  --flat-card: #ffffff;
-  --flat-soft: #f8f7f4;
-  --flat-border: transparent;
-  --flat-shadow: none;
-  --flat-card-shadow: none;
-}
-
-:root:not([data-theme="dark"]) body,
-:root:not([data-theme="dark"]) .appShell,
-:root:not([data-theme="dark"]) .dashboard,
-:root:not([data-theme="dark"]) .publicShell {
-  background: #f4f3f0;
-}
-
-:root:not([data-theme="dark"]) .topNav,
-:root:not([data-theme="dark"]) .topNav.compact {
-  background: #ffffff;
-}
-
-:root:not([data-theme="dark"]) .dashboardHeader,
-:root:not([data-theme="dark"]) .dashboardTopSection {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  padding: clamp(0.35rem, 1vw, 0.75rem) 0 clamp(0.65rem, 1.6vw, 1rem);
-}
-
-:root:not([data-theme="dark"]) .dashboard > .sectionBlock,
-:root:not([data-theme="dark"]) .publicReport > .sectionBlock,
-:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  margin-bottom: clamp(3.25rem, 5.4vw, 6rem);
-  padding: 0;
-}
-
-:root:not([data-theme="dark"]) .dashboard > .sectionBlock > .sectionTitle,
-:root:not([data-theme="dark"]) .publicReport > .sectionBlock > .sectionTitle,
-:root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock > .sectionTitle {
-  margin-bottom: clamp(1.25rem, 1.8vw, 1.7rem);
-}
-
-:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardHero,
-:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardTakeaways,
-:root:not([data-theme="dark"]) .sectionBlock .monthlyScorecardMetrics .driverTile,
-:root:not([data-theme="dark"]) .sectionBlock .metric,
-:root:not([data-theme="dark"]) .sectionBlock .styleSignalCard,
-:root:not([data-theme="dark"]) .sectionBlock .artCard,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryTotal,
-:root:not([data-theme="dark"]) .sectionBlock .inventorySummaryGrid div,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryBreakout div,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryCoverage,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryPosition,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryTrendChart,
-:root:not([data-theme="dark"]) .sectionBlock .inventoryForecastCard,
-:root:not([data-theme="dark"]) .sectionBlock .weeklyScorecardRow,
-:root:not([data-theme="dark"]) .sectionBlock .weeklyTopProduct,
-:root:not([data-theme="dark"]) .topSalesProduct,
-:root:not([data-theme="dark"]) .insightCard,
-:root:not([data-theme="dark"]) .lineCard,
-:root:not([data-theme="dark"]) .notice,
-:root:not([data-theme="dark"]) .emptyNotice,
-:root:not([data-theme="dark"]) .publicEmpty,
-:root:not([data-theme="dark"]) .uploadHistoryRow,
-:root:not([data-theme="dark"]) .bestItem,
-:root:not([data-theme="dark"]) .statCard,
-:root:not([data-theme="dark"]) .uploadManagerRow,
-:root:not([data-theme="dark"]) .accountReportMeta,
-:root:not([data-theme="dark"]) .accountReportTabs label {
-  background: #ffffff;
-  border: 0;
-  box-shadow: none;
-}
-
-:root:not([data-theme="dark"]) .publicReport,
-:root:not([data-theme="dark"]) .publicAccountReport {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-}
-
-:root:not([data-theme="dark"]) .controlDock select,
-:root:not([data-theme="dark"]) .inventoryDropdownTrigger,
-:root:not([data-theme="dark"]) .inventoryDropdownMenu,
-:root:not([data-theme="dark"]) .paginationControls button,
-:root:not([data-theme="dark"]) .shareLinkBox,
-:root:not([data-theme="dark"]) .fileButton {
-  background: #ffffff;
-  border: 0;
-  box-shadow: none;
-}
-
-@media (max-width: 820px) {
-  :root:not([data-theme="dark"]) .dashboard > .sectionBlock,
-  :root:not([data-theme="dark"]) .publicReport > .sectionBlock,
-  :root:not([data-theme="dark"]) .publicAccountReport > .sectionBlock {
-    border-radius: 0;
-    margin-bottom: 2.55rem;
-    padding: 0;
+  .sectionBlock .monthlyScorecardBarRow strong {
+    text-align: left;
   }
 }
 
-/* Sidebar utility cleanup: account, upload, and logout only. */
-:root:not([data-theme="dark"]) .sideNavBottom {
-  border-top: 1px solid rgba(31, 31, 29, 0.08);
-  gap: 0;
-  padding-top: 1rem;
-}
-
-:root:not([data-theme="dark"]) .navControls {
-  gap: 0.88rem;
-}
-
-:root:not([data-theme="dark"]) .navField,
-:root:not([data-theme="dark"]) .navUploadField,
-:root:not([data-theme="dark"]) .navSignOutField {
-  gap: 0.42rem;
-}
-
-:root:not([data-theme="dark"]) .navField span,
-:root:not([data-theme="dark"]) .navDateMeta p,
-:root:not([data-theme="dark"]) .navSignOutField > span {
-  color: #858178;
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  line-height: 1.15;
-}
-
-:root:not([data-theme="dark"]) .navField select,
-:root:not([data-theme="dark"]) .fileButton,
-:root:not([data-theme="dark"]) .navSignOut {
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid rgba(31, 31, 29, 0.1);
-  border-radius: 12px;
-  box-shadow: none;
-  color: var(--soft-black);
-  display: inline-grid;
-  font-size: 0.78rem;
-  font-weight: 850;
-  height: 42px;
-  justify-content: stretch;
-  min-height: 42px;
-  padding: 0 0.85rem;
-  text-align: left;
-  width: 100%;
-}
-
-:root:not([data-theme="dark"]) .fileButton,
-:root:not([data-theme="dark"]) .navSignOut {
-  justify-content: center;
-  text-align: center;
-}
-
-:root:not([data-theme="dark"]) .fileButton {
-  background: var(--soft-black);
-  border-color: var(--soft-black);
-  color: #ffffff;
-}
-
-:root:not([data-theme="dark"]) .fileButton:hover {
-  background: #2b2925;
-  border-color: #2b2925;
-}
-
-:root:not([data-theme="dark"]) .navSignOut:hover,
-:root:not([data-theme="dark"]) .navField select:hover {
-  border-color: rgba(31, 31, 29, 0.22);
-}
-
-:root:not([data-theme="dark"]) .navDateMeta {
-  gap: 0.34rem;
-}
-
-:root:not([data-theme="dark"]) .navDateMeta strong {
-  color: var(--soft-black);
-  font-size: 0.74rem;
-  font-weight: 900;
-}
-
-:root:not([data-theme="dark"]) .navSignOutField > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-:root:not([data-theme="dark"]) .navMessage {
-  background: #f4f3f0;
-  border: 0;
-  border-radius: 10px;
-  color: var(--taupe);
-}
