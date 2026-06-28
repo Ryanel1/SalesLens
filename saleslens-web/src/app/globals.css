@@ -6278,6 +6278,22 @@ body {
   grid-column: 1 / -1;
 }
 
+.sectionBlock .monthlyScorecardMetrics .driverTile {
+  align-content: start;
+  gap: 0.82rem;
+  min-height: 158px;
+  padding: clamp(1.25rem, 1.7vw, 1.6rem);
+}
+
+.sectionBlock .monthlyScorecardMetrics .driverMeta {
+  gap: 0.4rem;
+  padding-left: 1.15rem;
+}
+
+.sectionBlock .monthlyScorecardMetrics .driverMeta li {
+  line-height: 1.52;
+}
+
 .sectionBlock .monthlyScorecardTrack {
   background: rgba(215, 208, 196, 0.72);
   border-radius: 999px;
