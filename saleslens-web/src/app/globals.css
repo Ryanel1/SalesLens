@@ -6508,3 +6508,23 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep the primary report action readable after the flat control skin. */
+.dashboardHeader .controlDock .shareButton {
+  background: var(--soft-black);
+  border: 1px solid var(--soft-black);
+  color: var(--paper);
+  font-weight: 900;
+}
+
+.dashboardHeader .controlDock .shareButton:not(:disabled):hover {
+  background: var(--charcoal);
+  border-color: var(--charcoal);
+  color: var(--paper);
+}
+
+.dashboardHeader .controlDock .shareButton:disabled {
+  background: var(--flat-card);
+  border-color: var(--flat-border);
+  color: var(--taupe);
+}

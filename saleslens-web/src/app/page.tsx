@@ -130,7 +130,7 @@ type InventoryAudienceFilter = "All" | "Mens" | "Womens" | "Youth";
 type InventoryProductCategory = "Fleece" | "Reverse Weave" | "Tees" | "Other";
 type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees" | "Namedrop";
 type TopArtSort = "units" | "dollars";
-type ProductGalleryView = "top-sellers" | "inventory" | "low-stock" | "growth";
+type ProductGalleryView = "top-sellers" | "inventory";
 type ProductGallerySort = "units" | "dollars" | "inventory-high" | "inventory-low";
 
 type ProductGalleryItem = {
@@ -788,7 +788,7 @@ export default function Home() {
   const inventoryPageEnd = inventoryTrackerMeta?.pageEnd ?? 0;
   const inventoryTrackerTotalItems = inventoryTrackerMeta?.totalItems ?? inventoryTracker.length;
   const inventoryTrackerTotalUnits = inventoryTrackerMeta?.totalUnits ?? sum(inventoryTracker.map((row) => row.inventoryUnits));
-  const productGalleryUsesInventory = productGalleryView === "inventory" || productGalleryView === "low-stock";
+  const productGalleryUsesInventory = productGalleryView === "inventory";
   const topSellerAllRows = useMemo<ProductGalleryItem[]>(() => {
     const sourceRows =
       periodRecords.length
@@ -920,7 +920,6 @@ export default function Home() {
     setProductGalleryView(view);
     setInventoryPage(1);
     if (view === "inventory") setInventorySort("highest");
-    if (view === "low-stock") setInventorySort("lowest");
     setInventoryMenuOpen(null);
   }
 
@@ -931,7 +930,7 @@ export default function Home() {
       setProductGalleryView("top-sellers");
     } else {
       setInventorySort(sort === "inventory-high" ? "highest" : "lowest");
-      setProductGalleryView(sort === "inventory-high" ? "inventory" : "low-stock");
+      setProductGalleryView("inventory");
     }
     setInventoryMenuOpen(null);
   }
@@ -2202,7 +2201,7 @@ export default function Home() {
                     </button>
                     {inventoryMenuOpen === "view" ? (
                       <div className="inventoryDropdownMenu">
-                        {(["top-sellers", "inventory", "low-stock", "growth"] as ProductGalleryView[]).map((view) => (
+                        {(["top-sellers", "inventory"] as ProductGalleryView[]).map((view) => (
                           <button
                             aria-pressed={productGalleryView === view}
                             className={`inventoryOption ${productGalleryView === view ? "active" : ""}`}
@@ -4518,9 +4517,7 @@ function inventoryPriorYearSoldText(value: number | null | undefined) {
 
 function productGalleryViewLabel(view: ProductGalleryView) {
   if (view === "top-sellers") return "Top Sellers";
-  if (view === "inventory") return "Inventory";
-  if (view === "low-stock") return "Low Stock";
-  return "Growth";
+  return "Inventory";
 }
 
 function productGallerySortOptionLabel(sort: ProductGallerySort) {
