@@ -8,7 +8,6 @@ import {
   type ReportSnapshotPayload,
   type ReportSnapshotRecord,
   type SnapshotBestDay,
-  type SnapshotSalesForecast,
   type SnapshotInventory,
   type SnapshotInventoryLine,
   type SnapshotMetricSet,
@@ -112,6 +111,7 @@ function SharedReportBundle({ payload }: { payload: ReportSnapshotBundlePayload 
 
 function SharedAccountReport({ payload, embedded = false }: { payload: ReportSnapshotPayload; embedded?: boolean }) {
   const Shell = embedded ? "div" : "main";
+  const productGalleryRows = sharedProductGalleryRows(payload);
 
   return (
     <Shell className={embedded ? "" : `publicShell ${accountThemeClass(payload.accountName)}`}>
@@ -178,16 +178,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </div>
         </ReportSection>
 
-        {payload.salesForecast ? (
-          <ReportSection
-            title="Forecast Outlook"
-            subtitle="Projected full-year finish using current YTD pace and prior-year seasonality when available."
-            aside={payload.salesForecast.confidence}
-          >
-            <SalesForecastGrid forecast={payload.salesForecast} />
-          </ReportSection>
-        ) : null}
-
         <ReportSection
           title={payload.periodMode === "ytd" ? "Selected Year Scorecard" : "Monthly Scorecard"}
           subtitle={`${payload.periodTitle} compared with ${payload.priorPeriodTitle}.`}
@@ -212,57 +202,13 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </ReportSection>
         ) : null}
 
-        <ReportSection
-          title="Product Gallery"
-          subtitle={productGallerySubtitle(payload)}
-        >
-          <div className="artGrid">
-            {payload.topArt.map((row) => (
-              <article className="artCard" key={row.key}>
-                <div className="artImage">
-                  <b>#{row.rank}</b>
-                  {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
-                </div>
-                <div className="artMeta">
-                  {row.productUrl ? (
-                    <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                      {row.artCode}
-                    </a>
-                  ) : (
-                    <strong>{row.artCode}</strong>
-                  )}
-                  <span>{row.style} | {row.color}</span>
-                  <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.units)} Units | {wholeCurrencyText(row.sales)}</span>
-                  <span>
-                    YTD Sold: {numberText(row.cyUnits)} Units
-                    {row.cySales ? <> | {wholeCurrencyText(row.cySales)}</> : null}
-                  </span>
-                  <span>LY Sold: {inventoryPriorYearSoldText(row)}</span>
-                  {row.inventoryUnits != null ? (
-                    <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
-                  ) : null}
-                </div>
-              </article>
-            ))}
-          </div>
-        </ReportSection>
-
-        {payload.inventorySnapshot ? (
+        {productGalleryRows.length ? (
           <ReportSection
-            title="Inventory Snapshot"
-            subtitle="Current on-hand inventory from the latest available inventory data."
-          >
-            <InventoryCard snapshot={payload.inventorySnapshot} />
-          </ReportSection>
-        ) : null}
-
-        {payload.inventoryTracker?.length ? (
-          <ReportSection
-            title="Inventory Tracker"
-            subtitle={`${payload.inventoryTrackerSort === "lowest" ? "Lowest" : "Highest"} ${numberText(payload.inventoryTrackerMeta?.totalItems ?? payload.inventoryTracker.length)} current on-hand items with 5+ units, plus high-demand low-stock exceptions | ${numberText(payload.inventoryTrackerMeta?.totalUnits ?? sum(payload.inventoryTracker.map((row) => row.inventoryUnits)))} Units`}
+            title="Product Gallery"
+            subtitle={productGallerySubtitle(payload, productGalleryRows)}
           >
             <div className="artGrid">
-              {payload.inventoryTracker.map((row) => (
+              {productGalleryRows.map((row) => (
                 <article className="artCard" key={row.key}>
                   <div className="artImage">
                     <b>#{row.rank}</b>
@@ -277,16 +223,30 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                       <strong>{row.artCode}</strong>
                     )}
                     <span>{row.style} | {row.color}</span>
-                    <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
+                    {row.periodUnits > 0 || row.periodSales > 0 ? (
+                      <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.periodUnits)} Units | {wholeCurrencyText(row.periodSales)}</span>
+                    ) : null}
                     <span>
-                      YTD Sold: {numberText(row.ytdUnits ?? 0)} Units
+                      YTD Sold: {numberText(row.ytdUnits)} Units
                       {row.ytdSales ? <> | {wholeCurrencyText(row.ytdSales)}</> : null}
                     </span>
                     <span>LY Sold: {inventoryPriorYearSoldText(row)}</span>
+                    {row.inventoryUnits != null ? (
+                      <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
+                    ) : null}
                   </div>
                 </article>
               ))}
             </div>
+          </ReportSection>
+        ) : null}
+
+        {payload.inventorySnapshot ? (
+          <ReportSection
+            title="Inventory Snapshot"
+            subtitle="Current on-hand inventory from the latest available inventory data."
+          >
+            <InventoryCard snapshot={payload.inventorySnapshot} />
           </ReportSection>
         ) : null}
 
@@ -388,32 +348,6 @@ function ProductBreadthCard({ insights }: { insights: SnapshotYtdInsights }) {
         </span>
       </div>
     </article>
-  );
-}
-
-function SalesForecastGrid({ forecast }: { forecast: SnapshotSalesForecast }) {
-  const projectedSalesDelta = forecast.projectedSales - forecast.priorFullYearSales;
-  const projectedUnitsDelta = forecast.projectedUnits - forecast.priorFullYearUnits;
-
-  return (
-    <div className="forecastGrid">
-      <MetricCard label={`${forecast.currentYear} Projected Sales`} value={currencyText(forecast.projectedSales)} tone={projectedSalesDelta} />
-      <MetricCard label="Remaining To Projection" value={currencyText(forecast.remainingSales)} />
-      <MetricCard label={`${forecast.currentYear} Projected Units`} value={`${numberText(Math.round(forecast.projectedUnits))} Units`} tone={projectedUnitsDelta} />
-      <MetricCard
-        label="Seasonality Used"
-        value={forecast.seasonalityPercent == null ? "Pace-Based" : `${decimalText(forecast.seasonalityPercent, 1)}%`}
-      />
-      <article className="forecastStory">
-        <p>{forecast.note}</p>
-        <span>
-          Current YTD: {currencyText(forecast.currentYtdSales)} / {numberText(forecast.currentYtdUnits)} units
-        </span>
-        <span>
-          {forecast.priorYear} full year: {currencyText(forecast.priorFullYearSales)} / {numberText(forecast.priorFullYearUnits)} units
-        </span>
-      </article>
-    </div>
   );
 }
 
@@ -909,13 +843,89 @@ function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
 }
 
-function productGallerySubtitle(payload: ReportSnapshotPayload) {
-  const count = payload.topArt.length;
+type SharedProductGalleryRow = {
+  rank: number;
+  key: string;
+  style: string;
+  color: string;
+  artCode: string;
+  periodUnits: number;
+  periodSales: number;
+  ytdUnits: number;
+  ytdSales: number;
+  priorYearUnits?: number | null;
+  priorYtdUnits?: number | null;
+  inventoryUnits?: number | null;
+  imageUrl: string | null;
+  productUrl?: string | null;
+};
+
+function sharedProductGalleryRows(payload: ReportSnapshotPayload): SharedProductGalleryRow[] {
+  const rows = new Map<string, SharedProductGalleryRow>();
+
+  payload.topArt.forEach((row) => {
+    rows.set(row.key, {
+      rank: row.rank,
+      key: row.key,
+      style: row.style,
+      color: row.color,
+      artCode: row.artCode,
+      periodUnits: row.units,
+      periodSales: row.sales,
+      ytdUnits: row.cyUnits,
+      ytdSales: row.cySales,
+      priorYearUnits: row.priorYearUnits,
+      inventoryUnits: row.inventoryUnits,
+      imageUrl: row.imageUrl,
+      productUrl: row.productUrl,
+    });
+  });
+
+  (payload.inventoryTracker ?? []).forEach((row) => {
+    const existing = rows.get(row.key);
+    if (existing) {
+      rows.set(row.key, {
+        ...existing,
+        ytdUnits: existing.ytdUnits || row.ytdUnits || 0,
+        ytdSales: existing.ytdSales || row.ytdSales || 0,
+        priorYearUnits: existing.priorYearUnits ?? row.priorYearUnits,
+        priorYtdUnits: row.priorYtdUnits,
+        inventoryUnits: row.inventoryUnits,
+        imageUrl: existing.imageUrl ?? row.imageUrl,
+        productUrl: existing.productUrl ?? row.productUrl,
+      });
+      return;
+    }
+
+    rows.set(row.key, {
+      rank: row.rank,
+      key: row.key,
+      style: row.style,
+      color: row.color,
+      artCode: row.artCode,
+      periodUnits: 0,
+      periodSales: 0,
+      ytdUnits: row.ytdUnits ?? 0,
+      ytdSales: row.ytdSales ?? 0,
+      priorYearUnits: row.priorYearUnits,
+      priorYtdUnits: row.priorYtdUnits,
+      inventoryUnits: row.inventoryUnits,
+      imageUrl: row.imageUrl,
+      productUrl: row.productUrl,
+    });
+  });
+
+  return [...rows.values()].slice(0, 50).map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function productGallerySubtitle(payload: ReportSnapshotPayload, rows: SharedProductGalleryRow[]) {
+  const count = rows.length;
   const sortLabel = payload.topArtSort === "dollars" ? "Dollars" : "Units";
   const rangeText = count ? `1-${numberText(count)}` : "0-0";
-  const units = sum(payload.topArt.map((row) => row.units));
-  const sales = sum(payload.topArt.map((row) => row.sales));
-  return `${payload.topArtPeriodTitle ?? payload.periodTitle} Top Sellers by ${sortLabel}. Showing ${rangeText} of ${numberText(count)} | ${numberText(units)} Units${sales ? ` | ${wholeCurrencyText(sales)}` : ""}`;
+  const units = sum(rows.map((row) => row.periodUnits));
+  const sales = sum(rows.map((row) => row.periodSales));
+  const inventoryUnits = sum(rows.map((row) => row.inventoryUnits ?? 0));
+  return `${payload.topArtPeriodTitle ?? payload.periodTitle} Top Sellers by ${sortLabel}. Showing ${rangeText} of ${numberText(count)} | ${numberText(units)} Units${sales ? ` | ${wholeCurrencyText(sales)}` : ""}${inventoryUnits ? ` | ${numberText(inventoryUnits)} Current Inv` : ""}`;
 }
 
 function countText(value: number, singular: string, plural: string) {

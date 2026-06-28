@@ -4585,6 +4585,93 @@ label {
   color: var(--text);
 }
 
+.publicReport > .publicDashboardHeader,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader {
+  align-items: end;
+  background: transparent;
+  border: 0;
+  display: grid;
+  gap: clamp(1.4rem, 3vw, 3rem);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+  margin-bottom: clamp(2.6rem, 4vw, 4rem);
+  padding: clamp(0.5rem, 1vw, 1rem) 0 0;
+}
+
+.publicReport > .publicDashboardHeader .publicShareBrand,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicShareBrand {
+  margin: 0 0 1rem;
+}
+
+.publicReport > .publicDashboardHeader .publicShareBrand h1,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicShareBrand h1 {
+  color: var(--text);
+  font-size: clamp(1.65rem, 3vw, 2.6rem);
+  line-height: 0.95;
+  margin: 0;
+}
+
+.publicReport > .publicDashboardHeader .publicShareBrand p,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicShareBrand p {
+  color: var(--text-faint);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  margin-top: 0.12rem;
+}
+
+.publicReport > .publicDashboardHeader h1,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader h1 {
+  color: var(--text);
+  font-size: clamp(4rem, 8vw, 7rem);
+  line-height: 0.86;
+  margin: 0 0 0.8rem;
+}
+
+.publicReport > .publicDashboardHeader .muted,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .muted {
+  color: var(--text-soft);
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+  line-height: 1.45;
+  max-width: 48rem;
+}
+
+.publicReport > .publicDashboardHeader .publicHeaderAside,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicHeaderAside {
+  align-content: end;
+  display: grid;
+  gap: 0.85rem;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.publicReport > .publicDashboardHeader .publicContactCard,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContactCard {
+  background: transparent;
+  color: var(--text-soft);
+  gap: 0.12rem;
+  justify-items: end;
+  padding: 0;
+  text-align: right;
+}
+
+.publicReport > .publicDashboardHeader .publicContextCard,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContextCard {
+  background: var(--flat-card);
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  gap: 1px;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  padding: 0;
+}
+
+.publicReport > .publicDashboardHeader .publicContextCard > div,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContextCard > div {
+  background: var(--flat-card);
+  min-height: 78px;
+  padding: 1rem;
+}
+
 .accountReportTabs {
   background: var(--surface-muted);
   border: 0;
