@@ -826,7 +826,7 @@ function topArtRows(
       };
     })
     .sort(sort === "dollars" ? sortBySales : sortByUnits)
-    .slice(0, 30)
+    .slice(0, INVENTORY_TRACKER_PAGE_SIZE)
     .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 

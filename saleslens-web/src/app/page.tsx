@@ -804,7 +804,7 @@ export default function Home() {
       productUrl: row.productUrl,
     }));
   }, [dashboardData.images, dashboardData.inventoryRecords, periodRecords, priorYearRecords, topArt, topArtSort, ytdCurrentRecords]);
-  const topSellerPageSize = 30;
+  const topSellerPageSize = INVENTORY_TRACKER_PAGE_SIZE;
   const topSellerPageCount = Math.max(1, Math.ceil(topSellerAllRows.length / topSellerPageSize));
   const currentTopSellerPage = Math.min(Math.max(inventoryPage, 1), topSellerPageCount);
   const topSellerPageStart = topSellerAllRows.length ? (currentTopSellerPage - 1) * topSellerPageSize + 1 : 0;
@@ -3241,7 +3241,7 @@ function topArtRows(
   inventoryRecords: InventoryRecord[] = [],
   sort: TopArtSort = "units",
   priorYearRecords: SalesRecord[] = [],
-  limit: number | null = 30,
+  limit: number | null = INVENTORY_TRACKER_PAGE_SIZE,
 ): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
   const priorYearGroups = groupBy(priorYearRecords, artKey);
