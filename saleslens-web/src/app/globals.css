@@ -6081,3 +6081,29 @@ body {
 :root:not([data-theme="dark"]) .trendChart {
   border-color: transparent;
 }
+
+/* Keep Inventory Snapshot on the same rounded tile system as the scorecards. */
+.sectionBlock .inventoryCard {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.sectionBlock .inventoryTotal,
+.sectionBlock .inventorySummaryGrid div,
+.sectionBlock .inventoryBreakout div,
+.sectionBlock .inventoryCoverage,
+.sectionBlock .inventoryPosition,
+.sectionBlock .inventoryTrendChart {
+  background: var(--flat-card);
+  border: 1px solid var(--flat-border);
+  border-radius: 18px;
+  box-shadow: var(--flat-card-shadow);
+  overflow: hidden;
+}
+
+.sectionBlock .inventoryGaugeTrack {
+  border-radius: 999px;
+}
