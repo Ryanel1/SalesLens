@@ -2510,14 +2510,12 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
       </article>
 
       <div className="monthlyDriverMetricsRow monthlyScorecardMetrics">
-        {hasTransactionData ? (
-          <DriverTile
-            label="Transactions"
-            value={`${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY`}
-            details={[`Change: ${changeText(current.transactions, prior.transactions)}`]}
-            tone={transactionDelta}
-          />
-        ) : null}
+        <DriverTile
+          label="Transactions"
+          value={hasTransactionData ? `${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY` : "NA"}
+          details={[hasTransactionData ? `Change: ${changeText(current.transactions, prior.transactions)}` : "No receipt data"]}
+          tone={hasTransactionData ? transactionDelta : 0}
+        />
         <DriverTile
           label="Units"
           value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}

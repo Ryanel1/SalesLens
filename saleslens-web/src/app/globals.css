@@ -4170,6 +4170,7 @@ label {
   border: 0;
   border-radius: 0;
   box-shadow: none;
+  gap: 1rem;
   overflow: visible;
 }
 
@@ -4179,7 +4180,16 @@ label {
 .sectionBlock .inventoryCoverage,
 .sectionBlock .inventoryPosition,
 .sectionBlock .inventoryTrendChart {
+  background: var(--flat-card);
+  border: 0;
+  border-radius: 18px;
+  box-shadow: none;
   overflow: hidden;
+}
+
+.sectionBlock .inventorySummaryGrid,
+.sectionBlock .inventoryBreakout {
+  gap: 1rem;
 }
 
 .sectionBlock .inventoryGaugeTrack {
@@ -4254,6 +4264,7 @@ label {
 .sectionBlock .monthlyScorecardMetrics {
   background: transparent;
   border: 0;
+  gap: 1rem;
   grid-column: 1 / -1;
 }
 
@@ -4419,10 +4430,14 @@ label {
 }
 
 .artGrid {
-  gap: 0.85rem;
+  gap: 1rem;
 }
 
 .artCard {
+  background: var(--flat-card);
+  border: 0;
+  border-radius: 18px;
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -4450,7 +4465,7 @@ label {
 
 .artMeta {
   background: var(--surface-solid);
-  padding: 0.85rem;
+  padding: 1rem;
 }
 
 .artMeta strong,
