@@ -96,6 +96,7 @@ type TopArt = MetricSet & {
   sku: string | null;
   cySales: number;
   cyUnits: number;
+  priorYearUnits: number | null;
   inventoryUnits: number | null;
   inventoryScope: "color" | null;
   imageUrl: string | null;
@@ -787,29 +788,41 @@ export default function Home() {
   const inventoryTrackerTotalItems = inventoryTrackerMeta?.totalItems ?? inventoryTracker.length;
   const inventoryTrackerTotalUnits = inventoryTrackerMeta?.totalUnits ?? sum(inventoryTracker.map((row) => row.inventoryUnits));
   const productGalleryUsesInventory = productGalleryView === "inventory" || productGalleryView === "low-stock";
-  const topSellerGalleryRows = useMemo<ProductGalleryItem[]>(
-    () =>
-      topArt.map((row) => ({
-        rank: row.rank,
-        key: row.key,
-        style: row.style,
-        brand: row.brand,
-        color: row.color,
-        artCode: row.artCode,
-        monthUnits: row.units,
-        monthSales: row.sales,
-        ytdUnits: row.cyUnits,
-        ytdSales: row.cySales,
-        priorYearUnits: null,
-        inventoryUnits: row.inventoryUnits,
-        imageUrl: row.imageUrl,
-        productUrl: row.productUrl,
-      })),
-    [topArt],
+  const topSellerAllRows = useMemo<ProductGalleryItem[]>(() => {
+    const sourceRows =
+      periodRecords.length
+        ? topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images, dashboardData.inventoryRecords, topArtSort, priorYearRecords, null)
+        : topArt;
+
+    return sourceRows.map((row) => ({
+      rank: row.rank,
+      key: row.key,
+      style: row.style,
+      brand: row.brand,
+      color: row.color,
+      artCode: row.artCode,
+      monthUnits: row.units,
+      monthSales: row.sales,
+      ytdUnits: row.cyUnits,
+      ytdSales: row.cySales,
+      priorYearUnits: row.priorYearUnits ?? null,
+      inventoryUnits: row.inventoryUnits,
+      imageUrl: row.imageUrl,
+      productUrl: row.productUrl,
+    }));
+  }, [dashboardData.images, dashboardData.inventoryRecords, periodRecords, priorYearRecords, topArt, topArtSort, ytdCurrentRecords]);
+  const topSellerPageSize = 30;
+  const topSellerPageCount = Math.max(1, Math.ceil(topSellerAllRows.length / topSellerPageSize));
+  const currentTopSellerPage = Math.min(Math.max(inventoryPage, 1), topSellerPageCount);
+  const topSellerPageStart = topSellerAllRows.length ? (currentTopSellerPage - 1) * topSellerPageSize + 1 : 0;
+  const topSellerPageEnd = Math.min(currentTopSellerPage * topSellerPageSize, topSellerAllRows.length);
+  const topSellerGalleryRows = useMemo(
+    () => topSellerAllRows.slice((currentTopSellerPage - 1) * topSellerPageSize, currentTopSellerPage * topSellerPageSize),
+    [currentTopSellerPage, topSellerAllRows],
   );
   const topSellerLookup = useMemo(
-    () => new Map(topSellerGalleryRows.map((row) => [row.key, row])),
-    [topSellerGalleryRows],
+    () => new Map(topSellerAllRows.map((row) => [row.key, row])),
+    [topSellerAllRows],
   );
   const inventoryGalleryRows = useMemo<ProductGalleryItem[]>(
     () =>
@@ -835,13 +848,14 @@ export default function Home() {
     [topSellerLookup, visibleInventoryTracker],
   );
   const productGalleryRows = productGalleryUsesInventory ? inventoryGalleryRows : topSellerGalleryRows;
-  const productGalleryPageCount = productGalleryUsesInventory ? inventoryPageCount : 1;
-  const productGalleryPage = productGalleryUsesInventory ? currentInventoryPage : 1;
-  const productGalleryPageStart = productGalleryUsesInventory ? inventoryPageStart : productGalleryRows.length ? 1 : 0;
-  const productGalleryPageEnd = productGalleryUsesInventory ? inventoryPageEnd : productGalleryRows.length;
-  const productGalleryTotalItems = productGalleryUsesInventory ? inventoryTrackerTotalItems : productGalleryRows.length;
-  const productGalleryTotalUnits = productGalleryUsesInventory ? inventoryTrackerTotalUnits : sum(productGalleryRows.map((row) => row.monthUnits));
-  const productGalleryTotalSales = sum(productGalleryRows.map((row) => row.monthSales));
+  const productGallerySourceRows = productGalleryUsesInventory ? inventoryGalleryRows : topSellerAllRows;
+  const productGalleryPageCount = productGalleryUsesInventory ? inventoryPageCount : topSellerPageCount;
+  const productGalleryPage = productGalleryUsesInventory ? currentInventoryPage : currentTopSellerPage;
+  const productGalleryPageStart = productGalleryUsesInventory ? inventoryPageStart : topSellerPageStart;
+  const productGalleryPageEnd = productGalleryUsesInventory ? inventoryPageEnd : topSellerPageEnd;
+  const productGalleryTotalItems = productGalleryUsesInventory ? inventoryTrackerTotalItems : topSellerAllRows.length;
+  const productGalleryTotalUnits = productGalleryUsesInventory ? inventoryTrackerTotalUnits : sum(productGallerySourceRows.map((row) => row.monthUnits));
+  const productGalleryTotalSales = sum(productGallerySourceRows.map((row) => row.monthSales));
   const productGallerySortLabel = productGalleryUsesInventory
     ? inventorySort === "highest"
       ? "Inventory High"
@@ -878,8 +892,8 @@ export default function Home() {
   }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, selectedCustomerId, selectedPeriod]);
 
   useEffect(() => {
-    if (inventoryPage > inventoryPageCount) setInventoryPage(inventoryPageCount);
-  }, [inventoryPage, inventoryPageCount]);
+    if (inventoryPage > productGalleryPageCount) setInventoryPage(productGalleryPageCount);
+  }, [inventoryPage, productGalleryPageCount]);
 
   useEffect(() => {
     if (!inventoryMenuOpen) return undefined;
@@ -3209,18 +3223,22 @@ function topArtRows(
   images: ProductImage[],
   inventoryRecords: InventoryRecord[] = [],
   sort: TopArtSort = "units",
+  priorYearRecords: SalesRecord[] = [],
+  limit: number | null = 30,
 ): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
+  const priorYearGroups = groupBy(priorYearRecords, artKey);
   const imageLookup = imageLookupMaps(images);
   const latestInventory = latestStandaloneInventoryRecords(inventoryRecords);
   const inventoryGroups = groupBy(latestInventory, artKey);
-  return groupedRows(records, artKey)
+  const rows = groupedRows(records, artKey)
     .map(([key, group]) => {
       const first = group[0];
       const style = normalizedStyle(first);
       const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
+      const priorYearGroup = priorYearGroups.get(key) ?? [];
       const exactStandaloneInventory = inventoryGroups.get(key);
       const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory);
       return {
@@ -3238,15 +3256,16 @@ function topArtRows(
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
+        priorYearUnits: priorYearGroup.length ? sum(priorYearGroup.map((record) => record.units ?? 0)) : null,
         inventoryUnits: inventoryResult.units,
         inventoryScope: inventoryResult.scope,
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),
         productUrl: findProductPageUrl(imageLookup, style, artCode, color),
       };
     })
-    .sort(sort === "dollars" ? sortBySales : sortByUnits)
-    .slice(0, 30)
-    .map((row, index) => ({ ...row, rank: index + 1 }));
+    .sort(sort === "dollars" ? sortBySales : sortByUnits);
+  const limitedRows = limit == null ? rows : rows.slice(0, limit);
+  return limitedRows.map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {

@@ -51,6 +51,7 @@ export type TopArt = MetricSet & {
   sku: string | null;
   cySales: number;
   cyUnits: number;
+  priorYearUnits: number | null;
   inventoryUnits: number | null;
   inventoryScope: "color" | null;
   imageUrl: string | null;
@@ -455,7 +456,7 @@ export function buildReportPayload({
     topStyles: ytdStyleStudy,
     styleStudyMonthly: topStyleRows(periodRecords, priorPeriodRecords),
     styleStudyYtd: ytdStyleStudy,
-    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords, topArtSort),
+    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords, topArtSort, priorYearRecords),
   };
 }
 
@@ -784,8 +785,10 @@ function topArtRows(
   images: ProductImage[],
   inventoryRecords: InventoryRecord[] = [],
   sort: TopArtSort = "units",
+  priorYearRecords: SalesRecord[] = [],
 ): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
+  const priorYearGroups = groupBy(priorYearRecords, artKey);
   const imageLookup = imageLookupMaps(images);
   const latestInventory = latestStandaloneInventoryRecords(inventoryRecords);
   const inventoryGroups = groupBy(latestInventory, artKey);
@@ -796,6 +799,7 @@ function topArtRows(
       const artCode = displayArtCode(first);
       const color = colorName(first);
       const cyGroup = ytdGroups.get(key) ?? [];
+      const priorYearGroup = priorYearGroups.get(key) ?? [];
       const exactStandaloneInventory = inventoryGroups.get(key);
       const inventoryResult = inventoryTotalForTopArt(group, exactStandaloneInventory);
       return {
@@ -813,6 +817,7 @@ function topArtRows(
         transactions: group.length,
         cySales: sum(cyGroup.map(amountValue)),
         cyUnits: sum(cyGroup.map((record) => record.units ?? 0)),
+        priorYearUnits: priorYearGroup.length ? sum(priorYearGroup.map((record) => record.units ?? 0)) : null,
         inventoryUnits: inventoryResult.units,
         inventoryScope: inventoryResult.scope,
         imageUrl: findProductImageUrl(imageLookup, style, artCode, color),

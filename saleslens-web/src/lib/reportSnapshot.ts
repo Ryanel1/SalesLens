@@ -54,6 +54,7 @@ export type SnapshotTopArt = SnapshotMetricSet & {
   sku?: string | null;
   cySales: number;
   cyUnits: number;
+  priorYearUnits?: number | null;
   inventoryUnits?: number | null;
   inventoryScope?: "color" | "styleArt" | null;
   imageUrl: string | null;
