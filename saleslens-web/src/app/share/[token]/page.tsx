@@ -454,10 +454,6 @@ function SalesDriverGrid({
   return (
     <div className="salesDriverGrid monthlyScorecardGrid">
       <article className={`monthlyScorecardHero ${changeClass(salesDelta)}`}>
-        <div className="monthlyScorecardHeader">
-          <span>Sales Movement</span>
-          <strong>{changeText(current.sales, prior.sales)}</strong>
-        </div>
         <div className="monthlyScorecardTotal">
           <span>{periodTitle}</span>
           <strong>{currencyText(current.sales)}</strong>

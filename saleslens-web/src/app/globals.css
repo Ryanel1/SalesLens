@@ -6529,3 +6529,44 @@ body {
   color: var(--taupe);
 }
 
+/* Monthly hero cleanup: remove duplicate header clutter and let the data breathe. */
+.sectionBlock .monthlyScorecardHero {
+  gap: clamp(1.35rem, 2vw, 1.9rem);
+  padding: clamp(1.35rem, 2vw, 1.85rem);
+}
+
+.sectionBlock .monthlyScorecardTotal {
+  gap: 0.65rem;
+}
+
+.sectionBlock .monthlyScorecardTotal span {
+  line-height: 1.25;
+}
+
+.sectionBlock .monthlyScorecardTotal strong {
+  line-height: 1;
+}
+
+.sectionBlock .monthlyScorecardTotal em {
+  line-height: 1.45;
+}
+
+.sectionBlock .monthlyScorecardBars {
+  gap: 1rem;
+}
+
+.sectionBlock .monthlyScorecardBarRow {
+  gap: 1rem;
+}
+
+.sectionBlock .monthlyScorecardTakeaways {
+  padding: clamp(1.35rem, 2vw, 1.85rem);
+}
+
+.sectionBlock .monthlyScorecardTakeaways ul {
+  gap: 0.72rem;
+}
+
+.sectionBlock .monthlyScorecardTakeaways li {
+  line-height: 1.68;
+}
