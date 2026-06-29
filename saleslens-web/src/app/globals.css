@@ -4564,22 +4564,13 @@ label {
   display: grid;
   gap: 0.42rem;
   justify-items: end;
-  min-width: min(22rem, 100%);
+  min-width: min(17rem, 100%);
   text-align: right;
 }
 
 .imageCacheControl {
-  align-items: center;
-  display: grid;
-  gap: 0.65rem;
-  grid-template-columns: minmax(6.5rem, max-content) minmax(8.5rem, auto);
-}
-
-.imageCacheControl strong {
-  color: var(--soft-black);
-  font-size: 0.95rem;
-  line-height: 1.25;
-  white-space: nowrap;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .imageCacheControl button {

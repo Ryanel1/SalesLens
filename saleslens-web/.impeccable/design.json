@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-29T00:00:00-05:00",
+  "title": "Design System: SalesLens",
+  "extensions": {
+    "colorMeta": {
+      "app-bg": {
+        "role": "neutral",
+        "displayName": "App Canvas",
+        "canonical": "#f4f3f0",
+        "tonalRamp": ["oklch(18% 0.006 85)", "oklch(30% 0.006 85)", "oklch(42% 0.006 85)", "oklch(54% 0.006 85)", "oklch(66% 0.006 85)", "oklch(78% 0.006 85)", "oklch(90% 0.006 85)", "oklch(96% 0.006 85)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["oklch(18% 0 0)", "oklch(30% 0 0)", "oklch(42% 0 0)", "oklch(54% 0 0)", "oklch(66% 0 0)", "oklch(78% 0 0)", "oklch(90% 0 0)", "oklch(100% 0 0)"]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Primary Text",
+        "canonical": "#141413",
+        "tonalRamp": ["#141413", "#242321", "#3a3834", "#5f5b53", "#858178", "#b4afa4", "#ddd9d1", "#f8f7f4"]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Operator Ink",
+        "canonical": "#15120f",
+        "tonalRamp": ["#15120f", "#242321", "#3a332c", "#564b41", "#786a5b", "#a79789", "#d2c8bb", "#fffefa"]
+      },
+      "clay": {
+        "role": "primary",
+        "displayName": "Scorecard Clay",
+        "canonical": "#a96f4a",
+        "tonalRamp": ["oklch(18% 0.055 55)", "oklch(30% 0.055 55)", "oklch(42% 0.055 55)", "oklch(54% 0.055 55)", "oklch(66% 0.055 55)", "oklch(78% 0.055 55)", "oklch(90% 0.055 55)", "oklch(96% 0.055 55)"]
+      },
+      "steel": {
+        "role": "secondary",
+        "displayName": "Muted Steel",
+        "canonical": "#6f8795",
+        "tonalRamp": ["oklch(18% 0.035 230)", "oklch(30% 0.035 230)", "oklch(42% 0.035 230)", "oklch(54% 0.035 230)", "oklch(66% 0.035 230)", "oklch(78% 0.035 230)", "oklch(90% 0.035 230)", "oklch(96% 0.035 230)"]
+      },
+      "rebel-blue": {
+        "role": "secondary",
+        "displayName": "Rebel Blue",
+        "canonical": "#8ecae6",
+        "tonalRamp": ["oklch(18% 0.075 230)", "oklch(30% 0.075 230)", "oklch(42% 0.075 230)", "oklch(54% 0.075 230)", "oklch(66% 0.075 230)", "oklch(78% 0.075 230)", "oklch(88% 0.075 230)", "oklch(96% 0.075 230)"]
+      },
+      "volshop-orange": {
+        "role": "secondary",
+        "displayName": "Volshop Orange",
+        "canonical": "#ff8200",
+        "tonalRamp": ["oklch(18% 0.12 55)", "oklch(30% 0.12 55)", "oklch(42% 0.12 55)", "oklch(54% 0.12 55)", "oklch(66% 0.12 55)", "oklch(78% 0.12 55)", "oklch(90% 0.12 55)", "oklch(96% 0.12 55)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Scoreboard Display",
+        "purpose": "Top-level account identity, report heroes, and major scorecard values."
+      },
+      "headline": {
+        "displayName": "Section Headline",
+        "purpose": "Dashboard section titles and public report section heads."
+      },
+      "title": {
+        "displayName": "Compact Title",
+        "purpose": "Product names, card titles, and compact report headings."
+      },
+      "body": {
+        "displayName": "Operational Body",
+        "purpose": "Report context, takeaways, upload rows, and helper copy."
+      },
+      "label": {
+        "displayName": "Compact Label",
+        "purpose": "Metadata labels, controls, chart legends, and field labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "flat-card",
+        "value": "none",
+        "purpose": "Default active dashboard card treatment."
+      },
+      {
+        "name": "legacy-panel",
+        "value": "0 22px 70px rgba(36, 35, 33, 0.09)",
+        "purpose": "Legacy paper/stadium surfaces only."
+      },
+      {
+        "name": "legacy-modal",
+        "value": "0 30px 90px rgba(36, 35, 33, 0.22)",
+        "purpose": "Older share/import modal depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "140ms ease",
+        "purpose": "Button hover and compact control feedback."
+      },
+      {
+        "name": "nav-state",
+        "value": "160ms ease",
+        "purpose": "Top navigation opacity and transform state changes."
+      },
+      {
+        "name": "layout-state",
+        "value": "180ms ease",
+        "purpose": "Legacy nav padding and size transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-collapse",
+        "value": "1180px"
+      },
+      {
+        "name": "tablet",
+        "value": "1120px"
+      },
+      {
+        "name": "mobile",
+        "value": "820px"
+      },
+      {
+        "name": "narrow",
+        "value": "760px"
+      },
+      {
+        "name": "compact",
+        "value": "700px"
+      }
+    ],
+    "narrative": {
+      "northStar": "The Operator's Scoreboard",
+      "overview": "SalesLens is a working dashboard for retail POS analysis, so the design system serves speed, trust, and repeat scanning before decoration. The current active web layer is a flat, light dashboard: warm gray application canvas, white cards, dark ink navigation, compact controls, and large scorecard typography that makes the important comparison impossible to miss.\n\nThe mood is fun to view, minimal, and efficient. Fun comes from merchandise imagery, sharp ranking badges, compact scorecards, and account-specific accents; it does not come from gratuitous animation or ornamental panels. Minimal means each section has a clear purpose and uses whitespace, grouping, and hierarchy to reduce cognitive load. Efficient means controls stay close to the reports they affect, and dense POS data stays organized rather than hidden.\n\nThis system rejects complexity for its own sake: overloaded dashboards, dense control clusters, repeated card grids, generic SaaS dashboard tropes, decorative gradients, bloated hero metrics, and visual flourishes that slow analysis. The older macOS app is historical workflow context only; the active design source of truth is the web dashboard.",
+      "keyCharacteristics": [
+        "Flat app shell with a warm gray canvas (`#f4f3f0`) and white analytic surfaces.",
+        "Dark ink top navigation (`#15120f`) with pill controls for account, period, upload, and sign-out actions.",
+        "Large, confident scorecard type for comparisons, backed by compact cards for secondary signals.",
+        "Account accents that change chart and emphasis color without changing the whole interface.",
+        "Product imagery, rank badges, and inventory gauges as the main sources of visual energy."
+      ],
+      "rules": [
+        {
+          "name": "The Account Accent Rule",
+          "body": "Account colors are data accents, not themes. They may color charts, active tabs, gauges, and select emphasis states, but the dashboard stays structurally neutral.",
+          "section": "colors"
+        },
+        {
+          "name": "The Current Beats Prior Rule",
+          "body": "Current-period values use the account accent; prior-period values use Prior-Year Stone. Never give prior-year data the brighter color.",
+          "section": "colors"
+        },
+        {
+          "name": "The No Decorative Gradient Rule",
+          "body": "Gradients are allowed only when encoding a data continuum, such as inventory position. They are prohibited as decorative page backgrounds or button treatments.",
+          "section": "colors"
+        },
+        {
+          "name": "The Scoreboard Reserve Rule",
+          "body": "Large Montserrat is reserved for account names, section heads, and major scorecard values. Do not use display type for ordinary labels, buttons, table cells, or product metadata.",
+          "section": "typography"
+        },
+        {
+          "name": "The Compact Label Rule",
+          "body": "Uppercase labels are acceptable because this is a dense dashboard, but they must stay short and functional. Do not place decorative eyebrows above every minor block.",
+          "section": "typography"
+        },
+        {
+          "name": "The Flat-By-Default Rule",
+          "body": "Surfaces are flat at rest. Use background, radius, spacing, and borders before reaching for shadow.",
+          "section": "elevation"
+        },
+        {
+          "name": "The No Ghost Card Rule",
+          "body": "Do not pair a 1px border with a large soft shadow on the same analytic card. It makes the dashboard feel generic and heavier than the work requires.",
+          "section": "elevation"
+        }
+      ],
+      "dos": [
+        "Do keep SalesLens a product dashboard, not a landing page. Design for repeated POS analysis and quick operational decisions.",
+        "Do use the active flat dashboard system: `#f4f3f0` canvas, `#ffffff` cards, `#15120f` navigation/actions, and account accents as data color.",
+        "Do keep controls close to the reports they affect, especially period, account, brand/class, upload, share, and product-gallery controls.",
+        "Do use product imagery, rank badges, gauges, and compact scorecards as the main source of visual interest.",
+        "Do preserve WCAG AA contrast, keyboard focus, color-blind-safe chart distinction, and reduced-motion alternatives.",
+        "Do make dense data feel light through grouping, whitespace, progressive disclosure, and stable comparison patterns."
+      ],
+      "donts": [
+        "Don't introduce complexity for its own sake: overloaded dashboards, dense control clusters, repeated card grids, and panels that all compete for attention.",
+        "Don't use generic SaaS dashboard tropes, decorative gradients, bloated hero metrics, or visual flourishes that make POS analysis slower.",
+        "Don't treat SalesLens like a public marketing site. It is a working tool first.",
+        "Don't let the retired macOS app define the redesign. Preserve useful workflow knowledge, but design from the active web version.",
+        "Don't use side-stripe borders as decorative accents on cards. Existing data-state stripes should be redesigned into clearer badges, labels, or full-state treatments when touched.",
+        "Don't add shadow-heavy ghost cards to the active dashboard layer. New analytic cards stay flat.",
+        "Don't make account colors dominate the page. Account colors identify data and selected states; they do not repaint the product."
+      ]
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main dashboard action for share, generate, browse, and cache commands.",
+      "html": "<button class=\"ds-btn-primary\">Share Snapshot</button>",
+      "css": ".ds-btn-primary { background: #15120f; border: 1px solid #15120f; border-radius: 12px; color: #ffffff; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.76rem; font-weight: 850; min-height: 42px; padding: 0 0.85rem; text-transform: uppercase; transition: background 140ms ease, color 140ms ease; } .ds-btn-primary:hover { background: #242321; border-color: #242321; } .ds-btn-primary:focus-visible { outline: 3px solid rgba(111, 135, 149, 0.35); outline-offset: 2px; } .ds-btn-primary:disabled { background: #ffffff; border-color: transparent; color: #6e665c; opacity: 0.55; }"
+    },
+    {
+      "name": "Toolbar Pill",
+      "kind": "button",
+      "refersTo": "button-toolbar",
+      "description": "Compact top-navigation control used for account, period, upload, and sign-out actions.",
+      "html": "<button class=\"ds-toolbar-pill\">Upload</button>",
+      "css": ".ds-toolbar-pill { align-items: center; background: #fffefa; border: 1px solid #fffefa; border-radius: 999px; color: #15120f; display: inline-grid; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.68rem; font-weight: 900; height: 34px; justify-content: center; line-height: 1; padding: 0 0.82rem; text-transform: none; transition: background 140ms ease, border-color 140ms ease; } .ds-toolbar-pill:hover { background: #f0ece4; border-color: #f0ece4; } .ds-toolbar-pill:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Metric Card",
+      "kind": "card",
+      "refersTo": "card-standard",
+      "description": "Compact analytic card for scan-first totals and deltas.",
+      "html": "<article class=\"ds-metric-card\"><p>Current YTD</p><strong>$128.4K</strong></article>",
+      "css": ".ds-metric-card { background: #ffffff; border: 0; border-radius: 18px; box-shadow: none; color: #141413; display: grid; min-height: 118px; padding: 0.85rem; } .ds-metric-card p { color: #5f5b53; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.76rem; font-weight: 900; letter-spacing: 0.08em; margin: 0 0 0.65rem; text-transform: uppercase; } .ds-metric-card strong { color: #141413; display: block; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 1.65rem; font-weight: 900; line-height: 1; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-standard",
+      "description": "Standard dashboard field used in control docks and modal forms.",
+      "html": "<label class=\"ds-field\"><span>Period</span><input value=\"June 2026\" /></label>",
+      "css": ".ds-field { color: #858178; display: grid; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; gap: 0.42rem; } .ds-field span { color: #858178; font-size: 0.62rem; font-weight: 850; letter-spacing: 0.08em; line-height: 1; text-transform: uppercase; } .ds-field input { background: #ffffff; border: 1px solid rgba(31,31,29,0.1); border-radius: 12px; color: #141413; font: inherit; min-height: 42px; padding: 0 0.75rem; } .ds-field input:focus-visible { outline: 3px solid rgba(111,135,149,0.28); outline-offset: 1px; }"
+    },
+    {
+      "name": "Top Navigation Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Centered report-section link in the dark top navigation.",
+      "html": "<nav class=\"ds-topnav\"><a class=\"ds-nav-link active\" href=\"#scorecards\">Scorecards</a><a class=\"ds-nav-link\" href=\"#inventory\">Inventory</a></nav>",
+      "css": ".ds-topnav { align-items: center; background: #15120f; display: flex; gap: 2rem; justify-content: center; padding: 0.58rem 1.4rem; } .ds-nav-link { color: rgba(255,254,250,0.62); font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 760; min-height: 2.2rem; padding: 0.12rem 0; position: relative; text-decoration: none; } .ds-nav-link:hover, .ds-nav-link.active { color: #fffefa; } .ds-nav-link::after { background: transparent; border-radius: 999px; bottom: 0.1rem; content: ''; height: 2px; left: 0; position: absolute; right: 0; } .ds-nav-link.active::after { background: #fffefa; } .ds-nav-link:focus-visible { outline: 2px solid #fffefa; outline-offset: 4px; }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "product-card",
+      "description": "Merchandise card for top performers and inventory-aware product browsing.",
+      "html": "<article class=\"ds-product-card\"><div class=\"ds-product-image\"><b>#1</b><span>Image</span></div><div class=\"ds-product-meta\"><strong>CT1000</strong><span>Light Blue · 03503350</span><em>42 units · $1.8K</em></div></article>",
+      "css": ".ds-product-card { background: #ffffff; border: 0; border-radius: 18px; box-shadow: none; overflow: hidden; } .ds-product-image { align-items: center; aspect-ratio: 1; background: #ffffff; display: grid; justify-items: center; padding: 0.8rem; position: relative; } .ds-product-image b { background: #15120f; color: #ffffff; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 950; left: 0.8rem; line-height: 1; padding: 0.38rem 0.42rem; position: absolute; top: 0.8rem; } .ds-product-image span { align-items: center; background: #f8f7f4; border-radius: 10px; color: #858178; display: flex; font-size: 0.7rem; font-weight: 900; height: 72px; justify-content: center; text-transform: uppercase; width: 72px; } .ds-product-meta { background: #ffffff; display: grid; gap: 0.28rem; padding: 1rem; } .ds-product-meta strong { color: #141413; font-size: 1.08rem; font-weight: 900; line-height: 1.1; } .ds-product-meta span, .ds-product-meta em { color: #5f5b53; font-size: 0.8rem; font-style: normal; font-weight: 850; line-height: 1.25; }"
+    },
+    {
+      "name": "Inventory Gauge",
+      "kind": "custom",
+      "refersTo": "inventory-gauge",
+      "description": "Inventory-position continuum for lean, balanced, and heavy stock signals.",
+      "html": "<div class=\"ds-gauge\"><div class=\"ds-gauge-labels\"><span>Lean</span><span>Balanced</span><span>Heavy</span></div><div class=\"ds-gauge-track\"><i style=\"left: 58%\"></i></div></div>",
+      "css": ".ds-gauge { display: grid; gap: 0.45rem; } .ds-gauge-labels { align-items: center; display: flex; justify-content: space-between; } .ds-gauge-labels span { color: #5f5b53; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 0.7rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; } .ds-gauge-track { background: linear-gradient(90deg, #9db8c7, #d6d0c2, #6f8795); border-radius: 999px; height: 12px; position: relative; } .ds-gauge-track i { background: #11100e; border-radius: 999px; box-shadow: 0 0 0 3px rgba(255,253,248,0.9); height: 28px; position: absolute; top: 50%; transform: translate(-50%, -50%); width: 4px; }"
+    }
+  ]
+}

@@ -2161,9 +2161,8 @@ export default function Home() {
                 {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
                   <div className="productGalleryHeaderActions" aria-live="polite">
                     <div className="imageCacheControl">
-                      <strong>{missingImageCount ? `${numberText(missingImageCount)} missing` : "Images current"}</strong>
                       <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
-                        {imageCacheRunning ? "Caching" : missingImageCount ? "Cache Images" : "Current"}
+                        {imageCacheRunning ? `Caching ${numberText(missingImageCount)} Images` : missingImageCount ? `Cache ${numberText(missingImageCount)} Images` : "Images Current"}
                       </button>
                     </div>
                     <small title={imageCacheStatus}>{imageCacheStatus || "\u00a0"}</small>
