@@ -2321,23 +2321,24 @@ export default function Home() {
                         {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
                       </div>
                       <div className="artMeta">
-                        {row.productUrl ? (
-                          <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                            {row.artCode}
-                          </a>
-                        ) : (
-                          <strong>{row.artCode}</strong>
-                        )}
-                        <span>{row.style} | {row.color}</span>
+                        <div className="artIdentity">
+                          {row.productUrl ? (
+                            <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                              {row.artCode}
+                            </a>
+                          ) : (
+                            <strong>{row.artCode}</strong>
+                          )}
+                          <span>{row.style} | {row.color}</span>
+                        </div>
+                        <div className="artStats">
                         {!productGalleryUsesInventory || row.monthUnits > 0 || row.monthSales > 0 ? (
-                          <span>{selectedPeriodKind === "year" ? "Year" : "Month"}: {numberText(row.monthUnits)} Units | {wholeCurrencyText(row.monthSales)}</span>
+                          <span><em>{selectedPeriodKind === "year" ? "Year" : "Month"}</em><strong>{productCardSalesText(row.monthUnits, row.monthSales)}</strong></span>
                         ) : null}
-                        <span>
-                          YTD Sold: {numberText(row.ytdUnits)} Units
-                          {row.ytdSales ? <> | {wholeCurrencyText(row.ytdSales)}</> : null}
-                        </span>
-                        <span>LY Sold: {inventoryPriorYearSoldText(row.priorYearUnits)}</span>
-                        {row.inventoryUnits != null ? <span>Current Inv: {numberText(row.inventoryUnits)} Units</span> : null}
+                        <span><em>YTD</em><strong>{productCardSalesText(row.ytdUnits, row.ytdSales)}</strong></span>
+                        <span><em>LY</em><strong>{inventoryPriorYearSoldText(row.priorYearUnits)}</strong></span>
+                        {row.inventoryUnits != null ? <span><em>Current Inv</em><strong>{numberText(row.inventoryUnits)} Units</strong></span> : null}
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -4550,6 +4551,11 @@ function countText(value: number, singular: string, plural: string) {
 
 function inventoryPriorYearSoldText(value: number | null | undefined) {
   return value == null ? "NA" : `${numberText(value)} Units`;
+}
+
+function productCardSalesText(units: number, sales: number | null | undefined) {
+  const unitText = `${numberText(units)} Units`;
+  return sales ? `${unitText} (${wholeCurrencyText(sales)})` : unitText;
 }
 
 function productGalleryViewLabel(view: ProductGalleryView) {

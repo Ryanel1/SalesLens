@@ -224,25 +224,26 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                     {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
                   </div>
                   <div className="artMeta">
-                    {row.productUrl ? (
-                      <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                        {row.artCode}
-                      </a>
-                    ) : (
-                      <strong>{row.artCode}</strong>
-                    )}
-                    <span>{row.style} | {row.color}</span>
+                    <div className="artIdentity">
+                      {row.productUrl ? (
+                        <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
+                          {row.artCode}
+                        </a>
+                      ) : (
+                        <strong>{row.artCode}</strong>
+                      )}
+                      <span>{row.style} | {row.color}</span>
+                    </div>
+                    <div className="artStats">
                     {row.periodUnits > 0 || row.periodSales > 0 ? (
-                      <span>{payload.periodMode === "monthly" ? "Month" : "Year"}: {numberText(row.periodUnits)} Units | {wholeCurrencyText(row.periodSales)}</span>
+                      <span><em>{payload.periodMode === "monthly" ? "Month" : "Year"}</em><strong>{productCardSalesText(row.periodUnits, row.periodSales)}</strong></span>
                     ) : null}
-                    <span>
-                      YTD Sold: {numberText(row.ytdUnits)} Units
-                      {row.ytdSales ? <> | {wholeCurrencyText(row.ytdSales)}</> : null}
-                    </span>
-                    <span>LY Sold: {inventoryPriorYearSoldText(row)}</span>
+                    <span><em>YTD</em><strong>{productCardSalesText(row.ytdUnits, row.ytdSales)}</strong></span>
+                    <span><em>LY</em><strong>{inventoryPriorYearSoldText(row)}</strong></span>
                     {row.inventoryUnits != null ? (
-                      <span>Current Inv: {numberText(row.inventoryUnits)} Units</span>
+                      <span><em>Current Inv</em><strong>{numberText(row.inventoryUnits)} Units</strong></span>
                     ) : null}
+                    </div>
                   </div>
                 </article>
               ))}
@@ -952,6 +953,11 @@ function countText(value: number, singular: string, plural: string) {
 function inventoryPriorYearSoldText(row: { priorYearUnits?: number | null; priorYtdUnits?: number | null }) {
   const value = Object.prototype.hasOwnProperty.call(row, "priorYearUnits") ? row.priorYearUnits : row.priorYtdUnits;
   return value == null ? "NA" : `${numberText(value)} Units`;
+}
+
+function productCardSalesText(units: number, sales: number | null | undefined) {
+  const unitText = `${numberText(units)} Units`;
+  return sales ? `${unitText} (${wholeCurrencyText(sales)})` : unitText;
 }
 
 function inventoryPositionFallback(

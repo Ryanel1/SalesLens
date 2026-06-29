@@ -2939,18 +2939,67 @@ select {
 
 .artMeta {
   display: grid;
-  gap: 0.3rem;
-  padding: 0.9rem;
+  gap: 0.78rem;
+  padding: 1rem;
 }
 
-.artMeta strong {
+.artIdentity {
+  border-bottom: 1px solid var(--stone);
+  display: grid;
+  gap: 0.24rem;
+  padding-bottom: 0.78rem;
+  text-align: center;
+}
+
+.artIdentity > strong,
+.artIdentity .artCodeLink {
   color: var(--soft-black);
-  font-size: 1.05rem;
+  font-family: var(--font-heading);
+  font-size: 1.08rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.artIdentity > span {
+  color: var(--taupe);
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.artStats {
+  display: grid;
+  gap: 0.36rem;
+}
+
+.artStats > span {
+  align-items: baseline;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.artStats em {
+  color: var(--taupe);
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.artStats strong {
+  color: var(--soft-black);
+  font-size: 0.8rem;
+  font-weight: 900;
+  line-height: 1.35;
+  min-width: 0;
+  text-align: right;
 }
 
 .artCodeLink {
   color: var(--soft-black);
-  font-size: 1.05rem;
   font-weight: 900;
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--account-accent) 42%, transparent);
@@ -2961,7 +3010,7 @@ select {
   color: var(--account-accent);
 }
 
-.artMeta span {
+.artMeta > span {
   color: var(--taupe);
   font-size: 0.78rem;
   font-weight: 700;
@@ -4494,8 +4543,8 @@ label {
   padding: 1rem;
 }
 
-.artMeta strong,
-.artCodeLink {
+.artIdentity > strong,
+.artIdentity .artCodeLink {
   font-size: 1.08rem;
 }
 
