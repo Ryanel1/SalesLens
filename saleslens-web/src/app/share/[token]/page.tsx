@@ -160,7 +160,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
               <MetricCard label="Prior YTD" value={currencyText(payload.ytdLine.priorTotal)} />
               <MetricCard
                 label="Total Change"
-                value={currencyText(payload.ytdLine.currentTotal - payload.ytdLine.priorTotal)}
+                value={signedCurrencyText(payload.ytdLine.currentTotal - payload.ytdLine.priorTotal)}
                 tone={payload.ytdLine.currentTotal - payload.ytdLine.priorTotal}
               />
               {payload.ytdInsights ? (
@@ -429,14 +429,14 @@ function SalesDriverGrid({
         <DriverTile
           label="Transactions"
           value={hasTransactionData ? `${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY` : "NA"}
-          details={[hasTransactionData ? `Change: ${changeText(current.transactions, prior.transactions)}` : "No receipt data"]}
+          details={[hasTransactionData ? `Change: ${deltaText(transactionDelta, current.transactions, prior.transactions)}` : "No receipt data"]}
           tone={hasTransactionData ? transactionDelta : 0}
         />
         <DriverTile
           label="Units"
           value={`${numberText(current.units)} vs ${numberText(prior.units)} LY`}
           details={[
-            `Change: ${changeText(current.units, prior.units)}`,
+            `Change: ${deltaText(unitDelta, current.units, prior.units)}`,
             `Avg $ / unit: ${currencyText(avgSalePerUnit)} vs ${currencyText(priorAvgSalePerUnit)} LY`,
           ]}
           tone={unitDelta}
@@ -477,7 +477,7 @@ function DriverTile({ label, value, details, tone }: { label: string; value: str
       <strong>{value}</strong>
       <ul className="driverMeta">
         {details.map((detail) => (
-          <li key={detail}>{detail}</li>
+          <li className={detail.startsWith("Change:") ? changeClass(tone) : ""} key={detail}>{detail}</li>
         ))}
       </ul>
     </article>
@@ -831,6 +831,16 @@ function signedCurrencyText(value: number) {
 function signedNumberText(value: number) {
   if (!value) return numberText(0);
   return `${value > 0 ? "+" : "-"}${numberText(Math.abs(value))}`;
+}
+
+function signedPercentText(current: number, prior: number) {
+  if (!prior) return current ? "New" : "0.0%";
+  const percent = ((current - prior) / prior) * 100;
+  return `${percent > 0 ? "+" : ""}${percent.toFixed(1)}%`;
+}
+
+function deltaText(delta: number, current: number, prior: number) {
+  return `${signedNumberText(delta)} (${signedPercentText(current, prior)})`;
 }
 
 function changeClass(value: number) {
