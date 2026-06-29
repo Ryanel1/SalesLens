@@ -124,7 +124,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                 <p>by Lester Sales</p>
               </div>
               <h1>{payload.accountName}</h1>
-              <p className="muted">Review scorecards, inventory position, and Top Performers in one sales snapshot.</p>
             </div>
 
             <aside className="publicHeaderAside">
@@ -150,7 +149,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
 
         <ReportSection
           title={payload.periodMode === "ytd" ? "Year Scorecard" : "YTD Scorecard"}
-          subtitle={`${payload.periodTitle} compared with the same date range last year.`}
         >
           <div className="ytdTrackerLayout">
             <StaticLineChart payload={payload} />
@@ -180,7 +178,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
 
         <ReportSection
           title={payload.periodMode === "ytd" ? "Selected Year Scorecard" : "Monthly Scorecard"}
-          subtitle={`${payload.periodTitle} compared with ${payload.priorPeriodTitle}.`}
         >
           {payload.monthlyDrivers ? (
             <SalesDriverGrid
@@ -196,7 +193,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         {payload.periodMode !== "ytd" && payload.weeklyScorecards?.length ? (
           <ReportSection
             title="Weekly Scorecard"
-            subtitle={`Monday-Sunday sales weeks inside ${payload.periodTitle}, compared with the same weekday range last year.`}
           >
             <WeeklyScorecard rows={payload.weeklyScorecards} />
           </ReportSection>
@@ -205,7 +201,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         {payload.inventorySnapshot ? (
           <ReportSection
             title="Inventory Snapshot"
-            subtitle="Current on-hand inventory from the latest available inventory data."
           >
             <InventoryCard snapshot={payload.inventorySnapshot} />
           </ReportSection>
@@ -214,7 +209,6 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
         {productGalleryRows.length ? (
           <ReportSection
             title="Top Performers"
-            subtitle={productGallerySubtitle(payload, productGalleryRows)}
           >
             <div className="artGrid">
               {productGalleryRows.map((row) => (
@@ -284,13 +278,11 @@ async function loadSnapshot(token: string): Promise<ReportSnapshotRecord | null>
 
 function ReportSection({
   title,
-  subtitle,
   aside,
   asideTone,
   children,
 }: {
   title: string;
-  subtitle: string;
   aside?: string;
   asideTone?: number;
   children: React.ReactNode;
@@ -300,7 +292,6 @@ function ReportSection({
       <div className="sectionTitle">
         <div>
           <h2>{title}</h2>
-          <p>{subtitle}</p>
         </div>
         {aside ? <strong className={`changeBadge ${asideTone == null ? "" : changeClass(asideTone)}`}>{aside}</strong> : null}
       </div>
@@ -935,16 +926,6 @@ function sharedProductGalleryRows(payload: ReportSnapshotPayload): SharedProduct
   });
 
   return [...rows.values()].slice(0, 50).map((row, index) => ({ ...row, rank: index + 1 }));
-}
-
-function productGallerySubtitle(payload: ReportSnapshotPayload, rows: SharedProductGalleryRow[]) {
-  const count = rows.length;
-  const sortLabel = payload.topArtSort === "dollars" ? "Dollars" : "Units";
-  const rangeText = count ? `1-${numberText(count)}` : "0-0";
-  const units = sum(rows.map((row) => row.periodUnits));
-  const sales = sum(rows.map((row) => row.periodSales));
-  const inventoryUnits = sum(rows.map((row) => row.inventoryUnits ?? 0));
-  return `${payload.topArtPeriodTitle ?? payload.periodTitle} Top Sellers by ${sortLabel}. Showing ${rangeText} of ${numberText(count)} | ${numberText(units)} Units${sales ? ` | ${wholeCurrencyText(sales)}` : ""}${inventoryUnits ? ` | ${numberText(inventoryUnits)} Current Inv` : ""}`;
 }
 
 function countText(value: number, singular: string, plural: string) {

@@ -1977,7 +1977,6 @@ export default function Home() {
             <div className="dashboardHeroIntro">
               <p className="eyebrow">Sales Snapshot</p>
               <h2>{selectedCustomer?.name ?? "Account"}</h2>
-              <p className="muted">Review scorecards, inventory position, and Top Performers in one sales snapshot.</p>
             </div>
 
             <div className="controlDock">
@@ -2090,7 +2089,6 @@ export default function Home() {
             <div className="sectionTitle">
               <div>
                 <h3>{selectedPeriodKind === "year" ? "Year Scorecard" : "YTD Scorecard"}</h3>
-                <p>{ytdTitle(periodEndMonth)} compared with the same date range last year.</p>
               </div>
             </div>
 
@@ -2116,7 +2114,6 @@ export default function Home() {
             <div className="sectionTitle">
               <div>
                 <h3>{selectedPeriodKind === "year" ? "Selected Year Scorecard" : "Monthly Scorecard"}</h3>
-                <p>{selectedPeriodTitle} compared with {priorPeriodTitle}.</p>
               </div>
             </div>
 
@@ -2134,7 +2131,6 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h3>Weekly Scorecard</h3>
-                  <p>Monday-Sunday sales weeks inside {selectedPeriodTitle}, compared with the same weekday range last year.</p>
                 </div>
               </div>
               <WeeklyScorecard rows={weeklyScorecards} />
@@ -2146,7 +2142,6 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h3>Inventory Snapshot</h3>
-                  <p>Current on-hand inventory from the latest available inventory data.</p>
                 </div>
               </div>
               <InventoryCard snapshot={inventorySnapshot} />
@@ -2158,12 +2153,6 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h3>Top Performers</h3>
-                  <p>
-                    {productGalleryViewLabel(productGalleryView)} by {productGallerySortLabel}. Showing{" "}
-                    {numberText(productGalleryPageStart)}-{numberText(productGalleryPageEnd)} of{" "}
-                    {numberText(productGalleryTotalItems)} | {numberText(productGalleryTotalUnits)} Units
-                    {productGalleryTotalSales ? <> | {wholeCurrencyText(productGalleryTotalSales)}</> : null}
-                  </p>
                 </div>
                 {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
                   <div className="productGalleryHeaderActions">
