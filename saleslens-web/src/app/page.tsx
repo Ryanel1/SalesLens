@@ -73,6 +73,7 @@ type MetricSet = {
   sales: number;
   units: number;
   transactions: number;
+  transactionsKnown?: boolean;
 };
 
 type WeeklyTopItem = {
@@ -2467,7 +2468,7 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction;
   const avgUnitDelta = drivers.avgSalePerUnit - drivers.priorAvgSalePerUnit;
-  const hasTransactionData = current.transactions > 0 || prior.transactions > 0;
+  const hasTransactionData = hasComparableTransactionData(current, prior);
   const maxSales = Math.max(current.sales, prior.sales, 1);
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
@@ -2585,7 +2586,7 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
         const transactionDelta = row.current.transactions - row.prior.transactions;
         const hasSalesActivity =
           row.current.sales !== 0 || row.current.units !== 0 || row.prior.sales !== 0 || row.prior.units !== 0;
-        const hasTransactionData = row.current.transactions > 0 || row.prior.transactions > 0;
+        const hasTransactionData = hasComparableTransactionData(row.current, row.prior);
         return (
           <article className="weeklyScorecardRow" key={row.dateRange}>
             <div className="weeklyDateRail">
@@ -3276,20 +3277,22 @@ function shiftMonth(month: string, offset: number) {
 }
 
 function metricSet(records: SalesRecord[]): MetricSet {
+  const transactionKeys = records.map(transactionKey).filter(Boolean);
   return {
     sales: sum(records.map(amountValue)),
     units: sum(records.map((record) => record.units ?? 0)),
-    transactions: salesTransactionCount(records),
+    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : 0,
+    transactionsKnown: transactionKeys.length > 0,
   };
 }
 
 function salesTransactionCount(records: SalesRecord[]) {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
-  return transactionKeys.length ? uniqueCount(transactionKeys) : records.length;
+  return transactionKeys.length ? uniqueCount(transactionKeys) : 0;
 }
 
 function transactionKey(record: SalesRecord) {
-  const transactionNumber = clean(record.transaction_number) || clean(record.barcode);
+  const transactionNumber = clean(record.transaction_number);
   if (!transactionNumber) return "";
   return `${record.transaction_date}|${transactionNumber}`;
 }
@@ -4493,6 +4496,13 @@ function sortByUnits(left: MetricSet, right: MetricSet) {
 
 function sortWeeklyTopItems(left: WeeklyTopItem, right: WeeklyTopItem) {
   return right.units - left.units || right.sales - left.sales;
+}
+
+function hasComparableTransactionData(current: MetricSet, prior: MetricSet) {
+  const currentKnown = current.transactionsKnown ?? current.transactions > 0;
+  const priorKnown = prior.transactionsKnown ?? prior.transactions > 0;
+  const priorHasActivity = prior.sales !== 0 || prior.units !== 0 || prior.transactions !== 0;
+  return currentKnown && (priorKnown || !priorHasActivity);
 }
 
 function changeText(current: number, prior: number) {

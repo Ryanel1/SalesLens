@@ -28,6 +28,7 @@ export type MetricSet = {
   sales: number;
   units: number;
   transactions: number;
+  transactionsKnown?: boolean;
 };
 
 export type WeeklyTopItem = {
@@ -773,20 +774,22 @@ function shiftMonth(month: string, offset: number) {
 }
 
 function metricSet(records: SalesRecord[]): MetricSet {
+  const transactionKeys = records.map(transactionKey).filter(Boolean);
   return {
     sales: sum(records.map(amountValue)),
     units: sum(records.map((record) => record.units ?? 0)),
-    transactions: salesTransactionCount(records),
+    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : 0,
+    transactionsKnown: transactionKeys.length > 0,
   };
 }
 
 function salesTransactionCount(records: SalesRecord[]) {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
-  return transactionKeys.length ? uniqueCount(transactionKeys) : records.length;
+  return transactionKeys.length ? uniqueCount(transactionKeys) : 0;
 }
 
 function transactionKey(record: SalesRecord) {
-  const transactionNumber = clean(record.transaction_number) || clean(record.barcode);
+  const transactionNumber = clean(record.transaction_number);
   if (!transactionNumber) return "";
   return `${record.transaction_date}|${transactionNumber}`;
 }

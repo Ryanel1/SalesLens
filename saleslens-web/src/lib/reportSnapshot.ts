@@ -2,6 +2,7 @@ export type SnapshotMetricSet = {
   sales: number;
   units: number;
   transactions: number;
+  transactionsKnown?: boolean;
 };
 
 export type SnapshotSalesMixSlice = {

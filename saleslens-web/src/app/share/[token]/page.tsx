@@ -375,7 +375,7 @@ function SalesDriverGrid({
   const transactionDelta = current.transactions - prior.transactions;
   const avgTransactionDelta = avgSalePerTransaction - priorAvgSalePerTransaction;
   const avgUnitDelta = avgSalePerUnit - priorAvgSalePerUnit;
-  const hasTransactionData = current.transactions > 0 || prior.transactions > 0;
+  const hasTransactionData = hasComparableTransactionData(current, prior);
   const maxSales = Math.max(current.sales, prior.sales, 1);
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
@@ -493,7 +493,7 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
         const transactionDelta = row.current.transactions - row.prior.transactions;
         const hasSalesActivity =
           row.current.sales !== 0 || row.current.units !== 0 || row.prior.sales !== 0 || row.prior.units !== 0;
-        const hasTransactionData = row.current.transactions > 0 || row.prior.transactions > 0;
+        const hasTransactionData = hasComparableTransactionData(row.current, row.prior);
         const topProducts = row.topItems?.length ? row.topItems : row.topItem ? [row.topItem] : [];
         return (
           <article className="weeklyScorecardRow" key={row.dateRange}>
@@ -808,6 +808,13 @@ function lastActiveMonthIndex(values: Array<number | null>) {
 function compactNumber(value: number) {
   if (Math.abs(value) >= 1000) return `${Math.round(value / 1000)}K`;
   return numberText(Math.round(value));
+}
+
+function hasComparableTransactionData(current: SnapshotMetricSet, prior: SnapshotMetricSet) {
+  const currentKnown = current.transactionsKnown ?? current.transactions > 0;
+  const priorKnown = prior.transactionsKnown ?? prior.transactions > 0;
+  const priorHasActivity = prior.sales !== 0 || prior.units !== 0 || prior.transactions !== 0;
+  return currentKnown && (priorKnown || !priorHasActivity);
 }
 
 function changeText(current: number, prior: number) {
