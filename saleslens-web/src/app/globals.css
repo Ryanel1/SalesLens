@@ -3490,14 +3490,23 @@ select {
   gap: clamp(0.75rem, 1.8vw, 1.5rem);
   grid-column: 1;
   grid-template-columns: minmax(130px, 0.38fr) minmax(340px, 1fr) minmax(460px, 0.56fr);
-  justify-self: center;
+  justify-self: stretch;
   min-height: 58px;
+  opacity: 1;
   overflow: visible;
   padding: 0.58rem clamp(0.95rem, 2vw, 1.4rem);
   position: sticky;
   top: 0;
-  width: min(calc(100% - 56px), 1280px);
+  transform: translateY(0);
+  transition: opacity 160ms ease, transform 160ms ease;
+  width: 100%;
   z-index: 60;
+}
+
+.topNav.compact {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-100%);
 }
 
 .navBrand {
