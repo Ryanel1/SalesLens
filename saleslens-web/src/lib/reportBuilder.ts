@@ -266,6 +266,7 @@ const INVENTORY_TEE_STYLES = new Set([
   "C6047",
   "C6048",
   "C6054",
+  "C6065",
   "C7006",
   "G1357",
   "G2327",
@@ -284,6 +285,7 @@ const INVENTORY_TEE_STYLES = new Set([
 ]);
 const INVENTORY_TEE_STYLE_PREFIXES = ["C603"];
 const KNOWN_STYLE_PREFIXES = [
+  "CB1012",
   "CS1271",
   "CS1220",
   "CT1000",
@@ -1104,6 +1106,8 @@ const knownVolshopImages: Record<string, string> = {
 };
 
 const knownRebelRagsImages: Record<string, string> = {
+  [imageKey("CB1012", "AEC04157156", "SPIRITEDORANGE")]: "/images/product-overrides/rebel-rags-cb1012-aec04157156-spirited-orange.png",
+  [imageKey("C6065", "APC04058491", "WHITE")]: "/images/product-overrides/rebel-rags-c6065-apc04058491-white.png",
   [imageKey("CS1271", "APC03783493", "HEATHERGREY")]: "/images/product-overrides/rebel-rags-cs1271-apc03783493-heather-grey.png",
   [imageKey("CT1000", "03456518", "NAVY")]: "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg",
   [imageKey("CT1000", "03503350", "LIGHTBLUE")]: "https://www.rebelrags.net/prodimages/23149-DEFAULT-l.jpg",
@@ -1719,6 +1723,13 @@ function canonicalRebelRagsArtCode(record: MerchandiseRecord) {
   const color = compactImagePart(colorName(record));
 
   if (
+    style === "CB1012" &&
+    (artCode === "CB10124111NEW0415" || artCode === "NEW0415" || compactImagePart(record.raw_style_identifier).includes("NEW0415"))
+  ) {
+    return "AEC04157156";
+  }
+
+  if (
     artCode === "03456518" &&
     color === "WHITE" &&
     ["CT1000", "CS1220", "CS2071", "CT1730"].includes(style)
@@ -1738,9 +1749,20 @@ function compactImagePart(value: string | null | undefined) {
 }
 
 function colorName(record: MerchandiseRecord) {
+  if (isSpiritedOrangeAnorak(record)) return "Spirited Orange";
   if (isYouthHoodHeatherGrey(record)) return "Heather Grey";
   if (isReverseWeaveSilverGrey(record)) return "Silver Grey";
   return displayColorName(clean(record.catalog_color_name) || clean(record.color)) || "-";
+}
+
+function isSpiritedOrangeAnorak(record: MerchandiseRecord) {
+  return normalizedStyle(record) === "CB1012"
+    && (
+      colorCodeFromStyleIdentifier(record) === "4111" ||
+      compactImagePart(record.color_code) === "4111" ||
+      compactImagePart(record.raw_style_identifier).includes("4111NEW0415") ||
+      compactImagePart(record.art_code) === "AEC04157156"
+    );
 }
 
 function isYouthHoodHeatherGrey(record: MerchandiseRecord) {

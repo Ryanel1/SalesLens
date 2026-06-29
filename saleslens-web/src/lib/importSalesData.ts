@@ -66,10 +66,12 @@ const COLOR_NAMES_BY_CODE: Record<string, string> = {
   "035": "Oxford Grey",
   "940": "Silver Grey",
   "1616": "Light Blue",
+  "4111": "Spirited Orange",
 };
 
 const REBEL_RAGS_GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
+  "CB1012",
   "CS1271",
   "CS1220",
   "CT1000",
@@ -90,6 +92,7 @@ const KNOWN_STYLE_PREFIXES = [
   "C6047",
   "C6048",
   "C6054",
+  "C6065",
   "C7006",
   "C81001",
   "C81003",
