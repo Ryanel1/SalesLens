@@ -457,7 +457,7 @@ export function buildReportPayload({
     topStyles: ytdStyleStudy,
     styleStudyMonthly: topStyleRows(periodRecords, priorPeriodRecords),
     styleStudyYtd: ytdStyleStudy,
-    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords, topArtSort, priorYearRecords),
+    topArt: topArtRows(periodRecords, ytdCurrentRecords, images, filteredInventoryRecords, topArtSort, priorYearRecords, inventoryPageSize),
   };
 }
 
@@ -798,13 +798,14 @@ function topArtRows(
   inventoryRecords: InventoryRecord[] = [],
   sort: TopArtSort = "units",
   priorYearRecords: SalesRecord[] = [],
+  limit: number | null = INVENTORY_TRACKER_PAGE_SIZE,
 ): TopArt[] {
   const ytdGroups = groupBy(ytdRecords, artKey);
   const priorYearGroups = groupBy(priorYearRecords, artKey);
   const imageLookup = imageLookupMaps(images);
   const latestInventory = latestStandaloneInventoryRecords(inventoryRecords);
   const inventoryGroups = groupBy(latestInventory, artKey);
-  return groupedRows(records, artKey)
+  const rows = groupedRows(records, artKey)
     .map(([key, group]) => {
       const first = group[0];
       const style = normalizedStyle(first);
@@ -836,9 +837,9 @@ function topArtRows(
         productUrl: findProductPageUrl(imageLookup, style, artCode, color),
       };
     })
-    .sort(sort === "dollars" ? sortBySales : sortByUnits)
-    .slice(0, INVENTORY_TRACKER_PAGE_SIZE)
-    .map((row, index) => ({ ...row, rank: index + 1 }));
+    .sort(sort === "dollars" ? sortBySales : sortByUnits);
+
+  return (limit == null ? rows : rows.slice(0, limit)).map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {

@@ -132,6 +132,7 @@ type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees" | "Namedrop";
 type TopArtSort = "units" | "dollars";
 type ProductGalleryView = "top-sellers" | "inventory";
 type ProductGallerySort = "units" | "dollars" | "inventory-high" | "inventory-low";
+type ProductGalleryDisplayLimit = 25 | 50 | 100 | "all";
 
 type ProductGalleryItem = {
   rank: number;
@@ -235,6 +236,8 @@ const DASHBOARD_CACHE_STORE = "dashboard-data";
 const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
+const PRODUCT_GALLERY_ALL_LIMIT = 10000;
+const PRODUCT_GALLERY_DISPLAY_OPTIONS: ProductGalleryDisplayLimit[] = [25, 50, 100, "all"];
 const INVENTORY_AUDIENCE_FILTERS: InventoryAudienceFilter[] = ["Mens", "Womens", "Youth"];
 const INVENTORY_PRODUCT_FILTERS: InventoryProductFilter[] = ["Fleece", "Tees", "Reverse Weave", "Namedrop"];
 const EMPTY_DASHBOARD_SHELL: DashboardShellSummary = {
@@ -428,12 +431,13 @@ export default function Home() {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("All");
   const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
-  const [inventoryPage, setInventoryPage] = useState(1);
+  const [, setInventoryPage] = useState(1);
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
-  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"view" | "sort" | "filter" | null>(null);
+  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"view" | "sort" | "filter" | "show" | null>(null);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [productGalleryView, setProductGalleryView] = useState<ProductGalleryView>("top-sellers");
+  const [productGalleryDisplayLimit, setProductGalleryDisplayLimit] = useState<ProductGalleryDisplayLimit>(50);
   const [dashboardShell, setDashboardShell] = useState<DashboardShellSummary>(EMPTY_DASHBOARD_SHELL);
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [serverReport, setServerReport] = useState<ServerReportState | null>(null);
@@ -639,6 +643,7 @@ export default function Home() {
     if (period.kind === "month") return period.value;
     return latestMonthForShellYear(dashboardShell, brandFilter, period.year);
   }, [brandFilter, dashboardShell, period]);
+  const productGalleryDisplayCount = productGalleryDisplayLimit === "all" ? PRODUCT_GALLERY_ALL_LIMIT : productGalleryDisplayLimit;
   const selectedYear = period?.year ?? null;
   const priorYearMonth = periodEndMonth && selectedYear ? `${selectedYear - 1}${periodEndMonth.slice(4)}` : null;
   const selectedPeriodKind = period?.kind ?? "month";
@@ -648,8 +653,8 @@ export default function Home() {
       brandFilter,
       customerId: selectedCustomerId,
       inventoryAudienceFilter,
-      inventoryPage,
-      inventoryPageSize: INVENTORY_TRACKER_PAGE_SIZE,
+      inventoryPage: 1,
+      inventoryPageSize: productGalleryDisplayCount,
       inventoryProductFilters,
       inventorySort,
       period,
@@ -657,7 +662,7 @@ export default function Home() {
       reportRefreshKey,
       topArtSort,
     });
-  }, [brandFilter, inventoryAudienceFilter, inventoryPage, inventoryProductFilters, inventorySort, period, reloadKey, reportRefreshKey, selectedCustomerId, topArtSort]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, period, productGalleryDisplayCount, reloadKey, reportRefreshKey, selectedCustomerId, topArtSort]);
   const reportPayload =
     serverReport && selectedCustomer && serverReport.payload.accountName === selectedCustomer.name
       ? serverReport.payload
@@ -701,8 +706,8 @@ export default function Home() {
           brandFilter,
           customerId: selectedCustomerId,
           inventoryAudienceFilter,
-          inventoryPage,
-          inventoryPageSize: INVENTORY_TRACKER_PAGE_SIZE,
+          inventoryPage: 1,
+          inventoryPageSize: productGalleryDisplayCount,
           inventoryProductFilters,
           inventorySort,
           period,
@@ -733,7 +738,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, [brandFilter, inventoryAudienceFilter, inventoryPage, inventoryProductFilters, inventorySort, period, reportRequestKey, selectedCustomerId, supabase, topArtSort, user]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, period, productGalleryDisplayCount, reportRequestKey, selectedCustomerId, supabase, topArtSort, user]);
 
   const periodRecords = useMemo(() => {
     if (!period) return [];
@@ -798,8 +803,6 @@ export default function Home() {
     [reportPayload],
   );
   const inventoryTrackerMeta = reportPayload?.inventoryTrackerMeta ?? null;
-  const inventoryPageCount = inventoryTrackerMeta?.pageCount ?? 1;
-  const currentInventoryPage = inventoryTrackerMeta?.page ?? inventoryPage;
   const visibleInventoryTracker = inventoryTracker;
   const inventoryPageStart = inventoryTrackerMeta?.pageStart ?? 0;
   const inventoryPageEnd = inventoryTrackerMeta?.pageEnd ?? 0;
@@ -829,14 +832,11 @@ export default function Home() {
       productUrl: row.productUrl,
     }));
   }, [dashboardData.images, dashboardData.inventoryRecords, periodRecords, priorYearRecords, topArt, topArtSort, ytdCurrentRecords]);
-  const topSellerPageSize = INVENTORY_TRACKER_PAGE_SIZE;
-  const topSellerPageCount = Math.max(1, Math.ceil(topSellerAllRows.length / topSellerPageSize));
-  const currentTopSellerPage = Math.min(Math.max(inventoryPage, 1), topSellerPageCount);
-  const topSellerPageStart = topSellerAllRows.length ? (currentTopSellerPage - 1) * topSellerPageSize + 1 : 0;
-  const topSellerPageEnd = Math.min(currentTopSellerPage * topSellerPageSize, topSellerAllRows.length);
+  const topSellerPageStart = topSellerAllRows.length ? 1 : 0;
+  const topSellerPageEnd = Math.min(productGalleryDisplayCount, topSellerAllRows.length);
   const topSellerGalleryRows = useMemo(
-    () => topSellerAllRows.slice((currentTopSellerPage - 1) * topSellerPageSize, currentTopSellerPage * topSellerPageSize),
-    [currentTopSellerPage, topSellerAllRows],
+    () => topSellerAllRows.slice(0, productGalleryDisplayCount),
+    [productGalleryDisplayCount, topSellerAllRows],
   );
   const topSellerLookup = useMemo(
     () => new Map(topSellerAllRows.map((row) => [row.key, row])),
@@ -867,8 +867,6 @@ export default function Home() {
   );
   const productGalleryRows = productGalleryUsesInventory ? inventoryGalleryRows : topSellerGalleryRows;
   const productGallerySourceRows = productGalleryUsesInventory ? inventoryGalleryRows : topSellerAllRows;
-  const productGalleryPageCount = productGalleryUsesInventory ? inventoryPageCount : topSellerPageCount;
-  const productGalleryPage = productGalleryUsesInventory ? currentInventoryPage : currentTopSellerPage;
   const productGalleryPageStart = productGalleryUsesInventory ? inventoryPageStart : topSellerPageStart;
   const productGalleryPageEnd = productGalleryUsesInventory ? inventoryPageEnd : topSellerPageEnd;
   const productGalleryTotalItems = productGalleryUsesInventory ? inventoryTrackerTotalItems : topSellerAllRows.length;
@@ -908,11 +906,7 @@ export default function Home() {
 
   useEffect(() => {
     setInventoryPage(1);
-  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, selectedCustomerId, selectedPeriod]);
-
-  useEffect(() => {
-    if (inventoryPage > productGalleryPageCount) setInventoryPage(productGalleryPageCount);
-  }, [inventoryPage, productGalleryPageCount]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, productGalleryDisplayLimit, selectedCustomerId, selectedPeriod]);
 
   useEffect(() => {
     if (!inventoryMenuOpen) return undefined;
@@ -948,6 +942,12 @@ export default function Home() {
       setInventorySort(sort === "inventory-high" ? "highest" : "lowest");
       setProductGalleryView("inventory");
     }
+    setInventoryMenuOpen(null);
+  }
+
+  function applyProductGalleryDisplayLimit(limit: ProductGalleryDisplayLimit) {
+    setProductGalleryDisplayLimit(limit);
+    setInventoryPage(1);
     setInventoryMenuOpen(null);
   }
 
@@ -1143,8 +1143,8 @@ export default function Home() {
           brandFilter,
           customerId: customer.id,
           inventoryAudienceFilter,
-          inventoryPage,
-          inventoryPageSize: INVENTORY_TRACKER_PAGE_SIZE,
+          inventoryPage: 1,
+          inventoryPageSize: productGalleryDisplayCount,
           inventoryProductFilters,
           inventorySort,
           period: activePeriod,
@@ -2282,26 +2282,34 @@ export default function Home() {
                     </div>
                     ) : null}
                   </div>
-                </div>
-                {productGalleryPageCount > 1 ? (
-                  <div className="pagerControls" aria-label="Inventory page controls">
+                  <div className={`inventoryDropdown ${inventoryMenuOpen === "show" ? "isOpen" : ""}`}>
                     <button
-                      disabled={productGalleryPage <= 1}
+                      aria-expanded={inventoryMenuOpen === "show"}
+                      className="inventoryDropdownTrigger"
                       type="button"
-                      onClick={() => setInventoryPage((page) => Math.max(1, page - 1))}
+                      onClick={() => setInventoryMenuOpen((current) => (current === "show" ? null : "show"))}
                     >
-                      Prev
+                      <span>Show</span>
+                      <strong>{productGalleryDisplayLimitLabel(productGalleryDisplayLimit)}</strong>
                     </button>
-                    <span>Page {numberText(productGalleryPage)} of {numberText(productGalleryPageCount)}</span>
-                    <button
-                      disabled={productGalleryPage >= productGalleryPageCount}
-                      type="button"
-                      onClick={() => setInventoryPage((page) => Math.min(productGalleryPageCount, page + 1))}
-                    >
-                      Next
-                    </button>
+                    {inventoryMenuOpen === "show" ? (
+                      <div className="inventoryDropdownMenu">
+                        {PRODUCT_GALLERY_DISPLAY_OPTIONS.map((limit) => (
+                          <button
+                            aria-pressed={productGalleryDisplayLimit === limit}
+                            className={`inventoryOption ${productGalleryDisplayLimit === limit ? "active" : ""}`}
+                            key={limit}
+                            type="button"
+                            onClick={() => applyProductGalleryDisplayLimit(limit)}
+                          >
+                            <span className="inventoryOptionMark" aria-hidden="true" />
+                            <span>{productGalleryDisplayLimitLabel(limit)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </div>
               </div>
               {productGalleryRows.length ? (
                 <div className="artGrid">
@@ -4534,6 +4542,10 @@ function productGallerySortOptionLabel(sort: ProductGallerySort) {
   if (sort === "dollars") return "Dollars";
   if (sort === "inventory-high") return "Inventory High";
   return "Inventory Low";
+}
+
+function productGalleryDisplayLimitLabel(limit: ProductGalleryDisplayLimit) {
+  return limit === "all" ? "All" : String(limit);
 }
 
 function createReportToken() {

@@ -278,18 +278,18 @@ select {
 .accountThemeVolshop {
   --steel: #ff8200;
   --steel-dark: #ff8200;
-  --clay: #2f2d2a;
+  --clay: #ff8200;
   --oat: #8ecae6;
   --account-glow: rgba(255, 130, 0, 0.22);
   --positive-text: #4c4944;
 }
 
 .accountThemeRebelRags {
-  --steel: #0067a0;
-  --steel-dark: #005782;
-  --clay: #b71f2d;
+  --steel: #8ecae6;
+  --steel-dark: #5caed4;
+  --clay: #8ecae6;
   --oat: #9ed4ee;
-  --account-glow: rgba(0, 103, 160, 0.22);
+  --account-glow: rgba(142, 202, 230, 0.22);
 }
 
 .topNav {
