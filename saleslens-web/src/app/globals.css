@@ -282,6 +282,8 @@ select {
   --steel-dark: #ff8200;
   --clay: #ff8200;
   --oat: #8ecae6;
+  --chart-current: #ff8200;
+  --chart-prior: #a8a39b;
   --account-glow: rgba(255, 130, 0, 0.22);
   --positive-text: #4c4944;
 }
@@ -291,6 +293,8 @@ select {
   --steel-dark: #5caed4;
   --clay: #8ecae6;
   --oat: #9ed4ee;
+  --chart-current: #8ecae6;
+  --chart-prior: #a8a39b;
   --account-glow: rgba(142, 202, 230, 0.22);
 }
 
@@ -1835,14 +1839,14 @@ select {
 }
 
 .monthlyScorecardTrack i {
-  background: var(--accent);
+  background: var(--chart-current);
   border-radius: inherit;
   display: block;
   height: 100%;
 }
 
 .monthlyScorecardBarRow.prior .monthlyScorecardTrack i {
-  background: var(--steel);
+  background: var(--chart-prior);
 }
 
 .monthlyScorecardTakeaways {
@@ -2119,14 +2123,14 @@ select {
 }
 
 .monthlyBarTrack i {
-  background: var(--accent);
+  background: var(--chart-current);
   border-radius: inherit;
   display: block;
   height: 100%;
 }
 
 .monthlyComparisonRow.prior .monthlyBarTrack i {
-  background: var(--steel);
+  background: var(--chart-prior);
 }
 
 .monthlyStoryNote {
