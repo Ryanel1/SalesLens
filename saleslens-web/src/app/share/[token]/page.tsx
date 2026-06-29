@@ -124,7 +124,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                 <p>by Lester Sales</p>
               </div>
               <h1>{payload.accountName}</h1>
-              <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and top-performing styles and art.</p>
+              <p className="muted">Review scorecards, inventory position, and Top Performers in one sales snapshot.</p>
             </div>
 
             <aside className="publicHeaderAside">

@@ -17,6 +17,8 @@
   --steel-dark: #4f6878;
   --clay: #a96f4a;
   --oat: #d9c8ae;
+  --chart-current: var(--steel);
+  --chart-prior: #a8a39b;
   --shadow: 0 22px 70px rgba(36, 35, 33, 0.09);
   --hairline: 1px solid var(--stone);
 }
@@ -1524,11 +1526,11 @@ select {
 }
 
 .dot.current {
-  background: var(--steel);
+  background: var(--chart-current);
 }
 
 .dot.prior {
-  background: var(--oat);
+  background: var(--chart-prior);
 }
 
 .lineCard svg {
@@ -1569,11 +1571,11 @@ select {
 }
 
 .currentLine {
-  stroke: var(--steel);
+  stroke: var(--chart-current);
 }
 
 .priorLine {
-  stroke: var(--oat);
+  stroke: var(--chart-prior);
 }
 
 .currentPoint,
@@ -1584,11 +1586,11 @@ select {
 }
 
 .currentPoint {
-  fill: var(--steel);
+  fill: var(--chart-current);
 }
 
 .priorPoint {
-  fill: var(--oat);
+  fill: var(--chart-prior);
 }
 
 .monthLabel,
@@ -3483,7 +3485,7 @@ select {
   align-items: center;
   background: var(--ink);
   border: 0;
-  border-radius: 0 0 22px 22px;
+  border-radius: 0;
   box-shadow: none;
   color: #fffefa;
   display: grid;

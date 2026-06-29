@@ -1976,7 +1976,7 @@ export default function Home() {
             <div className="dashboardHeroIntro">
               <p className="eyebrow">Sales Snapshot</p>
               <h2>{selectedCustomer?.name ?? "Account"}</h2>
-              <p className="muted">Compare YTD pace, monthly sales movement, inventory signals, and product-level performance.</p>
+              <p className="muted">Review scorecards, inventory position, and Top Performers in one sales snapshot.</p>
             </div>
 
             <div className="controlDock">
