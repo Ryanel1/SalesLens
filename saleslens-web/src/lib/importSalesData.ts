@@ -70,6 +70,7 @@ const COLOR_NAMES_BY_CODE: Record<string, string> = {
 
 const REBEL_RAGS_GEAR_STYLE_PREFIXES = ["GDH", "G", "C400", "C603", "S650", "G209"];
 const KNOWN_STYLE_PREFIXES = [
+  "CS1271",
   "CS1220",
   "CT1000",
   "CS3050",
@@ -137,6 +138,9 @@ const KNOWN_STYLE_PREFIXES = [
   "P940",
   "S760",
 ];
+const STYLE_NUMBER_ALIASES: Record<string, string> = {
+  CS127: "CS1271",
+};
 
 const MONTHS: Record<string, number> = {
   jan: 0,
@@ -522,13 +526,19 @@ function parseStyleIdentifier(rawValue: string | null) {
     .sort((left, right) => right.length - left.length)
     .find((style) => compactPrefix.startsWith(style));
   const colorCode = splitColorCode(prefix, knownStyle);
-  const styleNumber = knownStyle ?? (colorCode ? prefix.slice(0, -colorCode.length).replace(/[-\s]+$/g, "") : prefix.replace(/[-\s]+$/g, ""));
+  const parsedStyleNumber = knownStyle ?? (colorCode ? prefix.slice(0, -colorCode.length).replace(/[-\s]+$/g, "") : prefix.replace(/[-\s]+$/g, ""));
+  const styleNumber = canonicalStyleNumber(parsedStyleNumber);
 
   return {
     styleNumber: styleNumber || null,
     colorCode,
     artCode,
   };
+}
+
+function canonicalStyleNumber(value: string | null) {
+  const compact = clean(value)?.toUpperCase().replace(/[^A-Z0-9]/g, "") ?? "";
+  return STYLE_NUMBER_ALIASES[compact] ?? value;
 }
 
 function parseVolshopSkuName(value: string | null) {

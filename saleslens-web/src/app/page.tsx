@@ -352,6 +352,7 @@ const INVENTORY_TEE_STYLES = new Set([
 ]);
 const INVENTORY_TEE_STYLE_PREFIXES = ["C603"];
 const KNOWN_STYLE_PREFIXES = [
+  "CS1271",
   "CS1220",
   "CT1000",
   "CS3050",
@@ -727,6 +728,7 @@ export default function Home() {
       rememberReportPayload(reportCache.current, reportRequestKey, payload.report);
       setServerReport({ key: reportRequestKey, payload: payload.report });
       setServerReportStatus("");
+      setImageCacheStatus((status) => status.includes("Rebuilding report view") ? "Report view updated with cached images." : status);
     }
 
     loadServerReport().catch(() => {
@@ -2155,12 +2157,14 @@ export default function Home() {
                   <h3>Top Performers</h3>
                 </div>
                 {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
-                  <div className="productGalleryHeaderActions">
-                    <strong>{missingImageCount ? `${numberText(missingImageCount)} missing in view` : "Images current"}</strong>
-                    <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
-                      {imageCacheRunning ? "Caching..." : missingImageCount ? "Cache Missing Images" : "Cache Current"}
-                    </button>
-                    {imageCacheStatus ? <small>{imageCacheStatus}</small> : null}
+                  <div className="productGalleryHeaderActions" aria-live="polite">
+                    <div className="imageCacheControl">
+                      <strong>{missingImageCount ? `${numberText(missingImageCount)} missing` : "Images current"}</strong>
+                      <button type="button" onClick={() => void cacheMissingImages()} disabled={imageCacheRunning || missingImageCount === 0}>
+                        {imageCacheRunning ? "Caching" : missingImageCount ? "Cache Images" : "Current"}
+                      </button>
+                    </div>
+                    <small title={imageCacheStatus}>{imageCacheStatus || "\u00a0"}</small>
                   </div>
                 ) : null}
               </div>
@@ -3597,6 +3601,7 @@ const knownVolshopImages: Record<string, string> = {
 };
 
 const knownRebelRagsImages: Record<string, string> = {
+  [imageKey("CS1271", "APC03783493", "HEATHERGREY")]: "/images/product-overrides/rebel-rags-cs1271-apc03783493-heather-grey.png",
   [imageKey("CT1000", "03456518", "NAVY")]: "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg",
   [imageKey("CT1000", "03503350", "LIGHTBLUE")]: "https://www.rebelrags.net/prodimages/23149-DEFAULT-l.jpg",
   [imageKey("CT1000", "03687236", "WHITE")]: "https://www.rebelrags.net/prodimages/25026-WHITE-l.jpg",
@@ -4084,8 +4089,15 @@ function compactImagePart(value: string | null | undefined) {
 }
 
 function colorName(record: MerchandiseRecord) {
+  if (isYouthHoodHeatherGrey(record)) return "Heather Grey";
   if (isReverseWeaveSilverGrey(record)) return "Silver Grey";
   return displayColorName(clean(record.catalog_color_name) || clean(record.color)) || "-";
+}
+
+function isYouthHoodHeatherGrey(record: MerchandiseRecord) {
+  return normalizedStyle(record) === "CS1271"
+    && compactImagePart(record.art_code) === "APC03783493"
+    && ["GREY", "GRAY", "HEATHERGREY", "HEATHERGRAY"].includes(compactImagePart(clean(record.catalog_color_name) || clean(record.color)));
 }
 
 function isReverseWeaveSilverGrey(record: MerchandiseRecord) {
@@ -4094,6 +4106,7 @@ function isReverseWeaveSilverGrey(record: MerchandiseRecord) {
 }
 
 const STYLE_NUMBER_ALIASES: Record<string, string> = {
+  CS127: "CS1271",
   CS122: "CS1220",
   CS207: "CS2071",
 };

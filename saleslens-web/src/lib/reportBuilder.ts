@@ -284,6 +284,7 @@ const INVENTORY_TEE_STYLES = new Set([
 ]);
 const INVENTORY_TEE_STYLE_PREFIXES = ["C603"];
 const KNOWN_STYLE_PREFIXES = [
+  "CS1271",
   "CS1220",
   "CT1000",
   "CS3050",
@@ -1103,6 +1104,7 @@ const knownVolshopImages: Record<string, string> = {
 };
 
 const knownRebelRagsImages: Record<string, string> = {
+  [imageKey("CS1271", "APC03783493", "HEATHERGREY")]: "/images/product-overrides/rebel-rags-cs1271-apc03783493-heather-grey.png",
   [imageKey("CT1000", "03456518", "NAVY")]: "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg",
   [imageKey("CT1000", "03503350", "LIGHTBLUE")]: "https://www.rebelrags.net/prodimages/23149-DEFAULT-l.jpg",
   [imageKey("CT1000", "03687236", "WHITE")]: "https://www.rebelrags.net/prodimages/25026-WHITE-l.jpg",
@@ -1736,8 +1738,15 @@ function compactImagePart(value: string | null | undefined) {
 }
 
 function colorName(record: MerchandiseRecord) {
+  if (isYouthHoodHeatherGrey(record)) return "Heather Grey";
   if (isReverseWeaveSilverGrey(record)) return "Silver Grey";
   return displayColorName(clean(record.catalog_color_name) || clean(record.color)) || "-";
+}
+
+function isYouthHoodHeatherGrey(record: MerchandiseRecord) {
+  return normalizedStyle(record) === "CS1271"
+    && compactImagePart(record.art_code) === "APC03783493"
+    && ["GREY", "GRAY", "HEATHERGREY", "HEATHERGRAY"].includes(compactImagePart(clean(record.catalog_color_name) || clean(record.color)));
 }
 
 function isReverseWeaveSilverGrey(record: MerchandiseRecord) {
@@ -1746,6 +1755,7 @@ function isReverseWeaveSilverGrey(record: MerchandiseRecord) {
 }
 
 const STYLE_NUMBER_ALIASES: Record<string, string> = {
+  CS127: "CS1271",
   CS122: "CS1220",
   CS207: "CS2071",
 };
