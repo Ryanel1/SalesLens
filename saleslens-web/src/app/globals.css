@@ -2969,7 +2969,14 @@ select {
 
 .artStats {
   display: grid;
-  gap: 0.36rem;
+  gap: 0.34rem;
+}
+
+.artStatsDivider {
+  background: var(--stone);
+  display: block;
+  height: 1px;
+  margin: 0.16rem 0 0.18rem;
 }
 
 .artStats > span {

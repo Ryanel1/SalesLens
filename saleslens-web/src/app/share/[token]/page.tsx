@@ -235,14 +235,15 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                       <span>{row.style} | {row.color}</span>
                     </div>
                     <div className="artStats">
+                    {row.inventoryUnits != null ? (
+                      <span><em>On-Hand</em><strong>{numberText(row.inventoryUnits)} Units</strong></span>
+                    ) : null}
+                    {row.inventoryUnits != null ? <i aria-hidden="true" className="artStatsDivider" /> : null}
                     {row.periodUnits > 0 || row.periodSales > 0 ? (
                       <span><em>{payload.periodMode === "monthly" ? "Month" : "Year"}</em><strong>{productCardSalesText(row.periodUnits, row.periodSales)}</strong></span>
                     ) : null}
                     <span><em>YTD</em><strong>{productCardSalesText(row.ytdUnits, row.ytdSales)}</strong></span>
                     <span><em>LY</em><strong>{inventoryPriorYearSoldText(row)}</strong></span>
-                    {row.inventoryUnits != null ? (
-                      <span><em>Current Inv</em><strong>{numberText(row.inventoryUnits)} Units</strong></span>
-                    ) : null}
                     </div>
                   </div>
                 </article>

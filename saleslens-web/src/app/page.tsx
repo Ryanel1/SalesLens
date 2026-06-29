@@ -2332,12 +2332,13 @@ export default function Home() {
                           <span>{row.style} | {row.color}</span>
                         </div>
                         <div className="artStats">
+                        {row.inventoryUnits != null ? <span><em>On-Hand</em><strong>{numberText(row.inventoryUnits)} Units</strong></span> : null}
+                        {row.inventoryUnits != null ? <i aria-hidden="true" className="artStatsDivider" /> : null}
                         {!productGalleryUsesInventory || row.monthUnits > 0 || row.monthSales > 0 ? (
                           <span><em>{selectedPeriodKind === "year" ? "Year" : "Month"}</em><strong>{productCardSalesText(row.monthUnits, row.monthSales)}</strong></span>
                         ) : null}
                         <span><em>YTD</em><strong>{productCardSalesText(row.ytdUnits, row.ytdSales)}</strong></span>
                         <span><em>LY</em><strong>{inventoryPriorYearSoldText(row.priorYearUnits)}</strong></span>
-                        {row.inventoryUnits != null ? <span><em>Current Inv</em><strong>{numberText(row.inventoryUnits)} Units</strong></span> : null}
                         </div>
                       </div>
                     </article>
