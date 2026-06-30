@@ -1,9 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 :root {
   color-scheme: light;
-  --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-heading: "Montserrat", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-main: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", "IBM Plex Sans", sans-serif;
+  --font-heading: var(--font-display);
   --canvas: #f6f2ea;
   --paper: #fffdf8;
   --paper-soft: #fbf8f1;
@@ -56,13 +57,13 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
   --section-gap: clamp(3rem, 4.8vw, 5rem);
-  --type-label: 0.6875rem;
+  --type-label: 0.72rem;
   --type-caption: 0.75rem;
   --type-small: 0.875rem;
   --type-body: 1rem;
   --type-title: 1.125rem;
-  --type-metric: 1.625rem;
-  --type-section-title: 2.375rem;
+  --type-metric: 1.95rem;
+  --type-section-title: 3rem;
   --type-display: 5.25rem;
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
@@ -5693,6 +5694,105 @@ select {
 .loginPanel,
 .shareModal {
   border-radius: var(--radius);
+}
+
+.navBrand h1,
+.dashboardHeader h2,
+.publicDashboardHeader h1,
+.dashboardScoreboard strong,
+.sectionTitle h3,
+.metric strong,
+.ytdInsightCard strong,
+.driverTile > strong,
+.changeBadge,
+.monthlyScorecardHeader strong,
+.monthlyScorecardTotal strong,
+.monthlyScorecardBarRow strong,
+.weeklyDateRail,
+.weeklyPrimary strong,
+.weeklyMetrics strong,
+.inventoryTotal strong,
+.artGrid .artCard:first-child .artIdentity > strong,
+.artGrid .artCard:first-child .artIdentity .artCodeLink,
+.topSalesRank,
+.artImage b,
+.accountReportTabs label {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.navBrand h1 {
+  font-size: clamp(1.75rem, 2.6vw, 2.35rem);
+  letter-spacing: -0.01em;
+  line-height: 0.86;
+  text-transform: none;
+}
+
+.dashboardHeader h2,
+.publicDashboardHeader h1 {
+  font-size: clamp(3.35rem, 7vw, 5.85rem);
+  letter-spacing: -0.012em;
+  line-height: 0.82;
+  max-width: 11ch;
+}
+
+.dashboardScoreboard strong {
+  font-size: clamp(2.1rem, 3.45vw, 3.35rem);
+  line-height: 0.9;
+  text-transform: none;
+}
+
+.dashboardScoreboard .scoreboardPrimary strong {
+  font-size: clamp(3.15rem, 5.75vw, 5.05rem);
+  line-height: 0.86;
+}
+
+.dashboardScoreboard span,
+.dashboardHeroKicker span,
+.dashboardHeader .eyebrow,
+.sectionTitle .eyebrow,
+.eyebrow {
+  letter-spacing: 0.065em;
+}
+
+.sectionTitle h3 {
+  font-size: var(--type-section-title);
+  line-height: 0.9;
+}
+
+.metric strong,
+.ytdInsightCard strong,
+.driverTile > strong,
+.inventoryTotal strong {
+  font-size: var(--type-metric);
+  line-height: 0.94;
+}
+
+.sectionBlock .monthlyScorecardMetrics .driverTile > strong {
+  font-size: 2.05rem;
+}
+
+.monthlyScorecardHeader strong,
+.monthlyScorecardTotal strong,
+.monthlyScorecardBarRow strong,
+.weeklyPrimary strong,
+.weeklyMetrics strong {
+  line-height: 0.92;
+}
+
+.artGrid .artCard:first-child .artIdentity > strong,
+.artGrid .artCard:first-child .artIdentity .artCodeLink {
+  font-size: clamp(2.1rem, 3.25vw, 3rem);
+  line-height: 0.9;
+}
+
+.topSalesRank,
+.artImage b {
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 @media (max-width: 1180px) {
