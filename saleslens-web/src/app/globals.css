@@ -311,7 +311,7 @@ select {
   padding: 1.4rem clamp(1.25rem, 4vw, 4rem);
   position: sticky;
   top: 0;
-  transition: min-height 180ms ease, padding 180ms ease, opacity 160ms ease, transform 160ms ease;
+  transition: opacity 160ms ease, transform 160ms ease;
   z-index: 20;
 }
 
@@ -1204,6 +1204,39 @@ select {
   min-width: 250px;
 }
 
+.inventoryDropdownMenu.refineMenu {
+  min-width: min(330px, calc(100vw - 2rem));
+}
+
+.inventoryActiveFilters {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  grid-column: 1 / -1;
+}
+
+.inventoryActiveFilters span,
+.inventoryActiveFilters button {
+  align-items: center;
+  background: var(--surface-solid);
+  border: 0;
+  border-radius: 999px;
+  color: var(--text-soft);
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 850;
+  min-height: 30px;
+  padding: 0 0.72rem;
+  text-transform: uppercase;
+}
+
+.inventoryActiveFilters button {
+  background: var(--ink);
+  color: var(--surface-solid);
+  cursor: pointer;
+}
+
 .inventoryResetOption {
   background: rgba(36, 35, 33, 0.9);
   border: 1px solid rgba(36, 35, 33, 0.9);
@@ -1341,15 +1374,18 @@ select {
 }
 
 .changeBadge.positive {
-  border-left: 5px solid var(--steel);
+  background: color-mix(in srgb, var(--steel) 12%, var(--surface-solid, #ffffff));
+  border-color: color-mix(in srgb, var(--steel) 44%, var(--stone));
 }
 
 .changeBadge.negative {
-  border-left: 5px solid var(--clay);
+  background: color-mix(in srgb, var(--clay) 12%, var(--surface-solid, #ffffff));
+  border-color: color-mix(in srgb, var(--clay) 44%, var(--stone));
 }
 
 .changeBadge.neutral {
-  border-left: 5px solid var(--taupe-2);
+  background: color-mix(in srgb, var(--taupe-2) 12%, var(--surface-solid, #ffffff));
+  border-color: color-mix(in srgb, var(--taupe-2) 44%, var(--stone));
 }
 
 .metricGrid {
@@ -1740,11 +1776,11 @@ select {
 }
 
 .driverTile.positive {
-  border-left: 4px solid #23834b;
+  background: color-mix(in srgb, #23834b 8%, var(--flat-card, #ffffff));
 }
 
 .driverTile.negative {
-  border-left: 4px solid #c62828;
+  background: color-mix(in srgb, #c62828 8%, var(--flat-card, #ffffff));
 }
 
 .monthlyScorecardGrid {
@@ -1911,7 +1947,7 @@ select {
 .weeklyDateRail {
   align-content: center;
   background: rgba(231, 222, 209, 0.28);
-  border-left: 4px solid var(--steel);
+  border-top: 3px solid var(--steel);
   grid-area: date;
 }
 
@@ -2765,7 +2801,6 @@ select {
 .styleSignalPanel {
   background: rgba(255, 253, 248, 0.78);
   border: var(--hairline);
-  border-left: 4px solid var(--steel);
   border-radius: 10px;
   display: grid;
   gap: 0.72rem;
@@ -2773,15 +2808,18 @@ select {
 }
 
 .styleSignalPanel.growth {
-  border-left-color: var(--account-accent, var(--steel-dark));
+  background: color-mix(in srgb, var(--account-accent, var(--steel-dark)) 8%, rgba(255, 253, 248, 0.78));
+  border-color: color-mix(in srgb, var(--account-accent, var(--steel-dark)) 36%, var(--stone));
 }
 
 .styleSignalPanel.risk {
-  border-left-color: var(--charcoal);
+  background: color-mix(in srgb, var(--charcoal) 8%, rgba(255, 253, 248, 0.78));
+  border-color: color-mix(in srgb, var(--charcoal) 28%, var(--stone));
 }
 
 .styleSignalPanel.neutral {
-  border-left-color: var(--steel);
+  background: color-mix(in srgb, var(--steel) 8%, rgba(255, 253, 248, 0.78));
+  border-color: color-mix(in srgb, var(--steel) 32%, var(--stone));
 }
 
 .styleSignalHeader {

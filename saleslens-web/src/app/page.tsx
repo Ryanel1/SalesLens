@@ -444,7 +444,7 @@ export default function Home() {
   const [, setInventoryPage] = useState(1);
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
-  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"view" | "sort" | "filter" | "show" | null>(null);
+  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"view" | "sort" | "refine" | null>(null);
   const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
   const [productGalleryView, setProductGalleryView] = useState<ProductGalleryView>("top-sellers");
   const [productGalleryDisplayLimit, setProductGalleryDisplayLimit] = useState<ProductGalleryDisplayLimit>(50);
@@ -486,6 +486,7 @@ export default function Home() {
   const importReviewConfirmRef = useRef<HTMLButtonElement | null>(null);
   const uploadManagerCloseRef = useRef<HTMLButtonElement | null>(null);
   const deleteConfirmButtonRef = useRef<HTMLButtonElement | null>(null);
+  const shareModalCloseRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     document.documentElement.removeAttribute("data-theme");
@@ -534,6 +535,14 @@ export default function Home() {
   }, [deleteUploadCandidate, uploadHistoryOpen]);
 
   useEffect(() => {
+    if (!shareModalOpen) return;
+    const timeout = window.setTimeout(() => {
+      shareModalCloseRef.current?.focus();
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [shareModalOpen]);
+
+  useEffect(() => {
     function handleModalKeyDown(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       if (deleteUploadCandidate) {
@@ -553,13 +562,20 @@ export default function Home() {
       if (uploadHistoryOpen) {
         event.preventDefault();
         closeUploadHistoryManager();
+        return;
+      }
+      if (shareModalOpen) {
+        event.preventDefault();
+        setShareModalOpen(false);
+        setShareStatus("");
+        setShareUrl("");
       }
     }
 
-    if (!importModalOpen && !uploadHistoryOpen && !deleteUploadCandidate) return;
+    if (!importModalOpen && !uploadHistoryOpen && !deleteUploadCandidate && !shareModalOpen) return;
     window.addEventListener("keydown", handleModalKeyDown);
     return () => window.removeEventListener("keydown", handleModalKeyDown);
-  }, [deleteUploadCandidate, importIntent, importModalOpen, uploadHistoryOpen]);
+  }, [deleteUploadCandidate, importIntent, importModalOpen, shareModalOpen, uploadHistoryOpen]);
 
   useEffect(() => {
     if (!supabase) {
@@ -951,6 +967,15 @@ export default function Home() {
     : topArtSort === "units"
       ? "Units"
       : "Dollars";
+  const productGalleryRefineLabel = [
+    inventoryFilterSummary(inventoryAudienceFilter, inventoryProductFilters),
+    productGalleryDisplayLimitLabel(productGalleryDisplayLimit),
+  ].join(" | ");
+  const productGalleryActiveRefinements = [
+    inventoryAudienceFilter === "All" ? null : inventoryAudienceFilterLabel(inventoryAudienceFilter),
+    ...inventoryProductFilters,
+    productGalleryDisplayLimit === 50 ? null : `Show ${productGalleryDisplayLimitLabel(productGalleryDisplayLimit)}`,
+  ].filter(Boolean) as string[];
   const bestDay = useMemo(
     () => (reportPayload?.bestDay as ReturnType<typeof bestSalesDay> | undefined) ?? bestSalesDay(periodRecords, dashboardData.images),
     [dashboardData.images, periodRecords, reportPayload],
@@ -1032,6 +1057,7 @@ export default function Home() {
   function clearInventoryFilters() {
     setInventoryAudienceFilter("All");
     setInventoryProductFilters([]);
+    setProductGalleryDisplayLimit(50);
     setInventoryPage(1);
     setInventoryMenuOpen(null);
   }
@@ -2238,6 +2264,7 @@ export default function Home() {
                     setShareStatus("");
                     setShareUrl("");
                   }}
+                  ref={shareModalCloseRef}
                   type="button"
                 >
                   X
@@ -2422,86 +2449,86 @@ export default function Home() {
                       </div>
                     ) : null}
                   </div>
-                  <div className={`inventoryDropdown ${inventoryMenuOpen === "filter" ? "isOpen" : ""}`}>
+                  <div className={`inventoryDropdown ${inventoryMenuOpen === "refine" ? "isOpen" : ""}`}>
                     <button
-                      aria-expanded={inventoryMenuOpen === "filter"}
+                      aria-expanded={inventoryMenuOpen === "refine"}
                       className="inventoryDropdownTrigger"
                       type="button"
-                      onClick={() => setInventoryMenuOpen((current) => (current === "filter" ? null : "filter"))}
+                      onClick={() => setInventoryMenuOpen((current) => (current === "refine" ? null : "refine"))}
                     >
-                      <span>Filter</span>
-                      <strong>{inventoryFilterSummary(inventoryAudienceFilter, inventoryProductFilters)}</strong>
+                      <span>Refine</span>
+                      <strong>{productGalleryRefineLabel}</strong>
                     </button>
-                    {inventoryMenuOpen === "filter" ? (
-                    <div className="inventoryDropdownMenu wide">
-                      <button
-                        className="inventoryResetOption"
-                        type="button"
-                        onClick={clearInventoryFilters}
-                      >
-                        Clear filters
-                      </button>
-                      <div className="inventoryOptionGroup">
-                        <p>Audience</p>
-                        {(["All", ...INVENTORY_AUDIENCE_FILTERS] as InventoryAudienceFilter[]).map((filter) => (
+                    {inventoryMenuOpen === "refine" ? (
+                      <div className="inventoryDropdownMenu wide refineMenu">
+                        {productGalleryActiveRefinements.length ? (
                           <button
-                            aria-pressed={inventoryAudienceFilter === filter}
-                            className={`inventoryOption ${inventoryAudienceFilter === filter ? "active" : ""}`}
-                            key={filter}
+                            className="inventoryResetOption"
                             type="button"
-                            onClick={() => applyInventoryAudienceFilter(filter)}
+                            onClick={clearInventoryFilters}
                           >
-                            <span className="inventoryOptionMark" aria-hidden="true" />
-                            <span>{inventoryAudienceFilterLabel(filter)}</span>
+                            Clear filters
                           </button>
-                        ))}
-                      </div>
-                      <div className="inventoryOptionGroup">
-                        <p>Product Type</p>
-                        {INVENTORY_PRODUCT_FILTERS.map((filter) => (
-                          <button
-                            aria-pressed={inventoryProductFilters.includes(filter)}
-                            className={`inventoryOption ${inventoryProductFilters.includes(filter) ? "active" : ""}`}
-                            key={filter}
-                            type="button"
-                            onClick={() => toggleInventoryProductFilter(filter)}
-                          >
-                            <span className="inventoryOptionMark square" aria-hidden="true" />
-                            <span>{filter}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    ) : null}
-                  </div>
-                  <div className={`inventoryDropdown ${inventoryMenuOpen === "show" ? "isOpen" : ""}`}>
-                    <button
-                      aria-expanded={inventoryMenuOpen === "show"}
-                      className="inventoryDropdownTrigger"
-                      type="button"
-                      onClick={() => setInventoryMenuOpen((current) => (current === "show" ? null : "show"))}
-                    >
-                      <span>Show</span>
-                      <strong>{productGalleryDisplayLimitLabel(productGalleryDisplayLimit)}</strong>
-                    </button>
-                    {inventoryMenuOpen === "show" ? (
-                      <div className="inventoryDropdownMenu">
-                        {PRODUCT_GALLERY_DISPLAY_OPTIONS.map((limit) => (
-                          <button
-                            aria-pressed={productGalleryDisplayLimit === limit}
-                            className={`inventoryOption ${productGalleryDisplayLimit === limit ? "active" : ""}`}
-                            key={limit}
-                            type="button"
-                            onClick={() => applyProductGalleryDisplayLimit(limit)}
-                          >
-                            <span className="inventoryOptionMark" aria-hidden="true" />
-                            <span>{productGalleryDisplayLimitLabel(limit)}</span>
-                          </button>
-                        ))}
+                        ) : null}
+                        <div className="inventoryOptionGroup">
+                          <p>Audience</p>
+                          {(["All", ...INVENTORY_AUDIENCE_FILTERS] as InventoryAudienceFilter[]).map((filter) => (
+                            <button
+                              aria-pressed={inventoryAudienceFilter === filter}
+                              className={`inventoryOption ${inventoryAudienceFilter === filter ? "active" : ""}`}
+                              key={filter}
+                              type="button"
+                              onClick={() => applyInventoryAudienceFilter(filter)}
+                            >
+                              <span className="inventoryOptionMark" aria-hidden="true" />
+                              <span>{inventoryAudienceFilterLabel(filter)}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <div className="inventoryOptionGroup">
+                          <p>Product Type</p>
+                          {INVENTORY_PRODUCT_FILTERS.map((filter) => (
+                            <button
+                              aria-pressed={inventoryProductFilters.includes(filter)}
+                              className={`inventoryOption ${inventoryProductFilters.includes(filter) ? "active" : ""}`}
+                              key={filter}
+                              type="button"
+                              onClick={() => toggleInventoryProductFilter(filter)}
+                            >
+                              <span className="inventoryOptionMark square" aria-hidden="true" />
+                              <span>{filter}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <div className="inventoryOptionGroup">
+                          <p>Show</p>
+                          {PRODUCT_GALLERY_DISPLAY_OPTIONS.map((limit) => (
+                            <button
+                              aria-pressed={productGalleryDisplayLimit === limit}
+                              className={`inventoryOption ${productGalleryDisplayLimit === limit ? "active" : ""}`}
+                              key={limit}
+                              type="button"
+                              onClick={() => applyProductGalleryDisplayLimit(limit)}
+                            >
+                              <span className="inventoryOptionMark" aria-hidden="true" />
+                              <span>{productGalleryDisplayLimitLabel(limit)}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     ) : null}
                   </div>
                 </div>
+                {productGalleryActiveRefinements.length ? (
+                  <div className="inventoryActiveFilters" aria-label="Active product gallery filters">
+                    {productGalleryActiveRefinements.map((label) => (
+                      <span key={label}>{label}</span>
+                    ))}
+                    <button type="button" onClick={clearInventoryFilters}>
+                      Clear
+                    </button>
+                  </div>
+                ) : null}
               </div>
               {productGalleryRows.length ? (
                 <div className="artGrid">
