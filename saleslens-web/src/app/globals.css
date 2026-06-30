@@ -20,10 +20,22 @@
   --chart-current: var(--steel);
   --chart-prior: #a8a39b;
   --on-ink: #fffefa;
-  --danger-surface: #fff6f3;
-  --danger-bg: #8f2f25;
+  --state-success: #23784a;
+  --state-success-strong: #145c34;
+  --state-success-soft: #e9f6ef;
+  --state-error: #8f2f25;
+  --state-error-strong: #6f1f1b;
+  --state-error-soft: #fff1ee;
+  --state-warning: #a85c00;
+  --state-warning-soft: #fff4e2;
+  --state-info: #4f6878;
+  --state-info-soft: #edf5f8;
+  --danger-surface: var(--state-error-soft);
+  --danger-bg: var(--state-error);
   --hero-positive: #9dd6b4;
   --hero-negative: #ffb4a9;
+  --focus-ring: rgba(79, 104, 120, 0.58);
+  --focus-ring-soft: rgba(79, 104, 120, 0.2);
   --shadow: 0 22px 70px rgba(36, 35, 33, 0.09);
   --hairline: 1px solid var(--stone);
   --radius-xs: 2px;
@@ -341,6 +353,8 @@ select {
   --chart-current: #ff8200;
   --chart-prior: #a8a39b;
   --account-glow: rgba(255, 130, 0, 0.22);
+  --focus-ring: rgba(255, 130, 0, 0.58);
+  --focus-ring-soft: rgba(255, 130, 0, 0.18);
   --scoreboard-wash: rgba(255, 130, 0, 0.32);
   --positive-text: #4c4944;
 }
@@ -354,6 +368,8 @@ select {
   --chart-current: #8ecae6;
   --chart-prior: #a8a39b;
   --account-glow: rgba(142, 202, 230, 0.22);
+  --focus-ring: rgba(92, 174, 212, 0.58);
+  --focus-ring-soft: rgba(142, 202, 230, 0.2);
   --scoreboard-wash: rgba(142, 202, 230, 0.34);
 }
 
@@ -760,8 +776,9 @@ select {
 }
 
 .shareScopeGrid button.active {
-  border-color: var(--steel);
-  box-shadow: inset 4px 0 0 var(--steel);
+  background: color-mix(in srgb, var(--account-accent, var(--steel)) 12%, rgba(255, 253, 248, 0.88));
+  border-color: color-mix(in srgb, var(--account-accent, var(--steel)) 62%, var(--stone));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--account-accent, var(--steel)) 14%, transparent);
 }
 
 .shareScopeGrid button:disabled {
@@ -804,9 +821,9 @@ select {
 }
 
 .shareAccountToggles button.active {
-  background: var(--steel);
-  border-color: var(--steel);
-  color: #fffdfa;
+  background: var(--account-accent, var(--steel));
+  border-color: var(--account-accent, var(--steel));
+  color: var(--soft-black);
 }
 
 .shareGenerateButton {
@@ -1159,9 +1176,9 @@ select {
 }
 
 .sortControls button.active {
-  background: var(--charcoal);
-  border-color: var(--charcoal);
-  color: var(--paper);
+  background: var(--account-accent, var(--steel));
+  border-color: var(--account-accent, var(--steel));
+  color: var(--soft-black);
 }
 
 .inventoryControls {
@@ -1331,7 +1348,7 @@ select {
 }
 
 .inventoryOption input {
-  accent-color: var(--charcoal);
+  accent-color: var(--account-accent, var(--steel));
   flex: 0 0 auto;
 }
 
@@ -1354,7 +1371,7 @@ select {
 }
 
 .inventoryOption.active .inventoryOptionMark::after {
-  background: var(--charcoal);
+  background: var(--account-accent, var(--steel));
   border-radius: inherit;
   content: "";
   inset: 2px;
@@ -1424,18 +1441,21 @@ select {
 }
 
 .changeBadge.positive {
-  background: color-mix(in srgb, var(--steel) 12%, var(--surface-solid, #ffffff));
-  border-color: color-mix(in srgb, var(--steel) 44%, var(--stone));
+  background: color-mix(in srgb, var(--state-success-soft) 82%, var(--surface-solid, #ffffff));
+  border-color: color-mix(in srgb, var(--state-success) 34%, var(--stone));
+  color: var(--state-success-strong);
 }
 
 .changeBadge.negative {
-  background: color-mix(in srgb, var(--clay) 12%, var(--surface-solid, #ffffff));
-  border-color: color-mix(in srgb, var(--clay) 44%, var(--stone));
+  background: color-mix(in srgb, var(--state-error-soft) 86%, var(--surface-solid, #ffffff));
+  border-color: color-mix(in srgb, var(--state-error) 36%, var(--stone));
+  color: var(--state-error-strong);
 }
 
 .changeBadge.neutral {
-  background: color-mix(in srgb, var(--taupe-2) 12%, var(--surface-solid, #ffffff));
-  border-color: color-mix(in srgb, var(--taupe-2) 44%, var(--stone));
+  background: var(--state-info-soft);
+  border-color: color-mix(in srgb, var(--state-info) 24%, var(--stone));
+  color: var(--state-info);
 }
 
 .metricGrid {
@@ -1483,19 +1503,19 @@ select {
 }
 
 .metric.positive strong {
-  color: #23834b;
+  color: var(--state-success);
 }
 
 .metric.negative strong {
-  color: #c62828;
+  color: var(--state-error);
 }
 
 .positive {
-  color: #23834b !important;
+  color: var(--state-success) !important;
 }
 
 .negative {
-  color: #c62828 !important;
+  color: var(--state-error) !important;
 }
 
 .neutral {
@@ -1826,11 +1846,11 @@ select {
 }
 
 .driverTile.positive {
-  background: color-mix(in srgb, #23834b 8%, var(--flat-card, #ffffff));
+  background: color-mix(in srgb, var(--state-success-soft) 72%, var(--flat-card, #ffffff));
 }
 
 .driverTile.negative {
-  background: color-mix(in srgb, #c62828 8%, var(--flat-card, #ffffff));
+  background: color-mix(in srgb, var(--state-error-soft) 76%, var(--flat-card, #ffffff));
 }
 
 .monthlyScorecardGrid {
@@ -2785,8 +2805,8 @@ select {
 }
 
 .studyTabs button.active {
-  background: var(--steel-dark);
-  color: var(--paper);
+  background: var(--account-accent, var(--steel));
+  color: var(--soft-black);
 }
 
 .studySubtitle {
@@ -3307,8 +3327,8 @@ tbody tr:nth-child(even) {
 #account-report-1:checked ~ .bundleDashboardHeader .accountReportTabs label:nth-child(2),
 #account-report-2:checked ~ .bundleDashboardHeader .accountReportTabs label:nth-child(3),
 #account-report-3:checked ~ .bundleDashboardHeader .accountReportTabs label:nth-child(4) {
-  background: var(--steel);
-  color: #fffdfa;
+  background: var(--account-accent, var(--steel));
+  color: var(--soft-black);
 }
 
 #account-report-0:checked ~ .accountReportPanels .accountReportPanel:nth-child(1),
@@ -4130,7 +4150,7 @@ select {
   justify-self: end;
   margin-top: 0;
   min-height: 112px;
-  max-width: 260px;
+  max-width: 181px;
   padding: 1rem;
   width: 100%;
 }
@@ -4146,7 +4166,7 @@ select {
 .dashboardHeader .controlDock input {
   border-color: rgba(255, 254, 250, 0.86);
   min-height: 48px;
-  min-width: min(160px, 100%);
+  min-width: min(145px, 100%);
   text-align: center;
 }
 
@@ -4244,23 +4264,23 @@ select {
 }
 
 .reportTrustNotice.loading {
-  background: color-mix(in srgb, var(--account-accent, var(--steel)) 10%, var(--surface));
+  background: color-mix(in srgb, var(--state-warning-soft) 78%, var(--surface));
   color: var(--text);
 }
 
 .reportTrustNotice.error {
-  background: var(--danger-surface);
-  color: var(--danger-bg);
+  background: var(--state-error-soft);
+  color: var(--state-error-strong);
 }
 
 .reportTrustNotice.error button {
-  background: var(--danger-bg);
-  border-color: var(--danger-bg);
+  background: var(--state-error);
+  border-color: var(--state-error);
   color: #fffefa;
 }
 
 .reportTrustNotice.empty {
-  background: var(--flat-card);
+  background: color-mix(in srgb, var(--state-info-soft) 76%, var(--flat-card));
   color: var(--text);
 }
 
@@ -4456,9 +4476,9 @@ select {
 .inventoryOption.active,
 .inventoryResetOption,
 .pagerControls button:not(:disabled):hover {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--surface-solid);
+  background: var(--account-accent, var(--steel));
+  border-color: var(--account-accent, var(--steel));
+  color: var(--soft-black);
 }
 
 .sortControls {
@@ -4579,8 +4599,17 @@ select {
   border-radius: 2px;
 }
 
+.inventoryOption.active {
+  background: color-mix(in srgb, var(--account-accent, var(--steel)) 11%, transparent);
+  color: var(--text);
+}
+
+.inventoryOption.active .inventoryOptionMark {
+  border-color: var(--account-accent, var(--steel));
+}
+
 .inventoryOption.active .inventoryOptionMark::after {
-  background: var(--charcoal);
+  background: var(--account-accent, var(--steel));
   border-radius: inherit;
   content: "";
   inset: 2px;
@@ -5240,26 +5269,26 @@ select {
 }
 
 .shareStatus.ready {
-  background: color-mix(in srgb, var(--hero-positive) 26%, var(--surface-solid));
+  background: color-mix(in srgb, var(--state-success-soft) 88%, var(--surface-solid));
   color: var(--text);
 }
 
 .shareStatus.ready::before {
-  background: #23834b;
+  background: var(--state-success);
 }
 
 .shareStatus.loading {
-  background: color-mix(in srgb, var(--account-accent, var(--steel)) 12%, var(--surface-solid));
+  background: color-mix(in srgb, var(--state-warning-soft) 86%, var(--surface-solid));
   color: var(--text);
 }
 
 .shareStatus.error {
-  background: var(--danger-surface);
-  color: var(--danger-bg);
+  background: var(--state-error-soft);
+  color: var(--state-error-strong);
 }
 
 .shareStatus.error::before {
-  background: var(--danger-bg);
+  background: var(--state-error);
 }
 
 .shareLinkBox {
@@ -5273,7 +5302,7 @@ select {
 
 .reportTrustNotice.loading::after {
   animation: trustNoticeScan 1400ms var(--ease-out-quart) infinite;
-  background: var(--account-accent, var(--steel));
+  background: var(--state-warning);
   bottom: 0;
   content: "";
   height: 2px;
@@ -5285,9 +5314,9 @@ select {
 
 .reportTrustNotice.empty::before {
   align-items: center;
-  background: color-mix(in srgb, var(--account-accent, var(--steel)) 18%, var(--surface-solid));
+  background: color-mix(in srgb, var(--state-info) 16%, var(--surface-solid));
   border-radius: var(--radius-pill);
-  color: var(--ink);
+  color: var(--state-info);
   content: "0";
   display: inline-flex;
   flex: 0 0 auto;
@@ -5634,8 +5663,8 @@ select {
 .accountReportSwitcher input:nth-of-type(1):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(1),
 .accountReportSwitcher input:nth-of-type(2):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(2),
 .accountReportSwitcher input:nth-of-type(3):checked ~ .publicDashboardHeader .accountReportTabs label:nth-of-type(3) {
-  background: var(--steel);
-  color: #fffefa;
+  background: var(--account-accent, var(--steel));
+  color: var(--soft-black);
 }
 
 .loginPanel,
@@ -6114,7 +6143,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgba(79, 104, 120, 0.58);
+  outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
