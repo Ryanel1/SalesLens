@@ -64,6 +64,11 @@ type UploadHistoryRow = {
   created_at: string;
 };
 
+type DeleteUploadCandidate = {
+  customerId: string;
+  upload: UploadHistoryRow;
+};
+
 type IdleWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
   cancelIdleCallback?: (handle: number) => void;
@@ -134,6 +139,7 @@ type TopArtSort = "units" | "dollars";
 type ProductGalleryView = "top-sellers" | "inventory";
 type ProductGallerySort = "units" | "dollars" | "inventory-high" | "inventory-low";
 type ProductGalleryDisplayLimit = 25 | 50 | 100 | "all";
+type ImportIntent = "sales" | "inventory";
 
 type ProductGalleryItem = {
   rank: number;
@@ -449,6 +455,7 @@ export default function Home() {
   const [reportRefreshKey, setReportRefreshKey] = useState(0);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
+  const [importIntent, setImportIntent] = useState<ImportIntent | null>(null);
   const [importRangeStart, setImportRangeStart] = useState("");
   const [importRangeEnd, setImportRangeEnd] = useState("");
   const [dashboardStatus, setDashboardStatus] = useState("");
@@ -466,6 +473,7 @@ export default function Home() {
   const [editingUploadId, setEditingUploadId] = useState<string | null>(null);
   const [editUploadRangeStart, setEditUploadRangeStart] = useState("");
   const [editUploadRangeEnd, setEditUploadRangeEnd] = useState("");
+  const [deleteUploadCandidate, setDeleteUploadCandidate] = useState<DeleteUploadCandidate | null>(null);
   const [imageCacheRunning, setImageCacheRunning] = useState(false);
   const [imageCacheStatus, setImageCacheStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -474,6 +482,10 @@ export default function Home() {
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
   const reportCache = useRef<Map<string, ReportSnapshotPayload>>(new Map());
+  const uploadImportButtonRef = useRef<HTMLButtonElement | null>(null);
+  const importReviewConfirmRef = useRef<HTMLButtonElement | null>(null);
+  const uploadManagerCloseRef = useRef<HTMLButtonElement | null>(null);
+  const deleteConfirmButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     document.documentElement.removeAttribute("data-theme");
@@ -493,8 +505,61 @@ export default function Home() {
     setEditingUploadId(null);
     setEditUploadRangeStart("");
     setEditUploadRangeEnd("");
+    setDeleteUploadCandidate(null);
     setImageCacheStatus("");
   }, [selectedCustomerId]);
+
+  useEffect(() => {
+    if (!importModalOpen) return;
+    const timeout = window.setTimeout(() => {
+      if (importIntent) {
+        importReviewConfirmRef.current?.focus();
+      } else {
+        uploadImportButtonRef.current?.focus();
+      }
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [importIntent, importModalOpen]);
+
+  useEffect(() => {
+    if (!uploadHistoryOpen) return;
+    const timeout = window.setTimeout(() => {
+      if (deleteUploadCandidate) {
+        deleteConfirmButtonRef.current?.focus();
+      } else {
+        uploadManagerCloseRef.current?.focus();
+      }
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, [deleteUploadCandidate, uploadHistoryOpen]);
+
+  useEffect(() => {
+    function handleModalKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      if (deleteUploadCandidate) {
+        event.preventDefault();
+        setDeleteUploadCandidate(null);
+        return;
+      }
+      if (importModalOpen) {
+        event.preventDefault();
+        if (importIntent) {
+          setImportIntent(null);
+        } else {
+          closeImportModal();
+        }
+        return;
+      }
+      if (uploadHistoryOpen) {
+        event.preventDefault();
+        closeUploadHistoryManager();
+      }
+    }
+
+    if (!importModalOpen && !uploadHistoryOpen && !deleteUploadCandidate) return;
+    window.addEventListener("keydown", handleModalKeyDown);
+    return () => window.removeEventListener("keydown", handleModalKeyDown);
+  }, [deleteUploadCandidate, importIntent, importModalOpen, uploadHistoryOpen]);
 
   useEffect(() => {
     if (!supabase) {
@@ -902,6 +967,14 @@ export default function Home() {
     [bestDay.items, dashboardData.images, reportPayload, topArt, visibleInventoryTracker, weeklyScorecards],
   );
   const missingImageCount = imagePrefetchCandidates.filter((row) => !row.imageUrl && row.style !== "-").length;
+  const pendingImportSummary = useMemo(() => {
+    const totalBytes = pendingImportFiles.reduce((total, file) => total + file.size, 0);
+    return {
+      fileCount: pendingImportFiles.length,
+      totalBytes,
+      fileLabels: pendingImportFiles.map((file) => `${file.name} (${fileSizeText(file.size)})`),
+    };
+  }, [pendingImportFiles]);
   const ytdLine = useMemo(
     () => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth, period?.kind === "month" ? periodRecords : []),
     [period, periodEndMonth, periodRecords, recordsForCustomer, reportPayload],
@@ -1220,6 +1293,7 @@ export default function Home() {
 
   function closeUploadHistoryManager() {
     setUploadHistoryOpen(false);
+    setDeleteUploadCandidate(null);
     setEditingUploadId(null);
     setEditUploadRangeStart("");
     setEditUploadRangeEnd("");
@@ -1269,12 +1343,17 @@ export default function Home() {
     }
   }
 
-  async function deleteUpload(upload: UploadHistoryRow) {
+  function requestDeleteUpload(upload: UploadHistoryRow) {
     const customerId = uploadHistoryCustomerId || selectedCustomerId;
     if (!supabase || !customerId) return;
+    setDeleteUploadCandidate({ customerId, upload });
+  }
+
+  async function confirmDeleteUpload() {
+    const candidate = deleteUploadCandidate;
+    if (!candidate || !supabase) return;
+    const { customerId, upload } = candidate;
     const label = upload.original_file_name || upload.source_file || "this upload";
-    const confirmed = window.confirm(`Delete ${label} and its imported records?`);
-    if (!confirmed) return;
 
     setUploadHistoryStatus(`Deleting ${label}...`);
     const { data } = await supabase.auth.getSession();
@@ -1310,6 +1389,7 @@ export default function Home() {
     setReportRefreshKey((key) => key + 1);
     setReloadKey((key) => key + 1);
     setUploadHistoryRows((rows) => rows.filter((row) => row.id !== upload.id));
+    setDeleteUploadCandidate(null);
     setUploadHistoryStatus(
       `Deleted ${label}: ${numberText(payload?.deletedSalesRecords ?? 0)} sales records and ${numberText(payload?.deletedInventoryRecords ?? 0)} inventory records.`,
     );
@@ -1465,12 +1545,15 @@ export default function Home() {
 
   function beginImportFiles(files: File[]) {
     if (files.length === 0 || !selectedCustomer) return;
+    setImportIntent(null);
+    setCustomerStatus("");
     setPendingImportFiles((current) => [...current, ...files]);
   }
 
   function closeImportModal() {
     setImportModalOpen(false);
     setPendingImportFiles([]);
+    setImportIntent(null);
     setImportRangeStart("");
     setImportRangeEnd("");
     setCustomerStatus("");
@@ -1478,6 +1561,32 @@ export default function Home() {
 
   function removePendingImportFile(indexToRemove: number) {
     setPendingImportFiles((files) => files.filter((_file, index) => index !== indexToRemove));
+    setImportIntent(null);
+  }
+
+  function reviewImport(intent: ImportIntent) {
+    if (!pendingImportFiles.length) {
+      setCustomerStatus("Choose at least one file before reviewing an import.");
+      return;
+    }
+    const range = selectedImportRange();
+    if (!range) return;
+    setCustomerStatus("");
+    setImportIntent(intent);
+  }
+
+  function confirmReviewedImport() {
+    if (!importIntent) return;
+    const range = selectedImportRange();
+    if (!range) return;
+    const files = pendingImportFiles;
+    const intent = importIntent;
+    closeImportModal();
+    if (intent === "sales") {
+      void importSalesFiles(files, range);
+    } else {
+      void importInventoryFiles(files);
+    }
   }
 
   function selectedImportRange(): SalesImportOptions | null {
@@ -1827,31 +1936,76 @@ export default function Home() {
               <div className="shareScopeGrid">
                 <button
                   disabled={pendingImportFiles.length === 0}
-                  onClick={() => {
-                    const range = selectedImportRange();
-                    if (!range) return;
-                    const files = pendingImportFiles;
-                    closeImportModal();
-                    void importSalesFiles(files, range);
-                  }}
+                  onClick={() => reviewImport("sales")}
+                  ref={uploadImportButtonRef}
                   type="button"
                 >
                   <strong>Sales Data</strong>
-                  <span>POS sales with units and dollars. The selected date range applies to every file in this upload.</span>
+                  <span>Review POS sales with units and dollars before replacing overlapping records.</span>
                 </button>
                 <button
                   disabled={pendingImportFiles.length === 0}
-                  onClick={() => {
-                    const files = pendingImportFiles;
-                    closeImportModal();
-                    void importInventoryFiles(files);
-                  }}
+                  onClick={() => reviewImport("inventory")}
                   type="button"
                 >
                   <strong>Inventory Report</strong>
-                  <span>Standalone on-hand units by product/style/color/art.</span>
+                  <span>Review standalone on-hand units before replacing inventory for the file dates.</span>
                 </button>
               </div>
+              {importIntent ? (
+                <div className="importReviewPanel" aria-live="polite">
+                  <div className="importReviewHeader">
+                    <span>Review before import</span>
+                    <strong>{importIntent === "sales" ? "Sales Data" : "Inventory Report"}</strong>
+                  </div>
+                  <div className="importImpactGrid">
+                    <div>
+                      <span>Account</span>
+                      <strong>{selectedCustomer?.name ?? "Selected account"}</strong>
+                    </div>
+                    <div>
+                      <span>Files</span>
+                      <strong>{numberText(pendingImportSummary.fileCount)} file{pendingImportSummary.fileCount === 1 ? "" : "s"} | {fileSizeText(pendingImportSummary.totalBytes)}</strong>
+                    </div>
+                    <div>
+                      <span>{importIntent === "sales" ? "Sales Range" : "Inventory Dates"}</span>
+                      <strong>
+                        {importIntent === "sales"
+                          ? importRangeStart || importRangeEnd
+                            ? `${dateText(importRangeStart || null)} - ${dateText(importRangeEnd || null)}`
+                            : "Use dates detected in each file"
+                          : "Use dates detected in each file"}
+                      </strong>
+                    </div>
+                  </div>
+                  <div className="importImpactNotice">
+                    <strong>{importIntent === "sales" ? "Replacement impact" : "Inventory impact"}</strong>
+                    <p>
+                      {importIntent === "sales"
+                        ? "Sales import will create an upload record, then replace existing records for this account where the file date range and brand/class overlap."
+                        : "Inventory import will create an upload record, then replace existing on-hand records for this account on the inventory dates found in the file."}
+                    </p>
+                  </div>
+                  <ul className="importFileReviewList">
+                    {pendingImportSummary.fileLabels.map((label, index) => (
+                      <li key={`${label}-${index}`}>{label}</li>
+                    ))}
+                  </ul>
+                  <div className="importReviewActions">
+                    <button className="ghostButton" type="button" onClick={() => setImportIntent(null)}>
+                      Back
+                    </button>
+                    <button
+                      className="shareGenerateButton"
+                      type="button"
+                      ref={importReviewConfirmRef}
+                      onClick={confirmReviewedImport}
+                    >
+                      Import {importIntent === "sales" ? "Sales Data" : "Inventory Report"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div className="uploadHistoryActions">
                 <button
                   className="ghostButton"
@@ -1873,6 +2027,7 @@ export default function Home() {
                 aria-label="Close upload manager"
                 className="modalCloseButton"
                 onClick={closeUploadHistoryManager}
+                ref={uploadManagerCloseRef}
                 type="button"
               >
                 X
@@ -1960,7 +2115,7 @@ export default function Home() {
                               Edit
                             </button>
                           )}
-                          <button className="dangerTextButton" type="button" onClick={() => void deleteUpload(upload)}>
+                          <button className="dangerTextButton" type="button" onClick={() => requestDeleteUpload(upload)}>
                             Delete
                           </button>
                         </div>
@@ -1972,6 +2127,48 @@ export default function Home() {
                   <p className="muted">No uploads are currently listed for this account.</p>
                 ) : null}
               </div>
+              {deleteUploadCandidate ? (
+                <div className="deleteConfirmPanel" role="alertdialog" aria-modal="true" aria-labelledby="delete-upload-title">
+                  <div>
+                    <p className="eyebrow">Destructive Action</p>
+                    <h4 id="delete-upload-title">Delete this upload?</h4>
+                    <p>
+                      This removes the upload history row and every sales or inventory record imported from it. The dashboard will rebuild after deletion.
+                    </p>
+                  </div>
+                  <div className="deleteImpactGrid">
+                    <div>
+                      <span>File</span>
+                      <strong>{deleteUploadCandidate.upload.original_file_name || deleteUploadCandidate.upload.source_file || "Imported upload"}</strong>
+                    </div>
+                    <div>
+                      <span>Range</span>
+                      <strong>{dateText(deleteUploadCandidate.upload.sales_period_start)} - {dateText(deleteUploadCandidate.upload.sales_period_end)}</strong>
+                    </div>
+                    <div>
+                      <span>Rows</span>
+                      <strong>{numberText(deleteUploadCandidate.upload.row_count)}</strong>
+                    </div>
+                    <div>
+                      <span>Units / Sales</span>
+                      <strong>{numberText(deleteUploadCandidate.upload.total_units ?? 0)} | {currencyText(Number(deleteUploadCandidate.upload.total_sales ?? 0))}</strong>
+                    </div>
+                  </div>
+                  <div className="deleteConfirmActions">
+                    <button className="ghostButton" type="button" onClick={() => setDeleteUploadCandidate(null)}>
+                      Keep Upload
+                    </button>
+                    <button
+                      className="dangerActionButton"
+                      type="button"
+                      ref={deleteConfirmButtonRef}
+                      onClick={() => void confirmDeleteUpload()}
+                    >
+                      Delete Upload
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </section>
           </div>
         ) : null}
@@ -4931,6 +5128,15 @@ function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
 
 function compactKey(value: string | number | null | undefined) {
   return (value == null ? "" : String(value)).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function fileSizeText(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024)).toLocaleString("en-US")} KB`;
+  return `${(bytes / (1024 * 1024)).toLocaleString("en-US", {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 1,
+  })} MB`;
 }
 
 function firstNonBlank(values: Array<string | null | undefined>) {
