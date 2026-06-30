@@ -4107,7 +4107,7 @@ select {
   padding: clamp(0.85rem, 1.35vw, 1.1rem);
   position: relative;
   text-align: right;
-  width: min(100%, 460px);
+  width: min(100%, 390px);
   z-index: 1;
 }
 
@@ -4180,11 +4180,20 @@ select {
   text-wrap: balance;
 }
 
-.dashboardAccountTitle {
+.dashboardHeader .dashboardAccountTitle {
   align-items: center;
+  color: var(--account-accent, var(--on-ink));
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.24em;
+  max-width: none;
+  text-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.dashboardHeader .dashboardAccountTitle span {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .accountTeamLogo {
@@ -5866,7 +5875,7 @@ select {
   gap: 0.3rem;
   min-height: 104px;
   padding: clamp(0.85rem, 1.35vw, 1.1rem);
-  width: 100%;
+  width: min(100%, 390px);
 }
 
 .publicReport > .publicDashboardHeader .publicContactCard.dashboardHeroContact span,

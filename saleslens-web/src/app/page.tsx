@@ -2395,7 +2395,6 @@ export default function Home() {
             </div>
 
             <aside className="dashboardHeroContact" aria-label="Sales representative contact">
-              <span>Sales Rep</span>
               <strong>Ryan Lester</strong>
               <a href="tel:+15026897374">Phone: (502) 689-7374</a>
               <a href="mailto:ryanlestersells@gmail.com">Email: ryanlestersells@gmail.com</a>

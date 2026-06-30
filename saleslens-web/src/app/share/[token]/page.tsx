@@ -66,7 +66,6 @@ function ProductMedia({
 function SalesRepContactCard() {
   return (
     <div className="publicContactCard dashboardHeroContact">
-      <span>Sales Rep</span>
       <strong>Ryan Lester</strong>
       <a href="tel:+15026897374">Phone: (502) 689-7374</a>
       <a href="mailto:ryanlestersells@gmail.com">Email: ryanlestersells@gmail.com</a>
