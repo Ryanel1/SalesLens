@@ -4032,7 +4032,7 @@ select {
     url("/images/campus-stadium-night-blur.jpg") center / cover;
   border-top: 6px solid var(--account-accent, var(--steel));
   color: var(--on-ink);
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.24fr);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
   margin: 0 0 clamp(1.65rem, 3vw, 3rem);
   min-height: 0;
   overflow: hidden;
@@ -4105,7 +4105,7 @@ select {
   min-height: 104px;
   padding: clamp(0.85rem, 1.35vw, 1.1rem);
   position: relative;
-  width: min(100%, 390px);
+  width: min(100%, 460px);
   z-index: 1;
 }
 
@@ -4127,12 +4127,13 @@ select {
 .dashboardHeroInsight strong {
   color: var(--on-ink);
   font-family: var(--font-display);
-  font-size: clamp(2rem, 3.1vw, 3rem);
+  font-size: clamp(1.75rem, 2.35vw, 2.4rem);
   font-weight: 800;
   letter-spacing: 0;
   line-height: 0.9;
   overflow-wrap: anywhere;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .dashboardHeroInsight em {

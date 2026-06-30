@@ -1078,8 +1078,8 @@ export default function Home() {
   const dashboardCurrentUnitsText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : numberText(currentMetrics.units);
   const dashboardPriorUnitsText = isTotalsPreparing ? "Waiting for report" : isTotalsBlocked ? "No verified report" : `${numberText(priorMetrics.units)} LY`;
   const dashboardBiggestMove = useMemo(
-    () => biggestMoveInsight(periodRecords, priorPeriodRecords) ?? biggestMoveFromGalleryRows(topSellerAllRows),
-    [periodRecords, priorPeriodRecords, topSellerAllRows],
+    () => biggestMoveInsight(periodRecords, priorPeriodRecords),
+    [periodRecords, priorPeriodRecords],
   );
   const shareStatusText = shareStatus.toLowerCase();
   let shareStatusTone = "";
@@ -3831,35 +3831,6 @@ function biggestMoveInsight(records: SalesRecord[], priorRecords: SalesRecord[])
     .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta) || Math.abs(right.currentSales - right.priorSales) - Math.abs(left.currentSales - left.priorSales));
 
   const biggest = rows[0];
-  if (!biggest) return null;
-
-  return {
-    label: biggest.delta > 0 ? "Largest gain" : "Largest drop",
-    title: biggest.title,
-    delta: biggest.delta,
-    detail: `${biggest.style} | ${biggest.color} | ${numberText(biggest.currentUnits)} now vs ${numberText(biggest.priorUnits)} LY`,
-  };
-}
-
-function biggestMoveFromGalleryRows(rows: ProductGalleryItem[]): BiggestMoveInsight {
-  const rankedRows = rows
-    .filter((row) => row.priorYearUnits != null)
-    .map((row) => {
-      const priorUnits = row.priorYearUnits ?? 0;
-      return {
-        title: row.artCode,
-        delta: row.monthUnits - priorUnits,
-        currentUnits: row.monthUnits,
-        priorUnits,
-        currentSales: row.monthSales,
-        style: row.style,
-        color: row.color,
-      };
-    })
-    .filter((row) => row.delta !== 0)
-    .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta) || right.currentSales - left.currentSales);
-
-  const biggest = rankedRows[0];
   if (!biggest) return null;
 
   return {
