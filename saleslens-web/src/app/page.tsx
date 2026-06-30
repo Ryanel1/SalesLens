@@ -2337,10 +2337,6 @@ export default function Home() {
         <section className="dashboard" id="saleslens-dashboard">
           <header className="dashboardHeader dashboardTopSection">
             <div className="dashboardHeroIntro">
-              <div className="dashboardHeroKicker">
-                <p className="eyebrow">Sales Snapshot</p>
-                <span>{dashboardPeriodLabel}</span>
-              </div>
               <h2 className="dashboardAccountTitle">
                 <span>{dashboardAccountName}</span>
                 {dashboardAccountLogo ? (
@@ -2354,6 +2350,9 @@ export default function Home() {
                   />
                 ) : null}
               </h2>
+              <div className="dashboardHeroKicker">
+                <span>{dashboardPeriodLabel}</span>
+              </div>
             </div>
 
             <div className="controlDock">

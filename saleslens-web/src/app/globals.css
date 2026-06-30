@@ -3979,6 +3979,7 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  justify-content: flex-start;
 }
 
 .dashboardHeroKicker span {
@@ -4033,8 +4034,8 @@ select {
 
 .accountTeamLogo {
   flex: 0 0 auto;
-  height: 0.66em;
-  max-height: 0.66em;
+  height: 0.79em;
+  max-height: 0.79em;
   object-fit: contain;
   transform: translateY(0.03em);
   width: auto;
