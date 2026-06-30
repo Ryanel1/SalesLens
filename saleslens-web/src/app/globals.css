@@ -695,33 +695,35 @@ select {
 
 .modalOverlay {
   align-items: center;
-  background: rgba(36, 35, 33, 0.28);
+  background: rgba(20, 18, 15, 0.48);
   display: flex;
   inset: 0;
   justify-content: center;
-  padding: 1.25rem;
+  padding: clamp(1rem, 3vw, 2rem);
   position: fixed;
   z-index: 40;
 }
 
 .shareModal {
   background: var(--paper);
-  border: var(--hairline);
-  box-shadow: 0 30px 90px rgba(36, 35, 33, 0.22);
-  max-width: 620px;
-  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid rgba(20, 18, 15, 0.12);
+  box-shadow: 0 34px 90px rgba(20, 18, 15, 0.34);
+  max-width: 600px;
+  padding: clamp(1.35rem, 3vw, 2rem);
   position: relative;
-  width: min(100%, 620px);
+  width: min(100%, 600px);
 }
 
 .shareModal h3 {
   color: var(--soft-black);
-  font-size: clamp(2rem, 5vw, 3.4rem);
-  margin-bottom: 0.8rem;
+  font-size: clamp(2.15rem, 5vw, 3.15rem);
+  line-height: 0.95;
+  margin: 0.45rem 3rem 0.75rem 0;
 }
 
 .shareModal p {
   color: var(--taupe);
+  max-width: 34rem;
 }
 
 .importDateRange {
@@ -806,39 +808,16 @@ select {
   line-height: 1.45;
 }
 
-.shareAccountToggles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin: 1.25rem 0;
-}
-
-.shareAccountToggles button {
-  background: rgba(255, 253, 248, 0.72);
-  border: var(--hairline);
-  color: var(--charcoal);
-  cursor: pointer;
-  font-size: 0.88rem;
-  font-weight: 900;
-  min-height: 2.65rem;
-  min-width: 8.5rem;
-  padding: 0.65rem 1rem;
-  text-align: center;
-}
-
-.shareAccountToggles button.active {
-  background: var(--account-accent, var(--steel));
-  border-color: var(--account-accent, var(--steel));
-  color: var(--soft-black);
-}
-
 .shareGenerateButton {
-  background: var(--charcoal);
-  border: 1px solid var(--charcoal);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
   color: #fffdfa;
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 900;
-  min-height: 3rem;
+  letter-spacing: 0.01em;
+  margin-top: 1.1rem;
+  min-height: 3.1rem;
   text-transform: uppercase;
   width: 100%;
 }
@@ -1005,31 +984,78 @@ select {
 
 .modalCloseButton {
   align-items: center;
-  background: transparent;
-  border: 1px solid var(--stone-2);
-  color: var(--charcoal);
+  background: var(--surface-solid);
+  border: 1px solid rgba(20, 18, 15, 0.18);
+  border-radius: 0;
+  color: var(--ink);
+  cursor: pointer;
   display: flex;
-  font-weight: 900;
-  height: 2.25rem;
+  font-size: 0.9rem;
+  font-weight: 950;
+  height: 2.4rem;
   justify-content: center;
   position: absolute;
-  right: 1rem;
-  top: 1rem;
-  width: 2.25rem;
+  right: 1.25rem;
+  top: 1.25rem;
+  width: 2.4rem;
 }
 
 .shareLinkBox {
-  border: var(--hairline);
+  background: color-mix(in srgb, var(--pms-151) 8%, var(--surface-solid));
+  border: 1px solid color-mix(in srgb, var(--pms-151) 28%, rgba(20, 18, 15, 0.14));
+  border-radius: var(--radius);
   display: grid;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+}
+
+.shareLinkHeader {
+  align-items: center;
+  display: flex;
   gap: 0.85rem;
-  margin-top: 1.25rem;
-  padding: 1rem;
+  justify-content: space-between;
+}
+
+.shareLinkHeader span {
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shareLinkHeader button {
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  color: var(--surface-solid);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 950;
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  text-transform: uppercase;
+}
+
+.modalCloseButton:not(:disabled):hover,
+.shareLinkHeader button:not(:disabled):hover,
+.shareGenerateButton:not(:disabled):hover {
+  background: var(--surface-solid);
+  color: var(--ink);
 }
 
 .shareLinkBox a {
-  color: var(--steel-dark);
-  font-weight: 800;
+  background: var(--paper);
+  border: 1px solid rgba(20, 18, 15, 0.1);
+  border-radius: calc(var(--radius) - 4px);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.45;
   overflow-wrap: anywhere;
+  padding: 0.85rem;
+  text-decoration: none;
 }
 
 .overviewStrip {
@@ -5462,7 +5488,6 @@ select {
 .ghostButton,
 .dangerActionButton,
 .shareScopeGrid button,
-.shareAccountToggles button,
 .inventoryOption,
 .imageCacheControl button,
 .pagerControls button,
@@ -5485,7 +5510,6 @@ select {
 .ghostButton:not(:disabled):active,
 .dangerActionButton:not(:disabled):active,
 .shareScopeGrid button:not(:disabled):active,
-.shareAccountToggles button:not(:disabled):active,
 .inventoryOption:not(:disabled):active,
 .imageCacheControl button:not(:disabled):active,
 .pagerControls button:not(:disabled):active,
@@ -5494,7 +5518,6 @@ select {
 }
 
 .shareScopeGrid button:not(:disabled):hover,
-.shareAccountToggles button:not(:disabled):hover,
 .inventoryOption:not(.active):hover {
   background: color-mix(in srgb, var(--account-accent, var(--steel)) 10%, var(--surface-solid));
   border-color: color-mix(in srgb, var(--account-accent, var(--steel)) 28%, var(--line));
@@ -5505,8 +5528,9 @@ select {
   border-radius: var(--radius);
   display: flex;
   gap: 0.5rem;
-  margin: 0.8rem 0 0;
-  padding: 0.65rem 0.75rem;
+  margin: 0.85rem 0 0;
+  max-width: none;
+  padding: 0.75rem 0.85rem;
 }
 
 .shareStatus::before {
@@ -5519,7 +5543,7 @@ select {
 }
 
 .shareStatus.ready {
-  background: color-mix(in srgb, var(--state-success-soft) 88%, var(--surface-solid));
+  background: color-mix(in srgb, var(--state-success-soft) 78%, var(--surface-solid));
   color: var(--text);
 }
 
@@ -5543,6 +5567,14 @@ select {
 
 .shareLinkBox {
   animation: shareLinkReady var(--motion-medium) var(--ease-out-quart);
+}
+
+.shareModal > .eyebrow {
+  color: var(--taupe);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
 }
 
 .reportTrustNotice {
@@ -6332,6 +6364,28 @@ select {
 }
 
 @media (max-width: 760px) {
+  .modalOverlay {
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .shareModal {
+    margin: 0.5rem 0;
+  }
+
+  .shareModal h3 {
+    font-size: clamp(2rem, 13vw, 2.7rem);
+  }
+
+  .shareLinkHeader {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .shareLinkHeader button {
+    width: 100%;
+  }
+
   .sectionBlock .weeklyScorecardRow {
     grid-template-areas:
       "sales"
@@ -6402,7 +6456,6 @@ select {
   .ghostButton:not(:disabled):active,
   .dangerActionButton:not(:disabled):active,
   .shareScopeGrid button:not(:disabled):active,
-  .shareAccountToggles button:not(:disabled):active,
   .inventoryOption:not(:disabled):active,
   .imageCacheControl button:not(:disabled):active,
   .pagerControls button:not(:disabled):active,

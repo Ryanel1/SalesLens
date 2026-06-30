@@ -15,7 +15,7 @@ import {
 } from "@/lib/reportData";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
-import type { ReportSnapshotBundlePayload, ReportSnapshotPayload } from "@/lib/reportSnapshot";
+import type { ReportSnapshotPayload } from "@/lib/reportSnapshot";
 import type { Customer } from "@/lib/types";
 
 type RebelRagsImageMatch = {
@@ -502,7 +502,6 @@ export default function Home() {
   const [importRangeEnd, setImportRangeEnd] = useState("");
   const [dashboardStatus, setDashboardStatus] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [selectedShareCustomerIds, setSelectedShareCustomerIds] = useState<string[]>([]);
   const [shareStatus, setShareStatus] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const inventoryControlsRef = useRef<HTMLDivElement | null>(null);
@@ -1319,28 +1318,13 @@ export default function Home() {
     setStatus("");
   }
 
-  function toggleShareCustomer(customerId: string) {
-    setSelectedShareCustomerIds((current) => {
-      if (current.includes(customerId)) {
-        return current.length === 1 ? current : current.filter((id) => id !== customerId);
-      }
-      return [...current, customerId];
-    });
-    setShareStatus("");
-    setShareUrl("");
-  }
-
-  async function createShareLink(customerIds = selectedShareCustomerIds) {
-    if (!supabase || !selectedCustomer || !user || !period || !customerIds.length) return;
+  async function createShareLink() {
+    if (!supabase || !selectedCustomer || !user || !period) return;
     const client = supabase;
     const activePeriod = period;
-    const shareCustomers = customers.filter((customer) => customerIds.includes(customer.id));
-    if (!shareCustomers.length) return;
-    const primaryCustomer = shareCustomers[0];
-    if (!primaryCustomer) return;
-    const isMultiAccount = shareCustomers.length > 1;
+    const primaryCustomer = selectedCustomer;
 
-    setShareStatus(isMultiAccount ? "Generating multi-account share link..." : "Generating share link...");
+    setShareStatus("Generating share link...");
     setShareUrl("");
 
     const token = createReportToken();
@@ -1380,37 +1364,20 @@ export default function Home() {
       return { ...payload.report, generatedAt };
     }
 
-    let reports: ReportSnapshotPayload[];
+    let primaryReport: ReportSnapshotPayload;
     try {
-      reports = await Promise.all(shareCustomers.map(reportForCustomer));
+      primaryReport = await reportForCustomer(primaryCustomer);
     } catch (error) {
       setShareStatus(error instanceof Error ? error.message : "Unable to generate share link.");
       return;
     }
-    const primaryReport = reports[0];
-    if (!primaryReport) return;
-    const title = isMultiAccount
-      ? `${shareCustomers.map((customer) => customer.name).join(" + ")} ${selectedPeriodTitle} Sales Snapshot`
-      : `${primaryCustomer.name} ${selectedPeriodTitle} Sales Snapshot`;
-    const payload: ReportSnapshotPayload | ReportSnapshotBundlePayload = isMultiAccount
-      ? {
-          version: 1,
-          reportKind: "account_bundle",
-          generatedAt,
-          accountName: shareCustomers.map((customer) => customer.name).join(" + "),
-          brandFilter,
-          periodMode: selectedPeriodKind === "month" ? "monthly" : "ytd",
-          selectedMonth: periodEndMonth,
-          periodTitle: selectedPeriodTitle,
-          priorPeriodTitle,
-          reports,
-        }
-      : primaryReport;
+    const title = `${primaryCustomer.name} ${selectedPeriodTitle} Sales Snapshot`;
+    const payload: ReportSnapshotPayload = primaryReport;
 
     const { error } = await client.from("report_snapshots").insert({
       token,
       title,
-      customer_id: isMultiAccount ? null : primaryCustomer.id,
+      customer_id: primaryCustomer.id,
       created_by: user.id,
       payload,
     });
@@ -2018,7 +1985,6 @@ export default function Home() {
                   onClick={() => {
                     setNavActionMenuOpen(false);
                     setShareModalOpen(true);
-                    setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
                     setShareStatus("");
                     setShareUrl("");
                   }}
@@ -2409,36 +2375,22 @@ export default function Home() {
                 </button>
                 <p className="eyebrow">Share Snapshot</p>
                 <h3 id="share-report-title">Create report link</h3>
-                <p>Select one account for an account-only link, or select multiple accounts for a combined review.</p>
+                <p>Create a shareable report link for the current account and period.</p>
 
-                <div className="shareAccountToggles" aria-label="Share report accounts">
-                  {customers.map((customer) => {
-                    const isSelected = selectedShareCustomerIds.includes(customer.id);
-                    return (
-                      <button
-                        aria-pressed={isSelected}
-                        className={isSelected ? "active" : ""}
-                        key={customer.id}
-                        onClick={() => toggleShareCustomer(customer.id)}
-                        type="button"
-                      >
-                        {customer.name}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button className="shareGenerateButton" type="button" onClick={() => createShareLink()} disabled={!selectedShareCustomerIds.length || shareStatus.includes("Generating")}>
-                  Generate {selectedShareCustomerIds.length > 1 ? "Multi-Account" : "Account"} Link
+                <button className="shareGenerateButton" type="button" onClick={() => createShareLink()} disabled={!selectedCustomerId || !period || shareStatus.includes("Generating")}>
+                  Generate Report Link
                 </button>
 
                 {shareStatus ? <p className={shareStatusClassName}>{shareStatus}</p> : null}
                 {shareUrl ? (
                   <div className="shareLinkBox">
+                    <div className="shareLinkHeader">
+                      <span>Report URL</span>
+                      <button type="button" onClick={() => void copyShareLink()}>
+                        Copy Link
+                      </button>
+                    </div>
                     <a href={shareUrl} target="_blank" rel="noreferrer">{shareUrl}</a>
-                    <button className="ghostButton" type="button" onClick={() => void copyShareLink()}>
-                      Copy Link
-                    </button>
                   </div>
                 ) : null}
               </section>
