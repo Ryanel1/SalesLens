@@ -3976,9 +3976,10 @@ select {
 }
 
 .dashboardHeroKicker span {
-  border: 1px solid rgba(255, 254, 250, 0.22);
+  background: var(--account-accent, var(--steel));
+  border: 1px solid var(--account-accent, var(--steel));
   border-radius: 999px;
-  color: rgba(255, 254, 250, 0.78);
+  color: var(--soft-black);
   font-size: var(--type-caption);
   font-weight: 850;
   min-height: 30px;
@@ -4018,8 +4019,8 @@ select {
 }
 
 .dashboardScoreboard {
-  background: rgba(255, 254, 250, 0.08);
-  border: 1px solid rgba(255, 254, 250, 0.16);
+  background: color-mix(in srgb, var(--account-accent, var(--steel)) 18%, rgba(255, 254, 250, 0.08));
+  border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(255, 254, 250, 0.16));
   display: grid;
   gap: 1px;
   grid-area: score;
@@ -4034,7 +4035,8 @@ select {
 
 .dashboardScoreboard > div {
   align-content: end;
-  background: rgba(21, 18, 15, 0.46);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--account-accent, var(--steel)) 13%, rgba(21, 18, 15, 0.55)), rgba(21, 18, 15, 0.42));
   display: grid;
   gap: 0.45rem;
   min-height: clamp(104px, 8.5vw, 132px);
@@ -4043,7 +4045,7 @@ select {
 
 .dashboardScoreboard .scoreboardPrimary {
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--account-accent, var(--steel)) 26%, rgba(21, 18, 15, 0.9)), rgba(21, 18, 15, 0.5));
+    linear-gradient(135deg, color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(21, 18, 15, 0.9)), rgba(21, 18, 15, 0.5));
 }
 
 .dashboardScoreboard span {
@@ -4105,7 +4107,8 @@ select {
 }
 
 .dashboardScoreboard.pending > div {
-  background: rgba(21, 18, 15, 0.34);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--account-accent, var(--steel)) 16%, rgba(21, 18, 15, 0.46)), rgba(21, 18, 15, 0.34));
 }
 
 .dashboardScoreboard.pending strong {
@@ -4325,7 +4328,7 @@ select {
 }
 
 .sectionTitle h3 {
-  color: var(--text);
+  color: color-mix(in srgb, var(--account-accent, var(--steel)) 42%, var(--text));
   font-size: var(--type-section-title);
   font-weight: 860;
   letter-spacing: 0;
@@ -4454,6 +4457,26 @@ select {
 
 .lineCard.comparativeChart svg {
   overflow: visible;
+}
+
+.lineCard,
+.ytdTrackerTiles .metric,
+.ytdTrackerTiles .ytdInsightCard,
+.sectionBlock .monthlyScorecardTakeaways,
+.sectionBlock .monthlyScorecardMetrics .driverTile,
+.sectionBlock .weeklyScorecardRow,
+.sectionBlock .weeklyTopProduct,
+.artGrid .artCard:not(:first-child),
+.topSalesProduct {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--account-accent, var(--steel)) 8%, var(--flat-card)), var(--flat-card));
+  border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 20%, var(--line));
+}
+
+.ytdTrackerTiles .metric:nth-child(3),
+.ytdTrackerTiles .productBreadthCard {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--account-accent, var(--steel)) 14%, var(--flat-card)), var(--flat-card));
 }
 
 .studyTabs button,
@@ -4767,7 +4790,7 @@ select {
 
 .sectionBlock .monthlyScorecardHero {
   background:
-    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 24%, rgba(21, 18, 15, 0.92)));
+    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 36%, rgba(21, 18, 15, 0.9)));
   color: #fffefa;
 }
 
@@ -4810,10 +4833,10 @@ select {
 
 .sectionBlock .weeklyDateRail {
   align-items: baseline;
-  background: var(--soft-black);
+  background: var(--account-accent, var(--soft-black));
   border: 0;
   border-radius: var(--radius-soft) var(--radius-soft) var(--radius-soft) 0;
-  color: var(--paper);
+  color: var(--soft-black);
   display: inline-flex;
   gap: 0.45rem;
   left: 0;
@@ -4963,7 +4986,7 @@ select {
 .artGrid .artCard:first-child .artMeta {
   align-content: center;
   background:
-    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 18%, rgba(21, 18, 15, 0.95)));
+    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 34%, rgba(21, 18, 15, 0.92)));
   color: #fffefa;
   display: grid;
   gap: 1rem;
