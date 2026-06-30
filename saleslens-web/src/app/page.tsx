@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { ParsedInventoryRecord, ParsedSalesRecord, SalesImportOptions } from "@/lib/importSalesData";
+import { ReportHeroHeader, accountThemeClass } from "@/components/ReportHeroHeader";
 import {
   type DashboardData,
   type DashboardShellSummary,
@@ -1062,7 +1063,6 @@ export default function Home() {
   const dashboardHeroPeriodLabel = heroPeriodLabel(period, periodEndMonth);
   const dashboardPriorLabel = priorPeriodTitle === "-" ? "Waiting for data" : priorPeriodTitle;
   const dashboardAccountName = selectedCustomer?.name ?? "Account";
-  const dashboardAccountLogo = accountTeamLogo(dashboardAccountName);
   const dashboardScoreTone = isTotalsPreparing || isTotalsBlocked ? "pending" : changeClass(monthlySalesDelta);
   const dashboardScoreChange =
     isTotalsPreparing ? "Preparing report" : isTotalsBlocked ? "Report unavailable" : currentMetrics.sales || priorMetrics.sales ? changeText(currentMetrics.sales, priorMetrics.sales) : "Confirmed zero";
@@ -2374,55 +2374,22 @@ export default function Home() {
         ) : null}
 
         <section className="dashboard" id="saleslens-dashboard">
-          <header className="dashboardHeader dashboardTopSection">
-            <div className="dashboardHeroIntro">
-              <h2 className="dashboardAccountTitle">
-                <span>{dashboardAccountName}</span>
-                {dashboardAccountLogo ? (
-                  <Image
-                    className="accountTeamLogo"
-                    src={dashboardAccountLogo.src}
-                    alt=""
-                    aria-hidden="true"
-                    width={dashboardAccountLogo.width}
-                    height={dashboardAccountLogo.height}
-                  />
-                ) : null}
-              </h2>
-              <div className="dashboardHeroKicker">
-                <span>{dashboardHeroPeriodLabel}</span>
-              </div>
-            </div>
-
-            <aside className="dashboardHeroContact" aria-label="Sales representative contact">
-              <strong>Ryan Lester</strong>
-              <a href="tel:+15026897374">Phone: (502) 689-7374</a>
-              <a href="mailto:ryanlestersells@gmail.com">Email: ryanlestersells@gmail.com</a>
-              <a href="https://www.lestersales.net" target="_blank" rel="noreferrer">Website: www.lestersales.net</a>
-            </aside>
-
-            <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
-              <div className="scoreboardPrimary">
-                <span>{isTotalsPreparing ? "Preparing Sales" : isTotalsBlocked ? "Sales Unavailable" : "Current Sales"}</span>
-                <strong>{dashboardCurrentSalesText}</strong>
-                <em>{isTotalsPreparing ? "Report is loading" : isTotalsBlocked ? "No verified totals shown" : dashboardPeriodLabel}</em>
-              </div>
-              <div>
-                <span>Vs Last Year</span>
-                <strong className="scoreDeltaValue">
-                  <span>{dashboardScoreChange}</span>
-                  {dashboardScoreCurrency ? <span>{dashboardScoreCurrency}</span> : null}
-                </strong>
-                <em>{dashboardPriorLabel}</em>
-              </div>
-              <div>
-                <span>Units</span>
-                <strong>{dashboardCurrentUnitsText}</strong>
-                <em>{dashboardPriorUnitsText}</em>
-              </div>
-            </div>
-
-          </header>
+          <ReportHeroHeader
+            accountName={dashboardAccountName}
+            comparisonDetail={dashboardScoreCurrency}
+            comparisonLabel="Vs Last Year"
+            comparisonValue={dashboardScoreChange}
+            currentSalesDetail={isTotalsPreparing ? "Report is loading" : isTotalsBlocked ? "No verified totals shown" : dashboardPeriodLabel}
+            currentSalesLabel={isTotalsPreparing ? "Preparing Sales" : isTotalsBlocked ? "Sales Unavailable" : "Current Sales"}
+            currentSalesValue={dashboardCurrentSalesText}
+            periodPillLabel={dashboardHeroPeriodLabel}
+            priorDetail={dashboardPriorLabel}
+            scoreAriaLabel={`${dashboardPeriodLabel} sales snapshot`}
+            scoreTone={dashboardScoreTone}
+            unitsDetail={dashboardPriorUnitsText}
+            unitsLabel="Units"
+            unitsValue={dashboardCurrentUnitsText}
+          />
 
           {shareModalOpen ? (
             <div className="modalOverlay" role="presentation">
@@ -2815,20 +2782,6 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
       <strong>{value}</strong>
     </article>
   );
-}
-
-function accountThemeClass(name?: string | null) {
-  const normalized = (name ?? "").toLowerCase();
-  if (normalized.includes("rebel")) return "accountThemeRebelRags";
-  if (normalized.includes("volshop") || normalized.includes("vol shop")) return "accountThemeVolshop";
-  return "accountThemeDefault";
-}
-
-function accountTeamLogo(name?: string | null) {
-  const normalized = (name ?? "").toLowerCase();
-  if (normalized.includes("rebel")) return { src: "/images/account-logos/ole-miss.png", width: 405, height: 369 };
-  if (normalized.includes("volshop") || normalized.includes("vol shop")) return { src: "/images/account-logos/tennessee.png", width: 951, height: 951 };
-  return null;
 }
 
 function YtdInsightCard({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {

@@ -5353,6 +5353,11 @@ select {
   width: 100%;
 }
 
+.sharedProductGallerySummary {
+  color: var(--taupe);
+  margin: -0.45rem 0 1rem;
+}
+
 .modalOverlay {
   animation: modalBackdropIn var(--motion-medium) var(--ease-out-quart);
 }

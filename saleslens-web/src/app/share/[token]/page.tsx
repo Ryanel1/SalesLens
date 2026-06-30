@@ -1,7 +1,9 @@
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
-import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
+import { ReportHeroHeader, accountThemeClass } from "@/components/ReportHeroHeader";
+import { currencyText, dateText, decimalText, monthText, numberText } from "@/lib/formatters";
 import { getSupabaseConfig } from "@/lib/supabase/config";
+import { SharedProductGallery, type SharedProductGalleryItem } from "./SharedProductGallery";
 import {
   isReportSnapshotBundlePayload,
   isShareSnapshotPayload,
@@ -63,17 +65,6 @@ function ProductMedia({
   );
 }
 
-function SalesRepContactCard() {
-  return (
-    <div className="publicContactCard dashboardHeroContact">
-      <strong>Ryan Lester</strong>
-      <a href="tel:+15026897374">Phone: (502) 689-7374</a>
-      <a href="mailto:ryanlestersells@gmail.com">Email: ryanlestersells@gmail.com</a>
-      <a href="https://www.lestersales.net" target="_blank" rel="noreferrer">Website: www.lestersales.net</a>
-    </div>
-  );
-}
-
 export default async function SharedReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const snapshot = await loadSnapshot(token);
@@ -125,7 +116,6 @@ function SharedReportBundle({ payload }: { payload: ReportSnapshotBundlePayload 
             </div>
 
             <aside className="publicHeaderAside">
-              <SalesRepContactCard />
               <div className="publicContextCard">
                 <div>
                   <span>Brand/Class</span>
@@ -161,36 +151,28 @@ function SharedReportBundle({ payload }: { payload: ReportSnapshotBundlePayload 
 
 function SharedAccountReport({ payload, embedded = false }: { payload: ReportSnapshotPayload; embedded?: boolean }) {
   const Shell = embedded ? "div" : "main";
-  const productGalleryRows = sharedProductGalleryRows(payload);
+  const performanceProductGalleryRows = sharedPerformanceProductGalleryRows(payload);
+  const inventoryProductGalleryRows = sharedInventoryProductGalleryRows(payload);
 
   return (
     <Shell className={embedded ? "" : `publicShell ${accountThemeClass(payload.accountName)}`}>
       <section className={embedded ? "publicAccountReport" : "publicReport"} id={embedded ? undefined : "saleslens-report-capture"}>
-        {!embedded ? (
-          <header className="dashboardHeader publicDashboardHeader">
-            <div>
-              <div className="navBrand publicShareBrand">
-                <h1>SalesLens</h1>
-                <p>by Lester Sales</p>
-              </div>
-              <h1>{payload.accountName}</h1>
-            </div>
-
-            <aside className="publicHeaderAside">
-              <SalesRepContactCard />
-              <div className="publicContextCard">
-                <div>
-                  <span>Brand/Class</span>
-                  <strong>{payload.brandFilter}</strong>
-                </div>
-                <div>
-                  <span>Period</span>
-                  <strong>{payload.periodTitle}</strong>
-                </div>
-              </div>
-            </aside>
-          </header>
-        ) : null}
+        <ReportHeroHeader
+          accountName={payload.accountName}
+          comparisonDetail={payload.currentMetrics.sales || payload.priorMetrics.sales ? signedCurrencyText(payload.currentMetrics.sales - payload.priorMetrics.sales) : ""}
+          comparisonLabel="Vs Last Year"
+          comparisonValue={payload.currentMetrics.sales || payload.priorMetrics.sales ? changeText(payload.currentMetrics.sales, payload.priorMetrics.sales) : "Confirmed zero"}
+          currentSalesDetail={payload.periodTitle}
+          currentSalesLabel="Current Sales"
+          currentSalesValue={currencyText(payload.currentMetrics.sales)}
+          periodPillLabel={shareHeroPeriodLabel(payload)}
+          priorDetail={payload.priorPeriodTitle}
+          scoreAriaLabel={`${payload.periodTitle} sales snapshot`}
+          scoreTone={changeClass(payload.currentMetrics.sales - payload.priorMetrics.sales)}
+          unitsDetail={`${numberText(payload.priorMetrics.units)} LY`}
+          unitsLabel="Units"
+          unitsValue={numberText(payload.currentMetrics.units)}
+        />
 
         <ReportSection
           title={payload.periodMode === "ytd" ? "Year Scorecard" : "YTD Scorecard"}
@@ -251,49 +233,15 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
           </ReportSection>
         ) : null}
 
-        {productGalleryRows.length ? (
+        {performanceProductGalleryRows.length || inventoryProductGalleryRows.length ? (
           <ReportSection
             title="Product Performance and Inventory"
           >
-            <div className="artGrid">
-              {productGalleryRows.map((row) => (
-                <article className="artCard" key={row.key}>
-                  <div className="artImage">
-                    <b>#{row.rank}</b>
-                    {row.imageUrl ? (
-                      <ProductMedia
-                        alt={`${row.style} ${row.artCode}`}
-                        sizes="(max-width: 760px) 50vw, (max-width: 1180px) 25vw, 220px"
-                        src={row.imageUrl}
-                      />
-                    ) : <span>No Image</span>}
-                  </div>
-                  <div className="artMeta">
-                    <div className="artIdentity">
-                      {row.productUrl ? (
-                        <a className="artCodeLink" href={row.productUrl} target="_blank" rel="noreferrer">
-                          {row.artCode}
-                        </a>
-                      ) : (
-                        <strong>{row.artCode}</strong>
-                      )}
-                      <span>{row.style} | {row.color}</span>
-                    </div>
-                    <div className="artStats">
-                    {row.inventoryUnits != null ? (
-                      <span><em>On-Hand</em><strong>{numberText(row.inventoryUnits)} Units</strong></span>
-                    ) : null}
-                    {row.inventoryUnits != null ? <i aria-hidden="true" className="artStatsDivider" /> : null}
-                    {row.periodUnits > 0 || row.periodSales > 0 ? (
-                      <span><em>{payload.periodMode === "monthly" ? "Month" : "Year"}</em><strong>{productCardSalesText(row.periodUnits, row.periodSales)}</strong></span>
-                    ) : null}
-                    <span><em>YTD</em><strong>{productCardSalesText(row.ytdUnits, row.ytdSales)}</strong></span>
-                    <span><em>LY</em><strong>{inventoryPriorYearSoldText(row)}</strong></span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <SharedProductGallery
+              inventoryRows={inventoryProductGalleryRows}
+              performanceRows={performanceProductGalleryRows}
+              periodMode={payload.periodMode}
+            />
           </ReportSection>
         ) : null}
 
@@ -905,39 +853,21 @@ function changeClass(value: number) {
   return "neutral";
 }
 
-function accountThemeClass(name?: string | null) {
-  const normalized = (name ?? "").toLowerCase();
-  if (normalized.includes("rebel")) return "accountThemeRebelRags";
-  if (normalized.includes("volshop") || normalized.includes("vol shop")) return "accountThemeVolshop";
-  return "accountThemeDefault";
+function shareHeroPeriodLabel(payload: ReportSnapshotPayload) {
+  if (payload.selectedMonth) return `Showing ${monthText(payload.selectedMonth)}`;
+  return `Showing ${payload.periodTitle}`;
 }
 
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
 }
 
-type SharedProductGalleryRow = {
-  rank: number;
-  key: string;
-  style: string;
-  color: string;
-  artCode: string;
-  periodUnits: number;
-  periodSales: number;
-  ytdUnits: number;
-  ytdSales: number;
-  priorYearUnits?: number | null;
-  priorYtdUnits?: number | null;
-  inventoryUnits?: number | null;
-  imageUrl: string | null;
-  productUrl?: string | null;
-};
+function sharedPerformanceProductGalleryRows(payload: ReportSnapshotPayload): SharedProductGalleryItem[] {
+  const inventoryRows = new Map(sharedInventoryProductGalleryRows(payload).map((row) => [row.key, row]));
 
-function sharedProductGalleryRows(payload: ReportSnapshotPayload): SharedProductGalleryRow[] {
-  const rows = new Map<string, SharedProductGalleryRow>();
-
-  payload.topArt.forEach((row) => {
-    rows.set(row.key, {
+  return payload.topArt.map((row, index) => {
+    const inventoryRow = inventoryRows.get(row.key);
+    return {
       rank: row.rank,
       key: row.key,
       style: row.style,
@@ -948,61 +878,39 @@ function sharedProductGalleryRows(payload: ReportSnapshotPayload): SharedProduct
       ytdUnits: row.cyUnits,
       ytdSales: row.cySales,
       priorYearUnits: row.priorYearUnits,
-      inventoryUnits: row.inventoryUnits,
-      imageUrl: row.imageUrl,
-      productUrl: row.productUrl,
-    });
-  });
+      priorYtdUnits: inventoryRow?.priorYtdUnits,
+      inventoryUnits: row.inventoryUnits ?? inventoryRow?.inventoryUnits,
+      audience: inventoryRow?.audience,
+      productCategory: inventoryRow?.productCategory,
+      imageUrl: row.imageUrl ?? inventoryRow?.imageUrl ?? null,
+      productUrl: row.productUrl ?? inventoryRow?.productUrl,
+    };
+  }).map((row, index) => ({ ...row, rank: index + 1 }));
+}
 
-  (payload.inventoryTracker ?? []).forEach((row) => {
-    const existing = rows.get(row.key);
-    if (existing) {
-      rows.set(row.key, {
-        ...existing,
-        ytdUnits: existing.ytdUnits || row.ytdUnits || 0,
-        ytdSales: existing.ytdSales || row.ytdSales || 0,
-        priorYearUnits: existing.priorYearUnits ?? row.priorYearUnits,
-        priorYtdUnits: row.priorYtdUnits,
-        inventoryUnits: row.inventoryUnits,
-        imageUrl: existing.imageUrl ?? row.imageUrl,
-        productUrl: existing.productUrl ?? row.productUrl,
-      });
-      return;
-    }
-
-    rows.set(row.key, {
-      rank: row.rank,
-      key: row.key,
-      style: row.style,
-      color: row.color,
-      artCode: row.artCode,
-      periodUnits: 0,
-      periodSales: 0,
-      ytdUnits: row.ytdUnits ?? 0,
-      ytdSales: row.ytdSales ?? 0,
-      priorYearUnits: row.priorYearUnits,
-      priorYtdUnits: row.priorYtdUnits,
-      inventoryUnits: row.inventoryUnits,
-      imageUrl: row.imageUrl,
-      productUrl: row.productUrl,
-    });
-  });
-
-  return [...rows.values()].map((row, index) => ({ ...row, rank: index + 1 }));
+function sharedInventoryProductGalleryRows(payload: ReportSnapshotPayload): SharedProductGalleryItem[] {
+  return (payload.inventoryTracker ?? []).map((row, index) => ({
+    rank: row.rank || index + 1,
+    key: row.key,
+    style: row.style,
+    color: row.color,
+    artCode: row.artCode,
+    periodUnits: 0,
+    periodSales: 0,
+    ytdUnits: row.ytdUnits ?? 0,
+    ytdSales: row.ytdSales ?? 0,
+    priorYearUnits: row.priorYearUnits,
+    priorYtdUnits: row.priorYtdUnits,
+    inventoryUnits: row.inventoryUnits,
+    audience: row.audience,
+    productCategory: row.productCategory,
+    imageUrl: row.imageUrl,
+    productUrl: row.productUrl,
+  })).map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 function countText(value: number, singular: string, plural: string) {
   return `${numberText(value)} ${value === 1 ? singular : plural}`;
-}
-
-function inventoryPriorYearSoldText(row: { priorYearUnits?: number | null; priorYtdUnits?: number | null }) {
-  const value = Object.prototype.hasOwnProperty.call(row, "priorYearUnits") ? row.priorYearUnits : row.priorYtdUnits;
-  return value == null ? "NA" : `${numberText(value)} Units`;
-}
-
-function productCardSalesText(units: number, sales: number | null | undefined) {
-  const unitText = `${numberText(units)} Units`;
-  return sales ? `${unitText} (${wholeCurrencyText(sales)})` : unitText;
 }
 
 function inventoryPositionFallback(
