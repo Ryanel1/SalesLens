@@ -63,6 +63,18 @@ function ProductMedia({
   );
 }
 
+function SalesRepContactCard() {
+  return (
+    <div className="publicContactCard dashboardHeroContact">
+      <span>Sales Rep</span>
+      <strong>Ryan Lester</strong>
+      <a href="tel:+15026897374">Phone: (502) 689-7374</a>
+      <a href="mailto:ryanlestersells@gmail.com">Email: ryanlestersells@gmail.com</a>
+      <a href="https://www.lestersales.net" target="_blank" rel="noreferrer">Website: www.lestersales.net</a>
+    </div>
+  );
+}
+
 export default async function SharedReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const snapshot = await loadSnapshot(token);
@@ -114,12 +126,7 @@ function SharedReportBundle({ payload }: { payload: ReportSnapshotBundlePayload 
             </div>
 
             <aside className="publicHeaderAside">
-              <div className="publicContactCard">
-                <span>Sales Rep: Ryan Lester</span>
-                <span>Phone: (502) 689-7374</span>
-                <span>Email: ryanlestersells@gmail.com</span>
-                <span>Website: www.lestersales.net</span>
-              </div>
+              <SalesRepContactCard />
               <div className="publicContextCard">
                 <div>
                   <span>Brand/Class</span>
@@ -171,12 +178,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
             </div>
 
             <aside className="publicHeaderAside">
-              <div className="publicContactCard">
-                <span>Sales Rep: Ryan Lester</span>
-                <span>Phone: (502) 689-7374</span>
-                <span>Email: ryanlestersells@gmail.com</span>
-                <span>Website: www.lestersales.net</span>
-              </div>
+              <SalesRepContactCard />
               <div className="publicContextCard">
                 <div>
                   <span>Brand/Class</span>
@@ -252,7 +254,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
 
         {productGalleryRows.length ? (
           <ReportSection
-            title="Product Assortment"
+            title="Product Performance and Inventory"
           >
             <div className="artGrid">
               {productGalleryRows.map((row) => (
@@ -987,7 +989,7 @@ function sharedProductGalleryRows(payload: ReportSnapshotPayload): SharedProduct
     });
   });
 
-  return [...rows.values()].slice(0, 50).map((row, index) => ({ ...row, rank: index + 1 }));
+  return [...rows.values()].map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 function countText(value: number, singular: string, plural: string) {

@@ -4093,30 +4093,31 @@ select {
   text-transform: uppercase;
 }
 
-.dashboardHeroInsight {
+.dashboardHeroContact {
   align-content: center;
   align-self: center;
   background: rgba(21, 18, 15, 0.66);
   border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 34%, rgba(255, 254, 250, 0.16));
   display: grid;
-  gap: 0.42rem;
+  gap: 0.3rem;
   grid-area: insight;
+  justify-items: end;
   justify-self: end;
   min-height: 104px;
   padding: clamp(0.85rem, 1.35vw, 1.1rem);
   position: relative;
+  text-align: right;
   width: min(100%, 460px);
   z-index: 1;
 }
 
-.dashboardHeroInsight span,
-.dashboardHeroInsight em,
-.dashboardHeroInsight small {
+.dashboardHeroContact span,
+.dashboardHeroContact a {
   font-style: normal;
   line-height: 1.2;
 }
 
-.dashboardHeroInsight span {
+.dashboardHeroContact span {
   color: rgba(255, 254, 250, 0.62);
   font-size: var(--type-label);
   font-weight: 900;
@@ -4124,28 +4125,28 @@ select {
   text-transform: uppercase;
 }
 
-.dashboardHeroInsight strong {
+.dashboardHeroContact strong {
   color: var(--on-ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 2.35vw, 2.4rem);
-  font-weight: 800;
+  font-size: clamp(1.15rem, 1.55vw, 1.45rem);
+  font-weight: 900;
   letter-spacing: 0;
-  line-height: 0.9;
+  line-height: 1;
   overflow-wrap: anywhere;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-.dashboardHeroInsight em {
-  color: var(--hero-positive);
-  font-size: 0.92rem;
-  font-weight: 850;
-}
-
-.dashboardHeroInsight small {
-  color: rgba(255, 254, 250, 0.72);
+.dashboardHeroContact a {
+  color: rgba(255, 254, 250, 0.76);
   font-size: var(--type-caption);
   font-weight: 750;
+  max-width: 100%;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dashboardHeroContact a:hover {
+  color: var(--account-accent, var(--on-ink));
 }
 
 .dashboardHeader .eyebrow,
@@ -5857,6 +5858,32 @@ select {
   text-align: right;
 }
 
+.publicReport > .publicDashboardHeader .publicContactCard.dashboardHeroContact,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContactCard.dashboardHeroContact {
+  background: rgba(21, 18, 15, 0.92);
+  border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 44%, rgba(255, 254, 250, 0.16));
+  color: var(--on-ink);
+  gap: 0.3rem;
+  min-height: 104px;
+  padding: clamp(0.85rem, 1.35vw, 1.1rem);
+  width: 100%;
+}
+
+.publicReport > .publicDashboardHeader .publicContactCard.dashboardHeroContact span,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContactCard.dashboardHeroContact span {
+  color: rgba(255, 254, 250, 0.62);
+}
+
+.publicReport > .publicDashboardHeader .publicContactCard.dashboardHeroContact strong,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContactCard.dashboardHeroContact strong {
+  color: var(--on-ink);
+}
+
+.publicReport > .publicDashboardHeader .publicContactCard.dashboardHeroContact a,
+.publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContactCard.dashboardHeroContact a {
+  color: rgba(255, 254, 250, 0.76);
+}
+
 .publicReport > .publicDashboardHeader .publicContextCard,
 .publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContextCard {
   background: var(--flat-card);
@@ -6110,7 +6137,7 @@ select {
       "score";
   }
 
-  .dashboardHeroInsight {
+  .dashboardHeroContact {
     justify-self: stretch;
     min-height: 0;
     width: 100%;

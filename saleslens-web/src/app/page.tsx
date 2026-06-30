@@ -201,13 +201,6 @@ type ProductGalleryItem = {
   productUrl: string | null;
 };
 
-type BiggestMoveInsight = {
-  label: string;
-  title: string;
-  delta: number;
-  detail: string;
-} | null;
-
 type TopStyle = MetricSet & {
   rank: number;
   style: string;
@@ -1077,10 +1070,6 @@ export default function Home() {
   const dashboardCurrentSalesText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : currencyText(currentMetrics.sales);
   const dashboardCurrentUnitsText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : numberText(currentMetrics.units);
   const dashboardPriorUnitsText = isTotalsPreparing ? "Waiting for report" : isTotalsBlocked ? "No verified report" : `${numberText(priorMetrics.units)} LY`;
-  const dashboardBiggestMove = useMemo(
-    () => biggestMoveInsight(periodRecords, priorPeriodRecords),
-    [periodRecords, priorPeriodRecords],
-  );
   const shareStatusText = shareStatus.toLowerCase();
   let shareStatusTone = "";
   if (shareUrl) {
@@ -2405,19 +2394,12 @@ export default function Home() {
               </div>
             </div>
 
-            <aside className="dashboardHeroInsight" aria-label="Biggest move">
-              <span>Biggest Move</span>
-              <strong>{isTotalsPreparing ? "Preparing report" : isTotalsBlocked ? "Report unavailable" : dashboardBiggestMove?.title ?? "Waiting for comparison"}</strong>
-              <em>
-                {isTotalsPreparing
-                  ? "Calculating period movement"
-                  : isTotalsBlocked
-                    ? "No verified movement shown"
-                    : dashboardBiggestMove
-                      ? `${dashboardBiggestMove.label} ${signedNumberText(dashboardBiggestMove.delta)} units`
-                      : "Needs current and prior product data"}
-              </em>
-              {dashboardBiggestMove && !isTotalsPreparing && !isTotalsBlocked ? <small>{dashboardBiggestMove.detail}</small> : null}
+            <aside className="dashboardHeroContact" aria-label="Sales representative contact">
+              <span>Sales Rep</span>
+              <strong>Ryan Lester</strong>
+              <a href="tel:+15026897374">Phone: (502) 689-7374</a>
+              <a href="mailto:ryanlestersells@gmail.com">Email: ryanlestersells@gmail.com</a>
+              <a href="https://www.lestersales.net" target="_blank" rel="noreferrer">Website: www.lestersales.net</a>
             </aside>
 
             <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
@@ -3793,52 +3775,6 @@ function topArtRows(
     .sort(sort === "dollars" ? sortBySales : sortByUnits);
   const limitedRows = limit == null ? rows : rows.slice(0, limit);
   return limitedRows.map((row, index) => ({ ...row, rank: index + 1 }));
-}
-
-function biggestMoveInsight(records: SalesRecord[], priorRecords: SalesRecord[]): BiggestMoveInsight {
-  if (!records.length || !priorRecords.length) return null;
-
-  const currentGroups = groupBy(records, artKey);
-  const priorGroups = groupBy(priorRecords, artKey);
-  const keys = new Set([...currentGroups.keys(), ...priorGroups.keys()]);
-  const rows = [...keys]
-    .map((key) => {
-      const currentGroup = currentGroups.get(key) ?? [];
-      const priorGroup = priorGroups.get(key) ?? [];
-      const first = currentGroup[0] ?? priorGroup[0];
-      if (!first) return null;
-
-      const currentUnits = sum(currentGroup.map((record) => record.units ?? 0));
-      const priorUnits = sum(priorGroup.map((record) => record.units ?? 0));
-      const currentSales = sum(currentGroup.map(amountValue));
-      const priorSales = sum(priorGroup.map(amountValue));
-      const delta = currentUnits - priorUnits;
-
-      return {
-        key,
-        title: displayArtCode(first),
-        delta,
-        currentUnits,
-        priorUnits,
-        currentSales,
-        priorSales,
-        style: normalizedStyle(first),
-        color: colorName(first),
-      };
-    })
-    .filter((row): row is NonNullable<typeof row> => Boolean(row))
-    .filter((row) => row.delta !== 0)
-    .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta) || Math.abs(right.currentSales - right.priorSales) - Math.abs(left.currentSales - left.priorSales));
-
-  const biggest = rows[0];
-  if (!biggest) return null;
-
-  return {
-    label: biggest.delta > 0 ? "Largest gain" : "Largest drop",
-    title: biggest.title,
-    delta: biggest.delta,
-    detail: `${biggest.style} | ${biggest.color} | ${numberText(biggest.currentUnits)} now vs ${numberText(biggest.priorUnits)} LY`,
-  };
 }
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {

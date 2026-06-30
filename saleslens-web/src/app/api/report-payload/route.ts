@@ -13,6 +13,8 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 
 export const runtime = "nodejs";
 
+const REPORT_PAYLOAD_ALL_ITEMS_LIMIT = 10000;
+
 type ReportPayloadRequest = {
   customerId?: unknown;
   brandFilter?: unknown;
@@ -98,7 +100,7 @@ export async function POST(request: NextRequest) {
     images,
     inventoryAudienceFilter: inventoryAudienceFilterValue(body?.inventoryAudienceFilter),
     inventoryPage: positiveInteger(body?.inventoryPage, 1),
-    inventoryPageSize: positiveInteger(body?.inventoryPageSize, 50),
+    inventoryPageSize: positiveInteger(body?.inventoryPageSize, REPORT_PAYLOAD_ALL_ITEMS_LIMIT),
     inventoryProductFilters: inventoryProductFilterValues(body?.inventoryProductFilters),
     inventoryRecords,
     inventorySort: inventorySortValue(body?.inventorySort),
