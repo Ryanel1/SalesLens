@@ -181,8 +181,7 @@ type InventoryProductCategory = "Fleece" | "Reverse Weave" | "Tees" | "Other";
 type InventoryProductFilter = "Fleece" | "Reverse Weave" | "Tees" | "Namedrop";
 type TopArtSort = "units" | "dollars";
 type ProductGalleryView = "top-sellers" | "inventory";
-type ProductGallerySort = "units" | "dollars" | "inventory-high" | "inventory-low";
-type ProductGalleryDisplayLimit = 25 | 50 | 100 | "all";
+type ProductGallerySortDirection = "descending" | "ascending";
 type ImportIntent = "sales" | "inventory";
 
 type ProductGalleryItem = {
@@ -288,7 +287,6 @@ const INVENTORY_TRACKER_MIN_UNITS = 5;
 const INVENTORY_TRACKER_RECENT_DEMAND_UNITS = 25;
 const INVENTORY_TRACKER_PAGE_SIZE = 50;
 const PRODUCT_GALLERY_ALL_LIMIT = 10000;
-const PRODUCT_GALLERY_DISPLAY_OPTIONS: ProductGalleryDisplayLimit[] = [25, 50, 100, "all"];
 const INVENTORY_AUDIENCE_FILTERS: InventoryAudienceFilter[] = ["Mens", "Womens", "Youth"];
 const INVENTORY_PRODUCT_FILTERS: InventoryProductFilter[] = ["Fleece", "Tees", "Reverse Weave", "Namedrop"];
 const EMPTY_DASHBOARD_SHELL: DashboardShellSummary = {
@@ -484,14 +482,13 @@ export default function Home() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("All");
-  const [inventorySort, setInventorySort] = useState<InventorySort>("highest");
   const [, setInventoryPage] = useState(1);
   const [inventoryAudienceFilter, setInventoryAudienceFilter] = useState<InventoryAudienceFilter>("All");
   const [inventoryProductFilters, setInventoryProductFilters] = useState<InventoryProductFilter[]>([]);
-  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"view" | "sort" | "refine" | null>(null);
-  const [topArtSort, setTopArtSort] = useState<TopArtSort>("units");
+  const [inventoryMenuOpen, setInventoryMenuOpen] = useState<"view" | "refine" | null>(null);
+  const [topArtSort] = useState<TopArtSort>("units");
   const [productGalleryView, setProductGalleryView] = useState<ProductGalleryView>("top-sellers");
-  const [productGalleryDisplayLimit, setProductGalleryDisplayLimit] = useState<ProductGalleryDisplayLimit>(50);
+  const [productGallerySortDirection, setProductGallerySortDirection] = useState<ProductGallerySortDirection>("descending");
   const [dashboardShell, setDashboardShell] = useState<DashboardShellSummary>(EMPTY_DASHBOARD_SHELL);
   const [dashboardData, setDashboardData] = useState<DashboardData>({ records: [], inventoryRecords: [], images: [] });
   const [serverReport, setServerReport] = useState<ServerReportState | null>(null);
@@ -791,7 +788,8 @@ export default function Home() {
     if (period.kind === "month") return period.value;
     return latestMonthForShellYear(dashboardShell, brandFilter, period.year);
   }, [brandFilter, dashboardShell, period]);
-  const productGalleryDisplayCount = productGalleryDisplayLimit === "all" ? PRODUCT_GALLERY_ALL_LIMIT : productGalleryDisplayLimit;
+  const productGalleryDisplayCount = PRODUCT_GALLERY_ALL_LIMIT;
+  const inventorySort: InventorySort = productGallerySortDirection === "descending" ? "highest" : "lowest";
   const selectedYear = period?.year ?? null;
   const priorYearMonth = periodEndMonth && selectedYear ? `${selectedYear - 1}${periodEndMonth.slice(4)}` : null;
   const selectedPeriodKind = period?.kind ?? "month";
@@ -973,8 +971,10 @@ export default function Home() {
         ? topArtRows(periodRecords, ytdCurrentRecords, dashboardData.images, dashboardData.inventoryRecords, topArtSort, priorYearRecords, null)
         : topArt;
 
-    return sourceRows.map((row) => ({
-      rank: row.rank,
+    const sortedRows = productGallerySortDirection === "ascending" ? [...sourceRows].reverse() : sourceRows;
+
+    return sortedRows.map((row, index) => ({
+      rank: index + 1,
       key: row.key,
       style: row.style,
       brand: row.brand,
@@ -989,13 +989,10 @@ export default function Home() {
       imageUrl: row.imageUrl,
       productUrl: row.productUrl,
     }));
-  }, [dashboardData.images, dashboardData.inventoryRecords, periodRecords, priorYearRecords, topArt, topArtSort, ytdCurrentRecords]);
+  }, [dashboardData.images, dashboardData.inventoryRecords, periodRecords, priorYearRecords, productGallerySortDirection, topArt, topArtSort, ytdCurrentRecords]);
   const topSellerPageStart = topSellerAllRows.length ? 1 : 0;
-  const topSellerPageEnd = Math.min(productGalleryDisplayCount, topSellerAllRows.length);
-  const topSellerGalleryRows = useMemo(
-    () => topSellerAllRows.slice(0, productGalleryDisplayCount),
-    [productGalleryDisplayCount, topSellerAllRows],
-  );
+  const topSellerPageEnd = topSellerAllRows.length;
+  const topSellerGalleryRows = topSellerAllRows;
   const topSellerLookup = useMemo(
     () => new Map(topSellerAllRows.map((row) => [row.key, row])),
     [topSellerAllRows],
@@ -1032,17 +1029,15 @@ export default function Home() {
   const productGalleryVisibleSales = productGalleryUsesInventory
     ? sum(productGalleryRows.map((row) => row.ytdSales))
     : sum(productGalleryRows.map((row) => row.monthSales));
-  const productGallerySortLabel = productGalleryUsesInventory
-    ? inventorySort === "highest"
-      ? "Inventory High"
-      : "Inventory Low"
+  const productGallerySortMetricLabel = productGalleryUsesInventory
+    ? "Inventory"
     : topArtSort === "units"
       ? "Units"
       : "Dollars";
-  const productGalleryRefineLabel = [
-    inventoryFilterSummary(inventoryAudienceFilter, inventoryProductFilters),
-    productGalleryDisplayLimitLabel(productGalleryDisplayLimit),
-  ].join(" | ");
+  const productGallerySortDirectionLabel = productGallerySortDirection === "descending" ? "Descending" : "Ascending";
+  const productGallerySortLabel = `${productGallerySortMetricLabel} ${productGallerySortDirectionLabel}`;
+  const productGallerySortArrow = productGallerySortDirection === "descending" ? "↓" : "↑";
+  const productGalleryRefineLabel = inventoryFilterSummary(inventoryAudienceFilter, inventoryProductFilters);
   const productGalleryActiveRefinements = [
     inventoryAudienceFilter === "All" ? null : inventoryAudienceFilterLabel(inventoryAudienceFilter),
     ...inventoryProductFilters,
@@ -1127,7 +1122,7 @@ export default function Home() {
 
   useEffect(() => {
     setInventoryPage(1);
-  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, productGalleryDisplayLimit, selectedCustomerId, selectedPeriod]);
+  }, [brandFilter, inventoryAudienceFilter, inventoryProductFilters, inventorySort, productGallerySortDirection, selectedCustomerId, selectedPeriod]);
 
   useEffect(() => {
     if (!inventoryMenuOpen) return undefined;
@@ -1141,41 +1136,21 @@ export default function Home() {
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [inventoryMenuOpen]);
 
-  function applyInventorySort(sort: InventorySort) {
-    setInventorySort(sort);
-    setInventoryPage(1);
-    setInventoryMenuOpen(null);
-  }
-
   function applyProductGalleryView(view: ProductGalleryView) {
     setProductGalleryView(view);
     setInventoryPage(1);
-    if (view === "inventory") setInventorySort("highest");
     setInventoryMenuOpen(null);
   }
 
-  function applyProductGallerySort(sort: ProductGallerySort) {
-    setInventoryPage(1);
-    if (sort === "units" || sort === "dollars") {
-      setTopArtSort(sort);
-      setProductGalleryView("top-sellers");
-    } else {
-      setInventorySort(sort === "inventory-high" ? "highest" : "lowest");
-      setProductGalleryView("inventory");
-    }
+  function toggleProductGallerySortDirection() {
+    setProductGallerySortDirection((current) => (current === "descending" ? "ascending" : "descending"));
     setInventoryMenuOpen(null);
-  }
-
-  function applyProductGalleryDisplayLimit(limit: ProductGalleryDisplayLimit) {
-    setProductGalleryDisplayLimit(limit);
     setInventoryPage(1);
-    setInventoryMenuOpen(null);
   }
 
   function clearInventoryFilters() {
     setInventoryAudienceFilter("All");
     setInventoryProductFilters([]);
-    setProductGalleryDisplayLimit(50);
     setInventoryPage(1);
     setInventoryMenuOpen(null);
   }
@@ -1969,6 +1944,16 @@ export default function Home() {
                 ))}
               </select>
             </label>
+
+            <label className="navField">
+              <select aria-label="Brand/Class" value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}>
+                {brandOptions.map((brand) => (
+                  <option key={brand} value={brand}>
+                    {brand === "All" ? "All Brands" : brand}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <div className="navActions">
@@ -2355,16 +2340,6 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="controlDock">
-              <select aria-label="Brand/Class" value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}>
-                {brandOptions.map((brand) => (
-                  <option key={brand} value={brand}>
-                    {brand === "All" ? "All Brands" : brand}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
               <div className="scoreboardPrimary">
                 <span>{isTotalsPreparing ? "Preparing Sales" : isTotalsBlocked ? "Sales Unavailable" : "Current Sales"}</span>
@@ -2593,32 +2568,17 @@ export default function Home() {
                       </div>
                     ) : null}
                   </div>
-                  <div className={`inventoryDropdown ${inventoryMenuOpen === "sort" ? "isOpen" : ""}`}>
+                  <div className="inventoryDropdown sortDirectionControl">
                     <button
-                      aria-expanded={inventoryMenuOpen === "sort"}
-                      className="inventoryDropdownTrigger"
+                      aria-label={`Sort ${productGallerySortMetricLabel.toLowerCase()} ${productGallerySortDirection === "descending" ? "largest first" : "smallest first"}`}
+                      className="inventoryDropdownTrigger sortDirectionToggle"
                       type="button"
-                      onClick={() => setInventoryMenuOpen((current) => (current === "sort" ? null : "sort"))}
+                      onClick={toggleProductGallerySortDirection}
                     >
                       <span>Sort</span>
-                      <strong>{productGallerySortLabel}</strong>
+                      <strong>{productGallerySortMetricLabel}</strong>
+                      <b aria-hidden="true">{productGallerySortArrow}</b>
                     </button>
-                    {inventoryMenuOpen === "sort" ? (
-                      <div className="inventoryDropdownMenu">
-                        {(["units", "dollars", "inventory-high", "inventory-low"] as ProductGallerySort[]).map((sort) => (
-                          <button
-                            aria-pressed={productGallerySortLabel === productGallerySortOptionLabel(sort)}
-                            className={`inventoryOption ${productGallerySortLabel === productGallerySortOptionLabel(sort) ? "active" : ""}`}
-                            key={sort}
-                            type="button"
-                            onClick={() => applyProductGallerySort(sort)}
-                          >
-                            <span className="inventoryOptionMark" aria-hidden="true" />
-                            <span>{productGallerySortOptionLabel(sort)}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
                   </div>
                   <div className={`inventoryDropdown ${inventoryMenuOpen === "refine" ? "isOpen" : ""}`}>
                     <button
@@ -2668,21 +2628,6 @@ export default function Home() {
                             >
                               <span className="inventoryOptionMark square" aria-hidden="true" />
                               <span>{filter}</span>
-                            </button>
-                          ))}
-                        </div>
-                        <div className="inventoryOptionGroup">
-                          <p>Show</p>
-                          {PRODUCT_GALLERY_DISPLAY_OPTIONS.map((limit) => (
-                            <button
-                              aria-pressed={productGalleryDisplayLimit === limit}
-                              className={`inventoryOption ${productGalleryDisplayLimit === limit ? "active" : ""}`}
-                              key={limit}
-                              type="button"
-                              onClick={() => applyProductGalleryDisplayLimit(limit)}
-                            >
-                              <span className="inventoryOptionMark" aria-hidden="true" />
-                              <span>{productGalleryDisplayLimitLabel(limit)}</span>
                             </button>
                           ))}
                         </div>
@@ -5005,17 +4950,6 @@ function productCardSalesText(units: number, sales: number | null | undefined) {
 function productGalleryViewLabel(view: ProductGalleryView) {
   if (view === "top-sellers") return "Top Sellers";
   return "Inventory";
-}
-
-function productGallerySortOptionLabel(sort: ProductGallerySort) {
-  if (sort === "units") return "Units";
-  if (sort === "dollars") return "Dollars";
-  if (sort === "inventory-high") return "Inventory High";
-  return "Inventory Low";
-}
-
-function productGalleryDisplayLimitLabel(limit: ProductGalleryDisplayLimit) {
-  return limit === "all" ? "All" : String(limit);
 }
 
 function createReportToken() {

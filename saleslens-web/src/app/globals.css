@@ -3717,7 +3717,7 @@ select {
   min-width: 0;
   overflow: visible;
   padding: 0.28rem;
-  width: min(100%, 390px);
+  width: min(100%, 560px);
 }
 
 .navActions {
@@ -3959,7 +3959,7 @@ select {
 .dashboardTopSection {
   align-items: start;
   grid-template-areas:
-    "intro controls"
+    "intro intro"
     "score score";
   grid-template-rows: auto auto;
 }
@@ -4580,6 +4580,16 @@ select {
   border-top: 5px solid var(--taupe);
   content: "";
   margin-left: 0.15rem;
+}
+
+.inventoryDropdownTrigger.sortDirectionToggle::after {
+  display: none;
+}
+
+.inventoryDropdownTrigger.sortDirectionToggle b {
+  color: var(--account-accent, var(--steel));
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 .inventoryDropdown.isOpen .inventoryDropdownTrigger {
@@ -5867,7 +5877,7 @@ select {
   .navControlIsland {
     grid-column: 1 / -1;
     justify-self: center;
-    width: min(100%, 520px);
+    width: min(100%, 640px);
   }
 
   .dashboardHeader,
@@ -5884,13 +5894,7 @@ select {
   .dashboardTopSection {
     grid-template-areas:
       "intro"
-      "controls"
       "score";
-  }
-
-  .dashboardTopSection .controlDock {
-    margin-top: 0;
-    max-width: 620px;
   }
 
   .dashboardScoreboard {
