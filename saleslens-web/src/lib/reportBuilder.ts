@@ -1108,7 +1108,13 @@ const knownVolshopImages: Record<string, string> = {
 const knownRebelRagsImages: Record<string, string> = {
   [imageKey("CB1012", "AEC04157156", "SPIRITEDORANGE")]: "/images/product-overrides/rebel-rags-cb1012-aec04157156-spirited-orange.png",
   [imageKey("C6065", "APC04058491", "WHITE")]: "/images/product-overrides/rebel-rags-c6065-apc04058491-white.png",
+  [imageKey("CS1220", "APC02512058", "GREY")]: "/images/product-overrides/rebel-rags-cs1220-apc02512058-grey.png",
+  [imageKey("CS1220", "APC02512059", "GREY")]: "/images/product-overrides/rebel-rags-cs1220-apc02512059-grey.png",
+  [imageKey("CS1220", "APC03338244", "GREY")]: "/images/product-overrides/rebel-rags-cs1220-apc03338244-grey.png",
+  [imageKey("CS1220", "APC03962332", "GREY")]: "/images/product-overrides/rebel-rags-cs1220-apc03962332-grey.png",
   [imageKey("CS1271", "APC03783493", "HEATHERGREY")]: "/images/product-overrides/rebel-rags-cs1271-apc03783493-heather-grey.png",
+  [imageKey("CT1000", "APC03609131", "OATMEAL")]: "/images/product-overrides/rebel-rags-ct1000-apc03609131-oatmeal.png",
+  [imageKey("CT1000", "APC03467189", "LIGHTBLUE")]: "/images/product-overrides/rebel-rags-ct1000-apc03467189-light-blue.png",
   [imageKey("CT1000", "03456518", "NAVY")]: "https://www.rebelrags.net/prodimages/16228-MIDNIGHT_NAVY-l.jpg",
   [imageKey("CT1000", "03503350", "LIGHTBLUE")]: "https://www.rebelrags.net/prodimages/23149-DEFAULT-l.jpg",
   [imageKey("CT1000", "03687236", "WHITE")]: "https://www.rebelrags.net/prodimages/25026-WHITE-l.jpg",
