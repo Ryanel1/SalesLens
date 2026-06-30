@@ -21,6 +21,24 @@
   --chart-prior: #a8a39b;
   --shadow: 0 22px 70px rgba(36, 35, 33, 0.09);
   --hairline: 1px solid var(--stone);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --section-gap: clamp(3rem, 4.8vw, 5rem);
+  --type-label: 0.6875rem;
+  --type-caption: 0.75rem;
+  --type-small: 0.875rem;
+  --type-body: 1rem;
+  --type-title: 1.125rem;
+  --type-metric: 1.625rem;
+  --type-section-title: 2.375rem;
+  --type-display: 5.25rem;
 }
 
 * {
@@ -35,9 +53,13 @@ body {
     var(--canvas);
   color: var(--charcoal);
   font-family: var(--font-main);
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+  font-size: var(--type-body);
   isolation: isolate;
   line-height: 1.55;
   min-height: 100vh;
+  text-rendering: optimizeLegibility;
 }
 
 body > * {
@@ -496,7 +518,7 @@ select {
 
 .dashboardHeader h2 {
   color: var(--steel);
-  font-size: clamp(3.3rem, 7vw, 7.5rem);
+  font-size: clamp(3rem, 6vw, 5.4rem);
   margin-bottom: 1rem;
 }
 
@@ -3130,7 +3152,7 @@ tbody tr:nth-child(even) {
 
 .publicDashboardHeader h1 {
   color: var(--steel);
-  font-size: clamp(3.3rem, 7vw, 7.5rem);
+  font-size: clamp(3rem, 6vw, 5.4rem);
   margin-bottom: 1rem;
 }
 
@@ -3997,7 +4019,7 @@ label {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  margin-bottom: clamp(3.25rem, 5.4vw, 6rem);
+  margin-bottom: var(--section-gap);
   padding: 0;
 }
 
@@ -4010,24 +4032,34 @@ label {
 }
 
 .sectionTitle {
-  align-items: start;
+  align-items: end;
   display: grid;
-  gap: 1rem;
+  gap: var(--space-6);
   grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.sectionTitle > div {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 76ch;
 }
 
 .sectionTitle h3 {
   color: var(--text);
-  font-size: clamp(1.9rem, 3vw, 3.2rem);
+  font-size: var(--type-section-title);
   font-weight: 860;
   letter-spacing: 0;
-  margin-bottom: 0.28rem;
+  margin: 0;
+  text-wrap: balance;
 }
 
 .sectionTitle p {
   color: var(--text-soft);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
   margin: 0;
+  max-width: 72ch;
+  text-wrap: pretty;
 }
 
 .changeBadge,
@@ -4088,30 +4120,56 @@ label {
 .ytdInsightCard strong,
 .driverTile strong,
 .inventoryTotal strong,
-.artMeta strong,
+.artMeta strong {
+  color: var(--text);
+}
+
 .artCodeLink {
   color: var(--text);
 }
 
 .metric strong {
-  font-size: 1.65rem;
+  font-size: var(--type-metric);
+}
+
+.metric strong,
+.ytdInsightCard strong,
+.driverTile strong,
+.inventoryTotal strong,
+.monthlyScorecardHeader strong,
+.monthlyScorecardTotal strong,
+.monthlyScorecardBarRow strong,
+.weeklyPrimary strong,
+.weeklyMetrics strong,
+.artStats strong,
+.publicContextCard strong,
+.deleteImpactGrid strong,
+.importImpactGrid strong {
+  font-feature-settings: "tnum" 1, "kern" 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .ytdTrackerLayout {
   align-items: stretch;
   display: grid;
-  gap: 0.8rem;
-  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.85fr);
 }
 
 .ytdTrackerTiles {
   display: grid;
-  gap: 0.7rem;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-content: start;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .lineCard {
-  min-height: 420px;
+  min-height: clamp(360px, 30vw, 440px);
+}
+
+.ytdTrackerTiles > :nth-child(3),
+.ytdTrackerTiles > .productBreadthCard {
+  grid-column: 1 / -1;
 }
 
 .lineCard.comparativeChart svg {
@@ -4128,7 +4186,7 @@ label {
   border: 0;
   border-radius: var(--radius);
   color: var(--text);
-  font-size: 0.74rem;
+  font-size: var(--type-caption);
   font-weight: 850;
   min-height: 36px;
 }
@@ -4152,9 +4210,9 @@ label {
 .inventoryDropdownTrigger span,
 .pagerControls span {
   color: var(--text-faint);
-  font-size: 0.62rem;
+  font-size: var(--type-label);
   font-weight: 850;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -4202,7 +4260,7 @@ label {
 
 .inventoryDropdownTrigger strong {
   color: var(--text);
-  font-size: 0.78rem;
+  font-size: var(--type-caption);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -4231,7 +4289,7 @@ label {
   color: var(--text);
   cursor: pointer;
   display: flex;
-  font-size: 0.78rem;
+  font-size: var(--type-small);
   font-weight: 850;
   gap: 0.5rem;
   min-height: 34px;
@@ -4278,9 +4336,9 @@ label {
 
 .inventoryOptionGroup p {
   color: var(--text-faint);
-  font-size: 0.66rem;
+  font-size: var(--type-label);
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   margin: 0 0 0.12rem;
   text-transform: uppercase;
 }
@@ -4324,7 +4382,7 @@ label {
   background: transparent;
   border: 0;
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
   grid-template-columns: minmax(360px, 1.35fr) minmax(300px, 0.9fr);
   overflow: visible;
 }
@@ -4384,8 +4442,9 @@ label {
 .sectionBlock .monthlyScorecardMetrics {
   background: transparent;
   border: 0;
-  gap: 1rem;
+  gap: var(--space-4);
   grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .sectionBlock .monthlyScorecardMetrics .driverTile {
@@ -4396,10 +4455,11 @@ label {
 }
 
 .sectionBlock .monthlyScorecardMetrics .driverTile > strong {
-  font-size: clamp(1.55rem, 2.05vw, 2rem);
+  font-size: 1.7rem;
+  line-height: 1.05;
   max-width: 100%;
-  overflow-wrap: normal;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .sectionBlock .monthlyScorecardMetrics .driverMeta {
@@ -4426,7 +4486,7 @@ label {
   display: grid;
   gap: 0;
   grid-template-areas: "sales metrics products";
-  grid-template-columns: minmax(250px, 0.72fr) minmax(260px, 0.72fr) minmax(560px, 1.56fr);
+  grid-template-columns: minmax(220px, 0.7fr) minmax(250px, 0.75fr) minmax(420px, 1.35fr);
   min-height: 168px;
   overflow: visible;
   padding-top: 0.72rem;
@@ -4496,11 +4556,13 @@ label {
 }
 
 .sectionBlock .weeklyPrimary strong {
-  font-size: clamp(1.65rem, 2.2vw, 2.2rem);
+  font-size: 2rem;
+  line-height: 1.05;
 }
 
 .sectionBlock .weeklyMetrics strong {
-  font-size: clamp(1.25rem, 1.7vw, 1.6rem);
+  font-size: 1.4rem;
+  line-height: 1.08;
 }
 
 .sectionBlock .weeklyPrimary em,
@@ -4518,7 +4580,7 @@ label {
   align-items: stretch;
   display: grid;
   gap: clamp(0.72rem, 1vw, 1rem);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
 .sectionBlock .weeklyTopProduct {
@@ -4540,8 +4602,9 @@ label {
 }
 
 .sectionBlock .weeklyTopProduct strong {
-  font-size: 0.92rem;
-  line-height: 1.1;
+  font-size: 0.95rem;
+  line-height: 1.16;
+  text-wrap: balance;
 }
 
 .sectionBlock .weeklyTopProduct em,
@@ -4550,7 +4613,8 @@ label {
 }
 
 .artGrid {
-  gap: 1rem;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .artCard {
@@ -4590,7 +4654,8 @@ label {
 
 .artIdentity > strong,
 .artIdentity .artCodeLink {
-  font-size: 1.08rem;
+  font-size: var(--type-title);
+  line-height: 1.08;
 }
 
 .artCodeLink {
@@ -4633,7 +4698,7 @@ label {
 
 .productGalleryHeaderActions small {
   color: var(--taupe);
-  font-size: 0.78rem;
+  font-size: var(--type-caption);
   line-height: 1.35;
   max-width: 22rem;
   min-height: 1.1rem;
@@ -4729,33 +4794,36 @@ label {
 .publicReport > .publicDashboardHeader .publicShareBrand h1,
 .publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicShareBrand h1 {
   color: var(--text);
-  font-size: clamp(1.65rem, 3vw, 2.6rem);
-  line-height: 0.95;
+  font-size: 2.25rem;
+  line-height: 1;
   margin: 0;
+  text-wrap: balance;
 }
 
 .publicReport > .publicDashboardHeader .publicShareBrand p,
 .publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicShareBrand p {
   color: var(--text-faint);
-  font-size: 0.5rem;
-  letter-spacing: 0.08em;
+  font-size: var(--type-label);
+  letter-spacing: 0.06em;
   margin-top: 0.12rem;
 }
 
 .publicReport > .publicDashboardHeader h1,
 .publicBundleReport > .accountReportSwitcher > .publicDashboardHeader h1 {
   color: var(--text);
-  font-size: clamp(4rem, 8vw, 7rem);
-  line-height: 0.86;
+  font-size: clamp(3.25rem, 7vw, 6rem);
+  line-height: 0.9;
   margin: 0 0 0.8rem;
+  text-wrap: balance;
 }
 
 .publicReport > .publicDashboardHeader .muted,
 .publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .muted {
   color: var(--text-soft);
-  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
-  line-height: 1.45;
+  font-size: 1rem;
+  line-height: 1.55;
   max-width: 48rem;
+  text-wrap: pretty;
 }
 
 .publicReport > .publicDashboardHeader .publicHeaderAside,
@@ -4897,6 +4965,10 @@ label {
     max-width: 440px;
   }
 
+  .ytdTrackerLayout {
+    grid-template-columns: 1fr;
+  }
+
   .ytdTrackerTiles,
   .sectionBlock .monthlyScorecardMetrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4931,6 +5003,35 @@ label {
   .ytdTrackerTiles,
   .sectionBlock .monthlyScorecardMetrics {
     grid-template-columns: 1fr;
+  }
+
+  .sectionTitle {
+    align-items: start;
+    gap: var(--space-3);
+  }
+
+  .sectionTitle h3 {
+    font-size: 1.85rem;
+  }
+
+  .sectionTitle p {
+    font-size: var(--type-small);
+    line-height: 1.5;
+  }
+
+  .sectionBlock .monthlyScorecardMetrics .driverTile > strong,
+  .sectionBlock .weeklyMetrics strong {
+    font-size: 1.3rem;
+  }
+
+  .sectionBlock .weeklyPrimary strong {
+    font-size: 1.65rem;
+  }
+
+  .productGalleryHeaderActions {
+    justify-items: start;
+    min-width: 0;
+    text-align: left;
   }
 }
 

@@ -956,10 +956,10 @@ export default function Home() {
   const productGalleryPageStart = productGalleryUsesInventory ? inventoryPageStart : topSellerPageStart;
   const productGalleryPageEnd = productGalleryUsesInventory ? inventoryPageEnd : topSellerPageEnd;
   const productGalleryTotalItems = productGalleryUsesInventory ? inventoryTrackerTotalItems : topSellerAllRows.length;
-  const productGalleryTotalUnits = productGalleryUsesInventory ? inventoryTrackerTotalUnits : sum(productGallerySourceRows.map((row) => row.monthUnits));
-  const productGalleryTotalSales = productGalleryUsesInventory
-    ? sum(productGallerySourceRows.map((row) => row.ytdSales))
-    : sum(productGallerySourceRows.map((row) => row.monthSales));
+  const productGalleryVisibleUnits = sum(productGalleryRows.map((row) => (productGalleryUsesInventory ? row.inventoryUnits ?? 0 : row.monthUnits)));
+  const productGalleryVisibleSales = productGalleryUsesInventory
+    ? sum(productGalleryRows.map((row) => row.ytdSales))
+    : sum(productGalleryRows.map((row) => row.monthSales));
   const productGallerySortLabel = productGalleryUsesInventory
     ? inventorySort === "highest"
       ? "Inventory High"
@@ -974,8 +974,38 @@ export default function Home() {
   const productGalleryActiveRefinements = [
     inventoryAudienceFilter === "All" ? null : inventoryAudienceFilterLabel(inventoryAudienceFilter),
     ...inventoryProductFilters,
-    productGalleryDisplayLimit === 50 ? null : `Show ${productGalleryDisplayLimitLabel(productGalleryDisplayLimit)}`,
   ].filter(Boolean) as string[];
+  const ytdLine = useMemo(
+    () => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth, period?.kind === "month" ? periodRecords : []),
+    [period, periodEndMonth, periodRecords, recordsForCustomer, reportPayload],
+  );
+  const ytdDelta = ytdLine.currentTotal - ytdLine.priorTotal;
+  const ytdDecisionSummary =
+    ytdLine.currentTotal || ytdLine.priorTotal
+      ? `${changeText(ytdLine.currentTotal, ytdLine.priorTotal)} vs last year (${signedCurrencyText(ytdDelta)}). Breadth is ${numberText(ytdInsights.stylesSold)} styles, ${numberText(ytdInsights.colorsSold)} colors, and ${numberText(ytdInsights.artworksSold)} artworks.`
+      : "No year-to-date sales are available for the current account and filters.";
+  const monthlySalesDelta = currentMetrics.sales - priorMetrics.sales;
+  const monthlyDecisionSummary =
+    currentMetrics.sales || priorMetrics.sales
+      ? `${selectedPeriodTitle} is ${changeText(currentMetrics.sales, priorMetrics.sales)} vs ${priorPeriodTitle} (${signedCurrencyText(monthlySalesDelta)}). Top 5 styles drove ${monthlyDrivers.topFiveStyleShare.toFixed(1)}% of sales.`
+      : "No sales match the current period and filters.";
+  const weeklyDecisionSummary = weeklyScorecards.length
+    ? (() => {
+        const bySales = [...weeklyScorecards].sort((left, right) => right.current.sales - left.current.sales);
+        const bestWeek = bySales[0];
+        const lightestWeek = bySales[bySales.length - 1];
+        if (!bestWeek) return "";
+        return bestWeek === lightestWeek
+          ? `${bestWeek.title} totaled ${currencyText(bestWeek.current.sales)} across ${numberText(bestWeek.dayCount)} days.`
+          : `${bestWeek.title} led at ${currencyText(bestWeek.current.sales)}; ${lightestWeek.title} was lightest at ${currencyText(lightestWeek.current.sales)}.`;
+      })()
+    : "";
+  const inventoryDecisionSummary = inventorySnapshot
+    ? `${inventorySnapshot.position.headline}. ${numberText(inventorySnapshot.totalUnits)} units across ${numberText(inventorySnapshot.styles)} styles and ${numberText(inventorySnapshot.artworks)} artworks.`
+    : "";
+  const productGalleryDecisionSummary = productGalleryTotalItems
+    ? `${productGalleryViewLabel(productGalleryView)} shows ${numberText(productGalleryPageStart)}-${numberText(productGalleryPageEnd)} of ${numberText(productGalleryTotalItems)} items, sorted by ${productGallerySortLabel.toLowerCase()}. Visible rows total ${numberText(productGalleryVisibleUnits)} units and ${currencyText(productGalleryVisibleSales)}.`
+    : "No product rows match the current filters.";
   const bestDay = useMemo(
     () => (reportPayload?.bestDay as ReturnType<typeof bestSalesDay> | undefined) ?? bestSalesDay(periodRecords, dashboardData.images),
     [dashboardData.images, periodRecords, reportPayload],
@@ -1000,11 +1030,6 @@ export default function Home() {
       fileLabels: pendingImportFiles.map((file) => `${file.name} (${fileSizeText(file.size)})`),
     };
   }, [pendingImportFiles]);
-  const ytdLine = useMemo(
-    () => reportPayload?.ytdLine ?? ytdPoints(recordsForCustomer, periodEndMonth, period?.kind === "month" ? periodRecords : []),
-    [period, periodEndMonth, periodRecords, recordsForCustomer, reportPayload],
-  );
-
   const brandOptions = useMemo(() => ["All", ...dashboardShell.brandOptions], [dashboardShell.brandOptions]);
 
   useEffect(() => {
@@ -2317,6 +2342,7 @@ export default function Home() {
             <div className="sectionTitle">
               <div>
                 <h3>{selectedPeriodKind === "year" ? "Year Scorecard" : "YTD Scorecard"}</h3>
+                <p>{ytdDecisionSummary}</p>
               </div>
             </div>
 
@@ -2342,6 +2368,7 @@ export default function Home() {
             <div className="sectionTitle">
               <div>
                 <h3>{selectedPeriodKind === "year" ? "Selected Year Scorecard" : "Monthly Scorecard"}</h3>
+                <p>{monthlyDecisionSummary}</p>
               </div>
             </div>
 
@@ -2359,6 +2386,7 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h3>Weekly Scorecard</h3>
+                  <p>{weeklyDecisionSummary}</p>
                 </div>
               </div>
               <WeeklyScorecard rows={weeklyScorecards} />
@@ -2370,6 +2398,7 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h3>Inventory Snapshot</h3>
+                  <p>{inventoryDecisionSummary}</p>
                 </div>
               </div>
               <InventoryCard snapshot={inventorySnapshot} />
@@ -2381,6 +2410,7 @@ export default function Home() {
               <div className="sectionTitle">
                 <div>
                   <h3>Top Performers</h3>
+                  <p>{productGalleryDecisionSummary}</p>
                 </div>
                 {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
                   <div className="productGalleryHeaderActions" aria-live="polite">
