@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
 import { currencyText, dateText, decimalText, monthText, numberText, wholeCurrencyText } from "@/lib/formatters";
 import { getSupabaseConfig } from "@/lib/supabase/config";
@@ -18,6 +19,49 @@ import {
 } from "@/lib/reportSnapshot";
 
 export const dynamic = "force-dynamic";
+
+function ProductMedia({
+  alt,
+  className,
+  height,
+  sizes,
+  src,
+  width,
+}: {
+  alt: string;
+  className?: string;
+  height?: number;
+  sizes: string;
+  src: string;
+  width?: number;
+}) {
+  if (width && height) {
+    return (
+      <Image
+        alt={alt}
+        className={className}
+        height={height}
+        loading="lazy"
+        sizes={sizes}
+        src={src}
+        style={{ objectFit: "contain" }}
+        width={width}
+      />
+    );
+  }
+
+  return (
+    <Image
+      alt={alt}
+      className={className}
+      fill
+      loading="lazy"
+      sizes={sizes}
+      src={src}
+      style={{ objectFit: "contain" }}
+    />
+  );
+}
 
 export default async function SharedReportPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -215,7 +259,13 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
                 <article className="artCard" key={row.key}>
                   <div className="artImage">
                     <b>#{row.rank}</b>
-                    {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
+                    {row.imageUrl ? (
+                      <ProductMedia
+                        alt={`${row.style} ${row.artCode}`}
+                        sizes="(max-width: 760px) 50vw, (max-width: 1180px) 25vw, 220px"
+                        src={row.imageUrl}
+                      />
+                    ) : <span>No Image</span>}
                   </div>
                   <div className="artMeta">
                     <div className="artIdentity">
@@ -526,7 +576,13 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
                   {topProducts.map((item) => (
                     <div className="weeklyTopProduct" key={`${item.style}-${item.artCode}-${item.color}`}>
                       {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} loading="lazy" decoding="async" />
+                        <ProductMedia
+                          alt={`${item.style} ${item.artCode}`}
+                          height={76}
+                          sizes="76px"
+                          src={item.imageUrl}
+                          width={76}
+                        />
                       ) : (
                         <div className="weeklyTopProductPlaceholder">No Image</div>
                       )}
@@ -568,7 +624,13 @@ function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: SnapshotBestDay;
             <div className="topSalesProduct" key={`${item.rank}-${item.style}-${item.artCode}`}>
               <span className="topSalesRank">#{item.rank}</span>
               {item.imageUrl ? (
-                <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} loading="lazy" decoding="async" />
+                <ProductMedia
+                  alt={`${item.style} ${item.artCode}`}
+                  height={72}
+                  sizes="72px"
+                  src={item.imageUrl}
+                  width={72}
+                />
               ) : (
                 <div className="weeklyTopProductPlaceholder">No Image</div>
               )}

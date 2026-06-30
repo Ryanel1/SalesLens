@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { ParsedInventoryRecord, ParsedSalesRecord, SalesImportOptions } from "@/lib/importSalesData";
@@ -80,6 +81,49 @@ type MetricSet = {
   transactions: number;
   transactionsKnown?: boolean;
 };
+
+function ProductMedia({
+  alt,
+  className,
+  height,
+  sizes,
+  src,
+  width,
+}: {
+  alt: string;
+  className?: string;
+  height?: number;
+  sizes: string;
+  src: string;
+  width?: number;
+}) {
+  if (width && height) {
+    return (
+      <Image
+        alt={alt}
+        className={className}
+        height={height}
+        loading="lazy"
+        sizes={sizes}
+        src={src}
+        style={{ objectFit: "contain" }}
+        width={width}
+      />
+    );
+  }
+
+  return (
+    <Image
+      alt={alt}
+      className={className}
+      fill
+      loading="lazy"
+      sizes={sizes}
+      src={src}
+      style={{ objectFit: "contain" }}
+    />
+  );
+}
 
 type WeeklyTopItem = {
   style: string;
@@ -2693,7 +2737,13 @@ export default function Home() {
                     <article className="artCard" key={row.key}>
                       <div className="artImage">
                         <b>#{row.rank}</b>
-                        {row.imageUrl ? <img src={row.imageUrl} alt={`${row.style} ${row.artCode}`} loading="lazy" decoding="async" /> : <span>No Image</span>}
+                        {row.imageUrl ? (
+                          <ProductMedia
+                            alt={`${row.style} ${row.artCode}`}
+                            sizes="(max-width: 760px) 50vw, (max-width: 1180px) 25vw, 220px"
+                            src={row.imageUrl}
+                          />
+                        ) : <span>No Image</span>}
                       </div>
                       <div className="artMeta">
                         <div className="artIdentity">
@@ -3002,7 +3052,13 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
                   {row.topItems.map((item) => (
                     <div className="weeklyTopProduct" key={`${item.style}-${item.artCode}-${item.color}`}>
                       {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} loading="lazy" decoding="async" />
+                        <ProductMedia
+                          alt={`${item.style} ${item.artCode}`}
+                          height={76}
+                          sizes="76px"
+                          src={item.imageUrl}
+                          width={76}
+                        />
                       ) : (
                         <div className="weeklyTopProductPlaceholder">No Image</div>
                       )}
@@ -3124,7 +3180,13 @@ function TopSalesItemsCard({ bestDay, periodTitle }: { bestDay: ReturnType<typeo
             <div className="topSalesProduct" key={`${item.style}-${item.artCode}-${item.color}`}>
               <span className="topSalesRank">#{item.rank}</span>
               {item.imageUrl ? (
-                <img src={item.imageUrl} alt={`${item.style} ${item.artCode}`} loading="lazy" decoding="async" />
+                <ProductMedia
+                  alt={`${item.style} ${item.artCode}`}
+                  height={72}
+                  sizes="72px"
+                  src={item.imageUrl}
+                  width={72}
+                />
               ) : (
                 <div className="weeklyTopProductPlaceholder">No Image</div>
               )}
