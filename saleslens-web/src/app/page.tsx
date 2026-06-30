@@ -989,6 +989,13 @@ export default function Home() {
     currentMetrics.sales || priorMetrics.sales
       ? `${selectedPeriodTitle} is ${changeText(currentMetrics.sales, priorMetrics.sales)} vs ${priorPeriodTitle} (${signedCurrencyText(monthlySalesDelta)}). Top 5 styles drove ${monthlyDrivers.topFiveStyleShare.toFixed(1)}% of sales.`
       : "No sales match the current period and filters.";
+  const dashboardPeriodLabel = selectedPeriodTitle === "-" ? "Choose a period" : selectedPeriodTitle;
+  const dashboardPriorLabel = priorPeriodTitle === "-" ? "Waiting for data" : priorPeriodTitle;
+  const dashboardScoreTone = changeClass(monthlySalesDelta);
+  const dashboardScoreDelta =
+    currentMetrics.sales || priorMetrics.sales
+      ? `${changeText(currentMetrics.sales, priorMetrics.sales)} | ${signedCurrencyText(monthlySalesDelta)}`
+      : "No sales yet";
   const weeklyDecisionSummary = weeklyScorecards.length
     ? (() => {
         const bySales = [...weeklyScorecards].sort((left, right) => right.current.sales - left.current.sales);
@@ -2227,8 +2234,28 @@ export default function Home() {
         <section className="dashboard" id="saleslens-dashboard">
           <header className="dashboardHeader dashboardTopSection">
             <div className="dashboardHeroIntro">
-              <p className="eyebrow">Sales Snapshot</p>
+              <div className="dashboardHeroKicker">
+                <p className="eyebrow">Sales Snapshot</p>
+                <span>{dashboardPeriodLabel}</span>
+              </div>
               <h2>{selectedCustomer?.name ?? "Account"}</h2>
+              <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
+                <div className="scoreboardPrimary">
+                  <span>Current Sales</span>
+                  <strong>{currencyText(currentMetrics.sales)}</strong>
+                  <em>{dashboardPeriodLabel}</em>
+                </div>
+                <div>
+                  <span>Vs Last Year</span>
+                  <strong>{dashboardScoreDelta}</strong>
+                  <em>{dashboardPriorLabel}</em>
+                </div>
+                <div>
+                  <span>Units</span>
+                  <strong>{numberText(currentMetrics.units)}</strong>
+                  <em>{numberText(priorMetrics.units)} LY</em>
+                </div>
+              </div>
             </div>
 
             <div className="controlDock">

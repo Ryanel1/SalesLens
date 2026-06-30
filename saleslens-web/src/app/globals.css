@@ -296,10 +296,13 @@ select {
 }
 
 .accountThemeDefault {
+  --account-accent: var(--steel);
   --account-glow: rgba(111, 135, 149, 0.18);
+  --scoreboard-wash: rgba(111, 135, 149, 0.28);
 }
 
 .accountThemeVolshop {
+  --account-accent: #ff8200;
   --steel: #ff8200;
   --steel-dark: #ff8200;
   --clay: #ff8200;
@@ -307,10 +310,12 @@ select {
   --chart-current: #ff8200;
   --chart-prior: #a8a39b;
   --account-glow: rgba(255, 130, 0, 0.22);
+  --scoreboard-wash: rgba(255, 130, 0, 0.32);
   --positive-text: #4c4944;
 }
 
 .accountThemeRebelRags {
+  --account-accent: #8ecae6;
   --steel: #8ecae6;
   --steel-dark: #5caed4;
   --clay: #8ecae6;
@@ -318,6 +323,7 @@ select {
   --chart-current: #8ecae6;
   --chart-prior: #a8a39b;
   --account-glow: rgba(142, 202, 230, 0.22);
+  --scoreboard-wash: rgba(142, 202, 230, 0.34);
 }
 
 .topNav {
@@ -3897,6 +3903,34 @@ label {
   padding: clamp(0.35rem, 1vw, 0.75rem) 0 clamp(0.65rem, 1.6vw, 1rem);
 }
 
+.dashboardHeader {
+  background:
+    linear-gradient(118deg, rgba(21, 18, 15, 0.98) 0%, rgba(21, 18, 15, 0.96) 48%, rgba(21, 18, 15, 0.7) 100%),
+    radial-gradient(circle at 78% 22%, var(--scoreboard-wash, rgba(111, 135, 149, 0.28)), transparent 34rem),
+    url("/images/campus-stadium-night-blur.jpg") center / cover;
+  border-top: 6px solid var(--account-accent, var(--steel));
+  color: #fffefa;
+  grid-template-columns: minmax(0, 1.08fr) minmax(330px, 0.72fr);
+  margin: 0 0 clamp(2.4rem, 4vw, 4.4rem);
+  min-height: clamp(320px, 34vw, 430px);
+  overflow: hidden;
+  padding: clamp(1.55rem, 3.5vw, 3rem);
+  position: relative;
+}
+
+.dashboardHeader::after {
+  background:
+    linear-gradient(90deg, rgba(255, 254, 250, 0.13), transparent 28%),
+    linear-gradient(0deg, rgba(255, 254, 250, 0.1), transparent 54%);
+  bottom: 0;
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: min(34rem, 45%);
+}
+
 .dashboardTopSection {
   align-items: start;
   grid-template-areas: "intro controls";
@@ -3906,9 +3940,29 @@ label {
 .dashboardTopSection .dashboardHeroIntro {
   align-self: start;
   display: grid;
-  gap: 0.62rem;
+  gap: clamp(0.85rem, 1.5vw, 1.2rem);
   grid-area: intro;
-  max-width: 48rem;
+  max-width: 62rem;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboardHeroKicker {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dashboardHeroKicker span {
+  border: 1px solid rgba(255, 254, 250, 0.22);
+  border-radius: 999px;
+  color: rgba(255, 254, 250, 0.78);
+  font-size: var(--type-caption);
+  font-weight: 850;
+  min-height: 30px;
+  padding: 0.42rem 0.7rem;
+  text-transform: uppercase;
 }
 
 .dashboardHeader .eyebrow,
@@ -3920,6 +3974,10 @@ label {
   letter-spacing: 0.08em;
 }
 
+.dashboardHeader .eyebrow {
+  color: var(--account-accent, #fffefa);
+}
+
 .dashboardHeader h2,
 .publicDashboardHeader h1 {
   color: var(--clay);
@@ -3927,6 +3985,80 @@ label {
   font-weight: 860;
   line-height: 0.9;
   margin: 0;
+}
+
+.dashboardHeader h2 {
+  color: #fffefa;
+  font-size: clamp(3.25rem, 7vw, 6rem);
+  letter-spacing: -0.02em;
+  line-height: 0.86;
+  max-width: 12ch;
+  text-wrap: balance;
+}
+
+.dashboardScoreboard {
+  background: rgba(255, 254, 250, 0.08);
+  border: 1px solid rgba(255, 254, 250, 0.16);
+  display: grid;
+  gap: 1px;
+  grid-template-columns: minmax(220px, 1.2fr) repeat(2, minmax(150px, 0.8fr));
+  margin-top: clamp(0.5rem, 1vw, 1rem);
+  max-width: min(100%, 820px);
+  overflow: hidden;
+}
+
+.dashboardScoreboard > div {
+  align-content: end;
+  background: rgba(21, 18, 15, 0.46);
+  display: grid;
+  gap: 0.45rem;
+  min-height: 118px;
+  padding: clamp(0.9rem, 1.6vw, 1.25rem);
+}
+
+.dashboardScoreboard .scoreboardPrimary {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--account-accent, var(--steel)) 26%, rgba(21, 18, 15, 0.9)), rgba(21, 18, 15, 0.5));
+}
+
+.dashboardScoreboard span {
+  color: rgba(255, 254, 250, 0.6);
+  font-size: var(--type-label);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboardScoreboard strong {
+  color: #fffefa;
+  font-feature-settings: "tnum" 1, "kern" 1;
+  font-size: clamp(1.2rem, 2vw, 1.9rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.dashboardScoreboard .scoreboardPrimary strong {
+  font-family: var(--font-heading);
+  font-size: clamp(2.25rem, 4.2vw, 4rem);
+  letter-spacing: -0.02em;
+}
+
+.dashboardScoreboard em {
+  color: rgba(255, 254, 250, 0.68);
+  font-size: var(--type-caption);
+  font-style: normal;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.dashboardScoreboard.positive > div:nth-child(2) strong {
+  color: #9dd6b4;
+}
+
+.dashboardScoreboard.negative > div:nth-child(2) strong {
+  color: #ffb4a9;
 }
 
 .dashboardHeader .muted,
@@ -3945,6 +4077,26 @@ label {
   grid-area: controls;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 1.2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboardHeader .controlDock {
+  align-self: stretch;
+  background: rgba(255, 254, 250, 0.08);
+  border: 1px solid rgba(255, 254, 250, 0.16);
+  gap: 0.85rem;
+  margin-top: 0;
+  padding: 1rem;
+}
+
+.dashboardHeader .controlDock label {
+  color: rgba(255, 254, 250, 0.66);
+}
+
+.dashboardHeader .controlDock select,
+.dashboardHeader .controlDock input {
+  border-color: rgba(255, 254, 250, 0.86);
 }
 
 .controlDock label {
@@ -3974,6 +4126,13 @@ label {
 .shareButton {
   grid-column: 1 / -1;
   padding: 0 0.85rem;
+}
+
+.dashboardHeader .shareButton {
+  background: var(--account-accent, var(--steel));
+  border-color: var(--account-accent, var(--steel));
+  color: var(--ink);
+  min-height: 48px;
 }
 
 .dashboardHeader .controlDock .shareButton:not(:disabled):hover {
@@ -4476,6 +4635,33 @@ label {
   border-radius: 999px;
 }
 
+.sectionBlock .monthlyScorecardHero {
+  background:
+    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 24%, rgba(21, 18, 15, 0.92)));
+  color: #fffefa;
+}
+
+.sectionBlock .monthlyScorecardHero .monthlyScorecardHeader span,
+.sectionBlock .monthlyScorecardHero .monthlyScorecardTotal span,
+.sectionBlock .monthlyScorecardHero .monthlyScorecardBarRow span,
+.sectionBlock .monthlyScorecardHero .monthlyScorecardTotal em {
+  color: rgba(255, 254, 250, 0.68);
+}
+
+.sectionBlock .monthlyScorecardHero .monthlyScorecardHeader strong,
+.sectionBlock .monthlyScorecardHero .monthlyScorecardTotal strong,
+.sectionBlock .monthlyScorecardHero .monthlyScorecardBarRow strong {
+  color: #fffefa;
+}
+
+.sectionBlock .monthlyScorecardHero .monthlyScorecardTrack {
+  background: rgba(255, 254, 250, 0.18);
+}
+
+.sectionBlock .monthlyScorecardHero .monthlyScorecardBarRow:not(.prior) .monthlyScorecardTrack i {
+  background: var(--account-accent, var(--steel));
+}
+
 .weeklyScorecardList,
 .sectionBlock .weeklyScorecardList {
   display: grid;
@@ -4614,6 +4800,7 @@ label {
 
 .artGrid {
   gap: var(--space-4);
+  grid-auto-flow: dense;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
@@ -4623,6 +4810,66 @@ label {
   border-radius: 18px;
   box-shadow: none;
   overflow: hidden;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.artCard:hover {
+  transform: translateY(-2px);
+}
+
+.artGrid .artCard:first-child {
+  background: var(--ink);
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: minmax(210px, 0.9fr) minmax(0, 1.1fr);
+  min-height: 340px;
+}
+
+.artGrid .artCard:first-child .artImage {
+  aspect-ratio: auto;
+  min-height: 100%;
+}
+
+.artGrid .artCard:first-child .artMeta {
+  align-content: center;
+  background:
+    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 18%, rgba(21, 18, 15, 0.95)));
+  color: #fffefa;
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.1rem, 2vw, 1.6rem);
+}
+
+.artGrid .artCard:first-child .artIdentity > strong,
+.artGrid .artCard:first-child .artIdentity .artCodeLink,
+.artGrid .artCard:first-child .artStats strong {
+  color: #fffefa;
+}
+
+.artGrid .artCard:first-child .artMeta span,
+.artGrid .artCard:first-child .artStats em {
+  color: rgba(255, 254, 250, 0.68);
+}
+
+.artGrid .artCard:first-child .artIdentity > strong,
+.artGrid .artCard:first-child .artIdentity .artCodeLink {
+  font-size: 1.8rem;
+  letter-spacing: -0.01em;
+}
+
+.artGrid .artCard:first-child .artStats {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.artGrid .artCard:first-child .artStats span {
+  background: rgba(255, 254, 250, 0.08);
+  padding: 0.75rem;
+}
+
+.artGrid .artCard:first-child .artStatsDivider {
+  display: none;
 }
 
 .sectionBlock .artImage,
@@ -4642,9 +4889,9 @@ label {
 
 .artImage b,
 .topSalesRank {
-  background: var(--ink);
+  background: var(--account-accent, var(--ink));
   border-radius: 0;
-  color: var(--surface-solid);
+  color: var(--ink);
 }
 
 .artMeta {
@@ -4954,6 +5201,10 @@ label {
     grid-template-columns: 1fr;
   }
 
+  .dashboardHeader {
+    min-height: auto;
+  }
+
   .dashboardTopSection {
     grid-template-areas:
       "intro"
@@ -4962,7 +5213,11 @@ label {
 
   .dashboardTopSection .controlDock {
     margin-top: 0;
-    max-width: 440px;
+    max-width: 620px;
+  }
+
+  .dashboardScoreboard {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .ytdTrackerLayout {
@@ -4994,7 +5249,23 @@ label {
 
   .dashboardHeader h2,
   .publicDashboardHeader h1 {
-    font-size: 2.1rem;
+    font-size: 2.4rem;
+  }
+
+  .dashboardHeader {
+    padding: 1rem;
+  }
+
+  .dashboardScoreboard {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardScoreboard > div {
+    min-height: 0;
+  }
+
+  .dashboardScoreboard .scoreboardPrimary strong {
+    font-size: 2.2rem;
   }
 
   .sectionTitle,
@@ -5033,6 +5304,21 @@ label {
     min-width: 0;
     text-align: left;
   }
+
+  .artGrid .artCard:first-child {
+    grid-column: span 1;
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .artGrid .artCard:first-child .artImage {
+    aspect-ratio: 1 / 0.9;
+  }
+
+  .artGrid .artCard:first-child .artIdentity > strong,
+  .artGrid .artCard:first-child .artIdentity .artCodeLink {
+    font-size: 1.35rem;
+  }
 }
 
 @media (max-width: 760px) {
@@ -5062,6 +5348,16 @@ label {
   .imageCacheControl {
     grid-template-columns: minmax(0, 1fr) auto;
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artCard {
+    transition: none;
+  }
+
+  .artCard:hover {
+    transform: none;
   }
 }
 
