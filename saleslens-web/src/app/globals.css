@@ -3726,8 +3726,104 @@ select {
   gap: 0.55rem;
   justify-content: end;
   min-width: 0;
+  position: relative;
   width: max-content;
   justify-self: end;
+}
+
+.navActionMenuButton {
+  align-items: center;
+  appearance: none;
+  background: var(--surface-solid);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  color: var(--ink);
+  display: inline-flex;
+  gap: 0.54rem;
+  height: 44px;
+  justify-content: center;
+  min-width: 112px;
+  padding: 0 1rem;
+  text-transform: uppercase;
+}
+
+.navActionMenuButton > span:last-child {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.menuIcon {
+  display: grid;
+  gap: 3px;
+  width: 14px;
+}
+
+.menuIcon span {
+  background: currentColor;
+  border-radius: 999px;
+  display: block;
+  height: 2px;
+  width: 100%;
+}
+
+.navActionMenu {
+  align-items: center;
+  background: var(--surface-solid);
+  border: 1px solid var(--ink);
+  border-radius: 10px;
+  display: flex;
+  gap: 0.45rem;
+  justify-content: end;
+  padding: 0.45rem;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  width: max-content;
+  z-index: 40;
+}
+
+.navActionMenuItem {
+  align-items: center;
+  appearance: none;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  color: var(--on-ink);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  height: 44px;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  min-width: 104px;
+  padding: 0 1.08rem;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.navActionMenuButton:hover,
+.navActionMenuButton:focus-visible {
+  background: var(--surface-solid);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.navActionMenuItem:hover,
+.navActionMenuItem:focus-visible {
+  background: var(--surface-solid);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.navActionMenuItem:disabled {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+  opacity: 0.44;
 }
 
 .navField,
@@ -3959,7 +4055,7 @@ select {
 .dashboardTopSection {
   align-items: start;
   grid-template-areas:
-    "intro intro"
+    "intro insight"
     "score score";
   grid-template-rows: auto auto;
 }
@@ -3994,6 +4090,60 @@ select {
   padding: 0.42rem 0.7rem;
   text-align: center;
   text-transform: uppercase;
+}
+
+.dashboardHeroInsight {
+  align-content: center;
+  align-self: center;
+  background: rgba(21, 18, 15, 0.66);
+  border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 34%, rgba(255, 254, 250, 0.16));
+  display: grid;
+  gap: 0.42rem;
+  grid-area: insight;
+  justify-self: end;
+  min-height: 104px;
+  padding: clamp(0.85rem, 1.35vw, 1.1rem);
+  position: relative;
+  width: min(100%, 390px);
+  z-index: 1;
+}
+
+.dashboardHeroInsight span,
+.dashboardHeroInsight em,
+.dashboardHeroInsight small {
+  font-style: normal;
+  line-height: 1.2;
+}
+
+.dashboardHeroInsight span {
+  color: rgba(255, 254, 250, 0.62);
+  font-size: var(--type-label);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboardHeroInsight strong {
+  color: var(--on-ink);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.1vw, 3rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 0.9;
+  overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
+
+.dashboardHeroInsight em {
+  color: var(--hero-positive);
+  font-size: 0.92rem;
+  font-weight: 850;
+}
+
+.dashboardHeroInsight small {
+  color: rgba(255, 254, 250, 0.72);
+  font-size: var(--type-caption);
+  font-weight: 750;
 }
 
 .dashboardHeader .eyebrow,
@@ -4353,7 +4503,7 @@ select {
 }
 
 .sectionTitle h3 {
-  color: var(--account-secondary-accent, var(--pms-cool-gray-11));
+  color: #000;
   font-size: var(--type-section-title);
   font-weight: 860;
   letter-spacing: 0;
@@ -5025,7 +5175,13 @@ select {
   color: #fffefa;
   display: grid;
   gap: 1rem;
+  min-width: 0;
   padding: clamp(1.1rem, 2vw, 1.6rem);
+}
+
+.artGrid .artCard:first-child .artIdentity {
+  min-width: 0;
+  width: 100%;
 }
 
 .artGrid .artCard:first-child .artIdentity > strong,
@@ -5041,8 +5197,13 @@ select {
 
 .artGrid .artCard:first-child .artIdentity > strong,
 .artGrid .artCard:first-child .artIdentity .artCodeLink {
-  font-size: 1.8rem;
+  display: block;
+  font-size: clamp(1.35rem, 2.25vw, 1.72rem);
   letter-spacing: -0.01em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .artGrid .artCard:first-child .artStats {
@@ -5266,6 +5427,8 @@ select {
 .fileButton,
 .navShareButton,
 .navSignOut,
+.navActionMenuButton,
+.navActionMenuItem,
 .shareButton,
 .shareGenerateButton,
 .browseButton,
@@ -5287,6 +5450,8 @@ select {
 .fileButton:not(:disabled):active,
 .navShareButton:not(:disabled):active,
 .navSignOut:not(:disabled):active,
+.navActionMenuButton:not(:disabled):active,
+.navActionMenuItem:not(:disabled):active,
 .shareButton:not(:disabled):active,
 .shareGenerateButton:not(:disabled):active,
 .browseButton:not(:disabled):active,
@@ -5804,6 +5969,36 @@ select {
   line-height: 0.94;
 }
 
+.sectionBlock .inventoryTotal {
+  gap: clamp(0.65rem, 1.1vw, 0.9rem);
+  min-height: clamp(260px, 28vw, 420px);
+  padding: clamp(1.75rem, 3.4vw, 3rem);
+}
+
+.sectionBlock .inventoryTotal::before,
+.sectionBlock .inventoryTotal::after {
+  background: var(--ink);
+  content: "";
+  display: block;
+  height: 3px;
+  justify-self: center;
+  width: min(7.5rem, 52%);
+}
+
+.sectionBlock .inventoryTotal span {
+  color: var(--ink);
+  font-size: clamp(0.8rem, 1vw, 0.94rem);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+}
+
+.sectionBlock .inventoryTotal strong {
+  color: var(--ink);
+  font-size: clamp(4.5rem, 8.2vw, 7.2rem);
+  letter-spacing: -0.015em;
+  line-height: 0.82;
+}
+
 .sectionBlock .monthlyScorecardMetrics .driverTile > strong {
   font-size: 2.05rem;
 }
@@ -5894,7 +6089,14 @@ select {
   .dashboardTopSection {
     grid-template-areas:
       "intro"
+      "insight"
       "score";
+  }
+
+  .dashboardHeroInsight {
+    justify-self: stretch;
+    min-height: 0;
+    width: 100%;
   }
 
   .dashboardScoreboard {
@@ -5945,6 +6147,11 @@ select {
     justify-content: end;
     justify-self: end;
     width: max-content;
+  }
+
+  .navActionMenu {
+    flex-wrap: wrap;
+    max-width: calc(100vw - 1.5rem);
   }
 
   .fileButton,

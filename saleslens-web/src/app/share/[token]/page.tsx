@@ -252,7 +252,7 @@ function SharedAccountReport({ payload, embedded = false }: { payload: ReportSna
 
         {productGalleryRows.length ? (
           <ReportSection
-            title="Top Performers"
+            title="Product Assortment"
           >
             <div className="artGrid">
               {productGalleryRows.map((row) => (

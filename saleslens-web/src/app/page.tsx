@@ -201,6 +201,13 @@ type ProductGalleryItem = {
   productUrl: string | null;
 };
 
+type BiggestMoveInsight = {
+  label: string;
+  title: string;
+  delta: number;
+  detail: string;
+} | null;
+
 type TopStyle = MetricSet & {
   rank: number;
   style: string;
@@ -505,6 +512,8 @@ export default function Home() {
   const [shareStatus, setShareStatus] = useState("");
   const [shareUrl, setShareUrl] = useState("");
   const inventoryControlsRef = useRef<HTMLDivElement | null>(null);
+  const navActionMenuRef = useRef<HTMLDivElement | null>(null);
+  const [navActionMenuOpen, setNavActionMenuOpen] = useState(false);
   const [importStatus, setImportStatus] = useState("");
   const [uploadHistoryOpen, setUploadHistoryOpen] = useState(false);
   const [uploadHistoryCustomerId, setUploadHistoryCustomerId] = useState("");
@@ -1067,6 +1076,10 @@ export default function Home() {
   const dashboardCurrentSalesText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : currencyText(currentMetrics.sales);
   const dashboardCurrentUnitsText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : numberText(currentMetrics.units);
   const dashboardPriorUnitsText = isTotalsPreparing ? "Waiting for report" : isTotalsBlocked ? "No verified report" : `${numberText(priorMetrics.units)} LY`;
+  const dashboardBiggestMove = useMemo(
+    () => biggestMoveInsight(periodRecords, priorPeriodRecords),
+    [periodRecords, priorPeriodRecords],
+  );
   const shareStatusText = shareStatus.toLowerCase();
   let shareStatusTone = "";
   if (shareUrl) {
@@ -1135,6 +1148,26 @@ export default function Home() {
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [inventoryMenuOpen]);
+
+  useEffect(() => {
+    if (!navActionMenuOpen) return undefined;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (navActionMenuRef.current?.contains(event.target as Node)) return;
+      setNavActionMenuOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setNavActionMenuOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [navActionMenuOpen]);
 
   function applyProductGalleryView(view: ProductGalleryView) {
     setProductGalleryView(view);
@@ -1956,53 +1989,84 @@ export default function Home() {
             </label>
           </div>
 
-          <div className="navActions">
-            <div className="navUploadField">
-              <button
-                aria-label="Upload or import"
-                className="fileButton"
-                onClick={() => {
-                  setCustomerStatus("");
-                  setImportModalOpen(true);
-                }}
-                type="button"
-              >
-                Upload
-              </button>
-              {(customerStatus || importStatus) ? (
-                <div className="navMessage">
-                  <span>{importStatus || customerStatus}</span>
-                  <button
-                    aria-label="Dismiss message"
-                    onClick={() => {
-                      setImportStatus("");
-                      setCustomerStatus("");
-                    }}
-                    type="button"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : null}
-            </div>
-
+          <div className="navActions" ref={navActionMenuRef}>
             <button
-              className="navShareButton"
-              onClick={() => {
-                setShareModalOpen(true);
-                setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
-                setShareStatus("");
-                setShareUrl("");
-              }}
-              disabled={!period}
+              aria-controls="nav-action-menu"
+              aria-expanded={navActionMenuOpen}
+              aria-haspopup="menu"
+              className="navActionMenuButton"
+              onClick={() => setNavActionMenuOpen((isOpen) => !isOpen)}
               type="button"
             >
-              Share
+              <span className="menuIcon" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </span>
+              <span>Menu</span>
             </button>
 
-            <button className="navSignOut" type="button" onClick={signOut}>
-              Sign Out
-            </button>
+            {navActionMenuOpen ? (
+              <div className="navActionMenu" id="nav-action-menu" role="menu">
+                <button
+                  role="menuitem"
+                  aria-label="Upload or import"
+                  className="navActionMenuItem"
+                  onClick={() => {
+                    setNavActionMenuOpen(false);
+                    setCustomerStatus("");
+                    setImportModalOpen(true);
+                  }}
+                  type="button"
+                >
+                  Upload
+                </button>
+
+                <button
+                  className="navActionMenuItem"
+                  disabled={!period}
+                  onClick={() => {
+                    setNavActionMenuOpen(false);
+                    setShareModalOpen(true);
+                    setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
+                    setShareStatus("");
+                    setShareUrl("");
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  Share
+                </button>
+
+                <button
+                  className="navActionMenuItem"
+                  onClick={() => {
+                    setNavActionMenuOpen(false);
+                    void signOut();
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : null}
+
+            {(customerStatus || importStatus) ? (
+              <div className="navMessage">
+                <span>{importStatus || customerStatus}</span>
+                <button
+                  aria-label="Dismiss message"
+                  onClick={() => {
+                    setImportStatus("");
+                    setCustomerStatus("");
+                  }}
+                  type="button"
+                >
+                  ×
+                </button>
+              </div>
+            ) : null}
           </div>
         </nav>
 
@@ -2340,6 +2404,21 @@ export default function Home() {
               </div>
             </div>
 
+            <aside className="dashboardHeroInsight" aria-label="Biggest move">
+              <span>Biggest Move</span>
+              <strong>{isTotalsPreparing ? "Preparing report" : isTotalsBlocked ? "Report unavailable" : dashboardBiggestMove?.title ?? "Waiting for comparison"}</strong>
+              <em>
+                {isTotalsPreparing
+                  ? "Calculating period movement"
+                  : isTotalsBlocked
+                    ? "No verified movement shown"
+                    : dashboardBiggestMove
+                      ? `${dashboardBiggestMove.label} ${signedNumberText(dashboardBiggestMove.delta)} units`
+                      : "Needs current and prior product data"}
+              </em>
+              {dashboardBiggestMove && !isTotalsPreparing && !isTotalsBlocked ? <small>{dashboardBiggestMove.detail}</small> : null}
+            </aside>
+
             <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
               <div className="scoreboardPrimary">
                 <span>{isTotalsPreparing ? "Preparing Sales" : isTotalsBlocked ? "Sales Unavailable" : "Current Sales"}</span>
@@ -2525,7 +2604,7 @@ export default function Home() {
             <section className="sectionBlock" id="product-gallery">
               <div className="sectionTitle">
                 <div>
-                  <h3>Top Performers</h3>
+                  <h3>Product Assortment</h3>
                   <p>{productGalleryDecisionSummary}</p>
                 </div>
                 {supportsProductImageFetch(selectedCustomer?.name ?? "") ? (
@@ -3707,6 +3786,52 @@ function topArtRows(
     .sort(sort === "dollars" ? sortBySales : sortByUnits);
   const limitedRows = limit == null ? rows : rows.slice(0, limit);
   return limitedRows.map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function biggestMoveInsight(records: SalesRecord[], priorRecords: SalesRecord[]): BiggestMoveInsight {
+  if (!records.length || !priorRecords.length) return null;
+
+  const currentGroups = groupBy(records, artKey);
+  const priorGroups = groupBy(priorRecords, artKey);
+  const keys = new Set([...currentGroups.keys(), ...priorGroups.keys()]);
+  const rows = [...keys]
+    .map((key) => {
+      const currentGroup = currentGroups.get(key) ?? [];
+      const priorGroup = priorGroups.get(key) ?? [];
+      const first = currentGroup[0] ?? priorGroup[0];
+      if (!first) return null;
+
+      const currentUnits = sum(currentGroup.map((record) => record.units ?? 0));
+      const priorUnits = sum(priorGroup.map((record) => record.units ?? 0));
+      const currentSales = sum(currentGroup.map(amountValue));
+      const priorSales = sum(priorGroup.map(amountValue));
+      const delta = currentUnits - priorUnits;
+
+      return {
+        key,
+        title: displayArtCode(first),
+        delta,
+        currentUnits,
+        priorUnits,
+        currentSales,
+        priorSales,
+        style: normalizedStyle(first),
+        color: colorName(first),
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+    .filter((row) => row.delta > 0)
+    .sort((left, right) => right.delta - left.delta || (right.currentSales - right.priorSales) - (left.currentSales - left.priorSales));
+
+  const biggest = rows[0];
+  if (!biggest) return null;
+
+  return {
+    label: "Largest gain",
+    title: biggest.title,
+    delta: biggest.delta,
+    detail: `${biggest.style} | ${biggest.color} | ${numberText(biggest.currentUnits)} now vs ${numberText(biggest.priorUnits)} LY`,
+  };
 }
 
 function inventoryLabel(row: Pick<TopArt, "inventoryScope" | "inventoryUnits">) {
