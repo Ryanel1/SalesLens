@@ -992,10 +992,9 @@ export default function Home() {
   const dashboardPeriodLabel = selectedPeriodTitle === "-" ? "Choose a period" : selectedPeriodTitle;
   const dashboardPriorLabel = priorPeriodTitle === "-" ? "Waiting for data" : priorPeriodTitle;
   const dashboardScoreTone = changeClass(monthlySalesDelta);
-  const dashboardScoreDelta =
-    currentMetrics.sales || priorMetrics.sales
-      ? `${changeText(currentMetrics.sales, priorMetrics.sales)} | ${signedCurrencyText(monthlySalesDelta)}`
-      : "No sales yet";
+  const dashboardScoreChange =
+    currentMetrics.sales || priorMetrics.sales ? changeText(currentMetrics.sales, priorMetrics.sales) : "No sales yet";
+  const dashboardScoreCurrency = currentMetrics.sales || priorMetrics.sales ? signedCurrencyText(monthlySalesDelta) : "";
   const weeklyDecisionSummary = weeklyScorecards.length
     ? (() => {
         const bySales = [...weeklyScorecards].sort((left, right) => right.current.sales - left.current.sales);
@@ -2239,23 +2238,6 @@ export default function Home() {
                 <span>{dashboardPeriodLabel}</span>
               </div>
               <h2>{selectedCustomer?.name ?? "Account"}</h2>
-              <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
-                <div className="scoreboardPrimary">
-                  <span>Current Sales</span>
-                  <strong>{currencyText(currentMetrics.sales)}</strong>
-                  <em>{dashboardPeriodLabel}</em>
-                </div>
-                <div>
-                  <span>Vs Last Year</span>
-                  <strong>{dashboardScoreDelta}</strong>
-                  <em>{dashboardPriorLabel}</em>
-                </div>
-                <div>
-                  <span>Units</span>
-                  <strong>{numberText(currentMetrics.units)}</strong>
-                  <em>{numberText(priorMetrics.units)} LY</em>
-                </div>
-              </div>
             </div>
 
             <div className="controlDock">
@@ -2301,6 +2283,27 @@ export default function Home() {
               >
                 Share Report
               </button>
+            </div>
+
+            <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
+              <div className="scoreboardPrimary">
+                <span>Current Sales</span>
+                <strong>{currencyText(currentMetrics.sales)}</strong>
+                <em>{dashboardPeriodLabel}</em>
+              </div>
+              <div>
+                <span>Vs Last Year</span>
+                <strong className="scoreDeltaValue">
+                  <span>{dashboardScoreChange}</span>
+                  {dashboardScoreCurrency ? <span>{dashboardScoreCurrency}</span> : null}
+                </strong>
+                <em>{dashboardPriorLabel}</em>
+              </div>
+              <div>
+                <span>Units</span>
+                <strong>{numberText(currentMetrics.units)}</strong>
+                <em>{numberText(priorMetrics.units)} LY</em>
+              </div>
             </div>
 
           </header>
