@@ -1063,6 +1063,8 @@ export default function Home() {
       : "No sales match the current period and filters.";
   const dashboardPeriodLabel = selectedPeriodTitle === "-" ? "Choose a period" : selectedPeriodTitle;
   const dashboardPriorLabel = priorPeriodTitle === "-" ? "Waiting for data" : priorPeriodTitle;
+  const dashboardAccountName = selectedCustomer?.name ?? "Account";
+  const dashboardAccountLogo = accountTeamLogo(dashboardAccountName);
   const dashboardScoreTone = isTotalsPreparing || isTotalsBlocked ? "pending" : changeClass(monthlySalesDelta);
   const dashboardScoreChange =
     isTotalsPreparing ? "Preparing report" : isTotalsBlocked ? "Report unavailable" : currentMetrics.sales || priorMetrics.sales ? changeText(currentMetrics.sales, priorMetrics.sales) : "Confirmed zero";
@@ -2339,7 +2341,19 @@ export default function Home() {
                 <p className="eyebrow">Sales Snapshot</p>
                 <span>{dashboardPeriodLabel}</span>
               </div>
-              <h2>{selectedCustomer?.name ?? "Account"}</h2>
+              <h2 className="dashboardAccountTitle">
+                <span>{dashboardAccountName}</span>
+                {dashboardAccountLogo ? (
+                  <Image
+                    className="accountTeamLogo"
+                    src={dashboardAccountLogo.src}
+                    alt=""
+                    aria-hidden="true"
+                    width={dashboardAccountLogo.width}
+                    height={dashboardAccountLogo.height}
+                  />
+                ) : null}
+              </h2>
             </div>
 
             <div className="controlDock">
@@ -2806,6 +2820,13 @@ function accountThemeClass(name?: string | null) {
   if (normalized.includes("rebel")) return "accountThemeRebelRags";
   if (normalized.includes("volshop") || normalized.includes("vol shop")) return "accountThemeVolshop";
   return "accountThemeDefault";
+}
+
+function accountTeamLogo(name?: string | null) {
+  const normalized = (name ?? "").toLowerCase();
+  if (normalized.includes("rebel")) return { src: "/images/account-logos/ole-miss.png", width: 405, height: 369 };
+  if (normalized.includes("volshop") || normalized.includes("vol shop")) return { src: "/images/account-logos/tennessee.png", width: 951, height: 951 };
+  return null;
 }
 
 function YtdInsightCard({ label, value, detail, tone }: { label: string; value: string; detail: string; tone: number }) {

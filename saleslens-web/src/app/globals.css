@@ -4024,6 +4024,22 @@ select {
   text-wrap: balance;
 }
 
+.dashboardAccountTitle {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.24em;
+}
+
+.accountTeamLogo {
+  flex: 0 0 auto;
+  height: 0.66em;
+  max-height: 0.66em;
+  object-fit: contain;
+  transform: translateY(0.03em);
+  width: auto;
+}
+
 .dashboardScoreboard {
   background: color-mix(in srgb, var(--account-accent, var(--steel)) 18%, rgba(255, 254, 250, 0.08));
   border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(255, 254, 250, 0.16));
