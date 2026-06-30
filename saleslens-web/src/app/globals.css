@@ -3639,7 +3639,7 @@ select {
   display: grid;
   gap: clamp(0.75rem, 1.8vw, 1.5rem);
   grid-column: 1;
-  grid-template-columns: minmax(130px, 0.38fr) minmax(340px, 1fr) minmax(460px, 0.56fr);
+  grid-template-columns: minmax(112px, 0.24fr) minmax(300px, 1fr) minmax(580px, 0.7fr);
   justify-self: stretch;
   min-height: 58px;
   opacity: 1;
@@ -3654,11 +3654,15 @@ select {
 }
 
 .topNav.compact {
-  box-shadow: none !important;
+  background: rgba(17, 16, 14, 0.96);
+  box-shadow: 0 10px 24px rgba(17, 16, 14, 0.18) !important;
   filter: none !important;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-100%);
+  min-height: 52px;
+  opacity: 1;
+  padding-bottom: 0.42rem;
+  padding-top: 0.42rem;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .navBrand {
@@ -3755,12 +3759,14 @@ select {
   align-items: end;
   display: grid;
   gap: 0.46rem;
-  grid-template-columns: 144px 144px 132px;
+  grid-template-columns: minmax(138px, 1.25fr) minmax(132px, 1.1fr) minmax(112px, 0.88fr) 82px 82px;
   justify-content: end;
+  width: 100%;
 }
 
 .navField,
 .navUploadField,
+.navShareField,
 .navSignOutField {
   align-self: end;
   display: grid;
@@ -3785,6 +3791,7 @@ label {
 .navField select,
 .navField input,
 .fileButton,
+.navShareButton,
 .navSignOut {
   align-items: center;
   appearance: none;
@@ -3813,6 +3820,7 @@ label {
 }
 
 .fileButton,
+.navShareButton,
 .navSignOut {
   justify-content: center;
   text-align: center;
@@ -3823,10 +3831,24 @@ label {
 }
 
 .fileButton:hover,
+.navShareButton:hover,
 .navSignOut:hover,
 .navField select:hover {
   background: #f0ece4;
   border-color: #f0ece4;
+}
+
+.navShareButton {
+  background: var(--account-accent, var(--steel));
+  border-color: var(--account-accent, var(--steel));
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.navShareButton:disabled {
+  background: rgba(255, 254, 250, 0.18);
+  border-color: rgba(255, 254, 250, 0.18);
+  color: rgba(255, 254, 250, 0.52);
 }
 
 .navDateMeta {
@@ -3900,7 +3922,7 @@ label {
 .dashboard {
   grid-column: 1;
   min-width: 0;
-  padding: clamp(1.25rem, 4vw, 4rem);
+  padding: clamp(0.85rem, 2.4vw, 2.4rem) clamp(1.25rem, 4vw, 4rem) clamp(1.25rem, 4vw, 4rem);
 }
 
 .dashboardHeader,
@@ -3923,11 +3945,11 @@ label {
     url("/images/campus-stadium-night-blur.jpg") center / cover;
   border-top: 6px solid var(--account-accent, var(--steel));
   color: var(--on-ink);
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.42fr);
-  margin: 0 0 clamp(2.4rem, 4vw, 4.4rem);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.24fr);
+  margin: 0 0 clamp(1.65rem, 3vw, 3rem);
   min-height: 0;
   overflow: hidden;
-  padding: clamp(1.55rem, 3.5vw, 3rem);
+  padding: clamp(1.1rem, 2.4vw, 2.05rem);
   position: relative;
 }
 
@@ -3955,7 +3977,7 @@ label {
 .dashboardTopSection .dashboardHeroIntro {
   align-self: start;
   display: grid;
-  gap: clamp(0.85rem, 1.5vw, 1.2rem);
+  gap: clamp(0.55rem, 1vw, 0.8rem);
   grid-area: intro;
   max-width: 62rem;
   position: relative;
@@ -4004,7 +4026,7 @@ label {
 
 .dashboardHeader h2 {
   color: var(--on-ink);
-  font-size: clamp(3.25rem, 7vw, 6rem);
+  font-size: clamp(2.7rem, 5.5vw, 4.7rem);
   letter-spacing: -0.02em;
   line-height: 0.86;
   max-width: 12ch;
@@ -4017,8 +4039,8 @@ label {
   display: grid;
   gap: 1px;
   grid-area: score;
-  grid-template-columns: minmax(520px, 2.25fr) minmax(240px, 0.75fr) minmax(180px, 0.55fr);
-  margin-top: clamp(0.85rem, 2vw, 1.5rem);
+  grid-template-columns: minmax(460px, 2.05fr) minmax(220px, 0.78fr) minmax(170px, 0.55fr);
+  margin-top: clamp(0.5rem, 1.2vw, 0.95rem);
   max-width: none;
   overflow: hidden;
   position: relative;
@@ -4031,8 +4053,8 @@ label {
   background: rgba(21, 18, 15, 0.46);
   display: grid;
   gap: 0.45rem;
-  min-height: clamp(130px, 12vw, 170px);
-  padding: clamp(1rem, 2vw, 1.45rem);
+  min-height: clamp(104px, 8.5vw, 132px);
+  padding: clamp(0.85rem, 1.45vw, 1.15rem);
 }
 
 .dashboardScoreboard .scoreboardPrimary {
@@ -4077,7 +4099,7 @@ label {
 
 .dashboardScoreboard .scoreboardPrimary strong {
   font-family: var(--font-heading);
-  font-size: clamp(3.4rem, 6.2vw, 5.4rem);
+  font-size: clamp(2.65rem, 4.8vw, 4.15rem);
   letter-spacing: -0.02em;
   white-space: nowrap;
 }
@@ -4126,8 +4148,8 @@ label {
   height: max-content;
   justify-self: end;
   margin-top: 0;
-  max-width: 560px;
-  padding: 1rem;
+  max-width: 230px;
+  padding: 0.82rem;
   width: 100%;
 }
 
@@ -5285,6 +5307,39 @@ label {
     padding: 0.75rem;
   }
 
+  .topNav,
+  .topNav.compact {
+    align-items: stretch;
+    justify-items: stretch;
+    padding: 0.62rem 0.75rem;
+  }
+
+  .navBrand {
+    text-align: left;
+  }
+
+  .sideNavMenu {
+    justify-content: start;
+    margin-inline: -0.75rem;
+    overflow-x: auto;
+    padding-inline: 0.75rem;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+
+  .sideNavMenu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navControls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .navSignOutField {
+    grid-column: 1 / -1;
+  }
+
   .dashboard > .sectionBlock,
   .publicReport > .sectionBlock,
   .publicAccountReport > .sectionBlock {
@@ -5295,11 +5350,12 @@ label {
 
   .dashboardHeader h2,
   .publicDashboardHeader h1 {
-    font-size: 2.4rem;
+    font-size: 2.15rem;
   }
 
   .dashboardHeader {
-    padding: 1rem;
+    margin-bottom: 1.65rem;
+    padding: 0.85rem;
   }
 
   .dashboardScoreboard {
@@ -5311,7 +5367,7 @@ label {
   }
 
   .dashboardScoreboard .scoreboardPrimary strong {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
 
   .sectionTitle,

@@ -1931,6 +1931,24 @@ export default function Home() {
                 </select>
               </label>
 
+              <label className="navField">
+                <select
+                  aria-label="Period"
+                  value={selectedPeriodValue ?? ""}
+                  onChange={(event) => setSelectedPeriod(event.target.value)}
+                >
+                  {periodOptions.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
+
               <div className="navUploadField">
                 <button
                   aria-label="Upload or import"
@@ -1958,6 +1976,22 @@ export default function Home() {
                     </button>
                   </div>
                 ) : null}
+              </div>
+
+              <div className="navShareField">
+                <button
+                  className="navShareButton"
+                  onClick={() => {
+                    setShareModalOpen(true);
+                    setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
+                    setShareStatus("");
+                    setShareUrl("");
+                  }}
+                  disabled={!period}
+                  type="button"
+                >
+                  Share
+                </button>
               </div>
 
               <div className="navSignOutField">
@@ -2303,38 +2337,6 @@ export default function Home() {
                   ))}
                 </select>
               </label>
-
-              <label>
-                Period
-                <select
-                  value={selectedPeriodValue ?? ""}
-                  onChange={(event) => setSelectedPeriod(event.target.value)}
-                >
-                  {periodOptions.map((group) => (
-                    <optgroup key={group.label} label={group.label}>
-                      {group.options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-
-              <button
-                className="shareButton"
-                onClick={() => {
-                  setShareModalOpen(true);
-                  setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
-                  setShareStatus("");
-                  setShareUrl("");
-                }}
-                disabled={!period}
-                type="button"
-              >
-                Share Report
-              </button>
             </div>
 
             <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
