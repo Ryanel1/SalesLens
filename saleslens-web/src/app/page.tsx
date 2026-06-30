@@ -521,8 +521,6 @@ export default function Home() {
   const [imageCacheRunning, setImageCacheRunning] = useState(false);
   const [imageCacheStatus, setImageCacheStatus] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
-  const [navCompact, setNavCompact] = useState(false);
-  const [activeReportSection, setActiveReportSection] = useState("scorecards");
   const [imagePrefetchRun, setImagePrefetchRun] = useState(0);
   const imageFetchAttempts = useRef<Set<string>>(new Set());
   const reportCache = useRef<Map<string, ReportSnapshotPayload>>(new Map());
@@ -686,37 +684,6 @@ export default function Home() {
 
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
-
-  useEffect(() => {
-    const updateNavSize = () => setNavCompact(window.scrollY > 24);
-    updateNavSize();
-    window.addEventListener("scroll", updateNavSize, { passive: true });
-    return () => window.removeEventListener("scroll", updateNavSize);
-  }, []);
-
-  useEffect(() => {
-    const sectionIds = ["scorecards", "monthly-scorecard", "weekly-scorecard", "inventory-snapshot", "product-gallery"];
-    const updateActiveSection = () => {
-      const sections = sectionIds
-        .map((id) => document.getElementById(id))
-        .filter((section): section is HTMLElement => Boolean(section));
-      let currentId = "";
-
-      sections.forEach((section) => {
-        if (section.getBoundingClientRect().top <= 150) currentId = section.id;
-      });
-
-      if (currentId) setActiveReportSection(currentId);
-    };
-
-    updateActiveSection();
-    window.addEventListener("scroll", updateActiveSection, { passive: true });
-    window.addEventListener("resize", updateActiveSection);
-    return () => {
-      window.removeEventListener("scroll", updateActiveSection);
-      window.removeEventListener("resize", updateActiveSection);
-    };
-  }, []);
 
   useEffect(() => {
     if (!supabase) {
@@ -1937,125 +1904,97 @@ export default function Home() {
   if (user) {
     return (
       <main className={`appShell ${accountThemeClass(selectedCustomer?.name)}`}>
-        <nav className={navCompact ? "topNav compact" : "topNav"} aria-label="SalesLens controls">
+        <nav className="topNav" aria-label="SalesLens controls">
           <div className="navBrand">
             <h1>SalesLens</h1>
             <p>by Lester Sales</p>
           </div>
 
-          <div className="sideNavMenu" aria-label="SalesLens report sections">
-            <a className={`sideNavItem ${activeReportSection === "scorecards" ? "active" : ""}`} href="#scorecards" aria-current={activeReportSection === "scorecards" ? "page" : undefined}>
-              <span>Scorecards</span>
-            </a>
-            <a className={`sideNavItem ${activeReportSection === "monthly-scorecard" ? "active" : ""}`} href="#monthly-scorecard" aria-current={activeReportSection === "monthly-scorecard" ? "page" : undefined}>
-              <span>{selectedPeriodKind === "year" ? "Selected Year" : "Monthly"}</span>
-            </a>
-            {selectedPeriodKind === "month" && weeklyScorecards.length ? (
-              <a className={`sideNavItem ${activeReportSection === "weekly-scorecard" ? "active" : ""}`} href="#weekly-scorecard" aria-current={activeReportSection === "weekly-scorecard" ? "page" : undefined}>
-                <span>Weekly</span>
-              </a>
-            ) : null}
-            {inventorySnapshot ? (
-              <a className={`sideNavItem ${activeReportSection === "inventory-snapshot" ? "active" : ""}`} href="#inventory-snapshot" aria-current={activeReportSection === "inventory-snapshot" ? "page" : undefined}>
-                <span>Inventory</span>
-              </a>
-            ) : null}
-            {productGalleryRows.length || inventoryTrackerMeta || topArt.length ? (
-              <a className={`sideNavItem ${activeReportSection === "product-gallery" ? "active" : ""}`} href="#product-gallery" aria-current={activeReportSection === "product-gallery" ? "page" : undefined}>
-                <span>Top Performers</span>
-              </a>
-            ) : null}
+          <div className="navControlIsland" aria-label="Report controls">
+            <label className="navField">
+              <select
+                aria-label="Account"
+                value={selectedCustomerId ?? ""}
+                onChange={(event) => {
+                  setSelectedCustomerId(event.target.value);
+                  setSelectedPeriod(null);
+                  setBrandFilter("All");
+                }}
+              >
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="navField">
+              <select
+                aria-label="Period"
+                value={selectedPeriodValue ?? ""}
+                onChange={(event) => setSelectedPeriod(event.target.value)}
+              >
+                {periodOptions.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
           </div>
 
-          <div className="sideNavBottom">
-            <div className="navControls">
-              <label className="navField">
-                <select
-                  aria-label="Account"
-                  value={selectedCustomerId ?? ""}
-                  onChange={(event) => {
-                    setSelectedCustomerId(event.target.value);
-                    setSelectedPeriod(null);
-                    setBrandFilter("All");
-                  }}
-                >
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="navField">
-                <select
-                  aria-label="Period"
-                  value={selectedPeriodValue ?? ""}
-                  onChange={(event) => setSelectedPeriod(event.target.value)}
-                >
-                  {periodOptions.map((group) => (
-                    <optgroup key={group.label} label={group.label}>
-                      {group.options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-
-              <div className="navUploadField">
-                <button
-                  aria-label="Upload or import"
-                  className="fileButton"
-                  onClick={() => {
-                    setCustomerStatus("");
-                    setImportModalOpen(true);
-                  }}
-                  type="button"
-                >
-                  Upload / Import
-                </button>
-                {(customerStatus || importStatus) ? (
-                  <div className="navMessage">
-                    <span>{importStatus || customerStatus}</span>
-                    <button
-                      aria-label="Dismiss message"
-                      onClick={() => {
-                        setImportStatus("");
-                        setCustomerStatus("");
-                      }}
-                      type="button"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="navShareField">
-                <button
-                  className="navShareButton"
-                  onClick={() => {
-                    setShareModalOpen(true);
-                    setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
-                    setShareStatus("");
-                    setShareUrl("");
-                  }}
-                  disabled={!period}
-                  type="button"
-                >
-                  Share
-                </button>
-              </div>
-
-              <div className="navSignOutField">
-                <button className="ghostButton navSignOut" type="button" onClick={signOut}>
-                  Sign Out
-                </button>
-              </div>
+          <div className="navActions">
+            <div className="navUploadField">
+              <button
+                aria-label="Upload or import"
+                className="fileButton"
+                onClick={() => {
+                  setCustomerStatus("");
+                  setImportModalOpen(true);
+                }}
+                type="button"
+              >
+                Upload
+              </button>
+              {(customerStatus || importStatus) ? (
+                <div className="navMessage">
+                  <span>{importStatus || customerStatus}</span>
+                  <button
+                    aria-label="Dismiss message"
+                    onClick={() => {
+                      setImportStatus("");
+                      setCustomerStatus("");
+                    }}
+                    type="button"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : null}
             </div>
+
+            <button
+              className="navShareButton"
+              onClick={() => {
+                setShareModalOpen(true);
+                setSelectedShareCustomerIds(selectedCustomerId ? [selectedCustomerId] : []);
+                setShareStatus("");
+                setShareUrl("");
+              }}
+              disabled={!period}
+              type="button"
+            >
+              Share
+            </button>
+
+            <button className="ghostButton navSignOut" type="button" onClick={signOut}>
+              Sign Out
+            </button>
           </div>
         </nav>
 

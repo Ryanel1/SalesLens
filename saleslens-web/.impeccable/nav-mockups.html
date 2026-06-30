@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SalesLens Nav Mockups</title>
+    <style>
+      :root {
+        --canvas: #f4f3f0;
+        --surface: #fffefa;
+        --surface-soft: #f8f7f4;
+        --ink: #15120f;
+        --text: #171512;
+        --muted: #6a655d;
+        --line: rgba(21, 18, 15, 0.12);
+        --orange: #ff8200;
+        --blue: #8ecae6;
+        --radius: 12px;
+        --pill: 999px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--text);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 28px;
+      }
+
+      main {
+        display: grid;
+        gap: 26px;
+        margin: 0 auto;
+        max-width: 1360px;
+      }
+
+      .mockup {
+        background: #ebe8e1;
+        border: 1px solid rgba(21, 18, 15, 0.12);
+        display: grid;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .mockup > header {
+        align-items: end;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .mockup h2 {
+        font-size: 15px;
+        line-height: 1;
+        margin: 0;
+      }
+
+      .mockup p {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+        margin: 0;
+        max-width: 58ch;
+      }
+
+      .frame {
+        background:
+          linear-gradient(rgba(255, 254, 250, 0.78), rgba(244, 243, 240, 0.88)),
+          radial-gradient(circle at 78% 18%, rgba(255, 130, 0, 0.18), transparent 24%),
+          #f3f1ea;
+        min-height: 220px;
+        overflow: hidden;
+      }
+
+      .brand {
+        display: grid;
+        gap: 2px;
+        min-width: 166px;
+      }
+
+      .brand strong {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0;
+        line-height: 0.95;
+      }
+
+      .brand span {
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.08em;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      .links {
+        align-items: center;
+        display: flex;
+        gap: 3px;
+      }
+
+      .links a {
+        align-items: center;
+        border-radius: var(--pill);
+        color: inherit;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 700;
+        height: 36px;
+        padding: 0 10px;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .links a.active {
+        background: rgba(255, 255, 255, 0.12);
+        color: inherit;
+      }
+
+      .controls {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        min-width: 0;
+      }
+
+      .control,
+      .action {
+        align-items: center;
+        border-radius: var(--pill);
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 760;
+        height: 38px;
+        justify-content: center;
+        line-height: 1;
+        min-width: 92px;
+        padding: 0 12px;
+        white-space: nowrap;
+      }
+
+      .control {
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.96);
+        color: var(--ink);
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .control::after {
+        content: "⌄";
+        font-size: 12px;
+        opacity: 0.58;
+      }
+
+      .action {
+        border: 1px solid transparent;
+      }
+
+      .primary {
+        background: var(--orange);
+        color: var(--ink);
+        min-width: 76px;
+      }
+
+      .secondary {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.18);
+        color: #fffefa;
+        min-width: 82px;
+      }
+
+      .quiet {
+        background: transparent;
+        border-color: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 254, 250, 0.82);
+        min-width: 76px;
+      }
+
+      .bodyGhost {
+        display: grid;
+        gap: 18px;
+        padding: 30px;
+      }
+
+      .metric {
+        background: rgba(255, 254, 250, 0.74);
+        height: 86px;
+        max-width: 560px;
+      }
+
+      .tiles {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .tile {
+        background: rgba(255, 254, 250, 0.7);
+        height: 54px;
+      }
+
+      .navA {
+        align-items: center;
+        background: var(--ink);
+        color: #fffefa;
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 180px minmax(390px, 1fr) minmax(460px, auto);
+        min-height: 70px;
+        padding: 12px 18px;
+      }
+
+      .navA .brand span {
+        color: rgba(255, 254, 250, 0.58);
+      }
+
+      .navA .links {
+        justify-content: center;
+      }
+
+      .navB {
+        align-items: center;
+        background: rgba(255, 254, 250, 0.94);
+        border-bottom: 1px solid var(--line);
+        color: var(--ink);
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 188px minmax(390px, 1fr) minmax(460px, auto);
+        min-height: 72px;
+        padding: 12px 20px;
+      }
+
+      .navB .brand strong {
+        font-size: 24px;
+      }
+
+      .navB .brand span {
+        color: var(--muted);
+      }
+
+      .navB .links {
+        background: var(--surface-soft);
+        border: 1px solid var(--line);
+        border-radius: var(--pill);
+        justify-self: center;
+        padding: 4px;
+      }
+
+      .navB .links a {
+        color: var(--muted);
+      }
+
+      .navB .links a.active {
+        background: var(--ink);
+        color: #fffefa;
+      }
+
+      .navB .control {
+        background: #fff;
+        border-color: var(--line);
+      }
+
+      .navB .secondary,
+      .navB .quiet {
+        background: #fff;
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .navB .primary {
+        color: #15120f;
+      }
+
+      .navC {
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        color: var(--ink);
+        display: grid;
+      }
+
+      .navCTop,
+      .navCBottom {
+        align-items: center;
+        display: grid;
+        gap: 18px;
+        padding: 10px 20px;
+      }
+
+      .navCTop {
+        grid-template-columns: 220px minmax(0, 1fr) minmax(86px, auto);
+        min-height: 58px;
+      }
+
+      .navCBottom {
+        background: #f8f7f4;
+        border-top: 1px solid var(--line);
+        grid-template-columns: minmax(0, 1fr) minmax(170px, auto);
+        min-height: 50px;
+      }
+
+      .navC .brand strong {
+        font-size: 25px;
+      }
+
+      .navC .brand span {
+        color: var(--muted);
+      }
+
+      .navC .links {
+        justify-content: flex-start;
+      }
+
+      .navC .links a {
+        color: var(--muted);
+        height: 34px;
+      }
+
+      .navC .links a.active {
+        background: var(--ink);
+        color: #fffefa;
+      }
+
+      .navC .control,
+      .navC .secondary,
+      .navC .quiet {
+        background: #fff;
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .navC .primary {
+        color: var(--ink);
+      }
+
+      .tag {
+        align-items: center;
+        background: rgba(255, 130, 0, 0.13);
+        border: 1px solid rgba(255, 130, 0, 0.28);
+        border-radius: var(--pill);
+        color: #7a3d00;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 800;
+        height: 30px;
+        padding: 0 12px;
+      }
+
+      @media (max-width: 900px) {
+        body {
+          padding: 16px;
+        }
+
+        .navA,
+        .navB,
+        .navCTop,
+        .navCBottom {
+          grid-template-columns: 1fr;
+        }
+
+        .links,
+        .controls {
+          justify-content: flex-start;
+          overflow-x: auto;
+        }
+
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="mockup">
+        <header>
+          <div>
+            <h2>Option A: Dark Command Bar</h2>
+            <p>Closest to the current bold direction, but all controls share one size, one radius, one label weight. Brand becomes a real anchor.</p>
+          </div>
+          <span class="tag">Recommended if you want to keep the Volshop punch</span>
+        </header>
+        <div class="frame">
+          <nav class="navA">
+            <div class="brand">
+              <strong>SalesLens</strong>
+              <span>by Lester Sales</span>
+            </div>
+            <div class="links">
+              <a class="active" href="#">Scorecards</a>
+              <a href="#">Monthly</a>
+              <a href="#">Weekly</a>
+              <a href="#">Inventory</a>
+              <a href="#">Top Performers</a>
+            </div>
+            <div class="controls">
+              <span class="control">Volshop</span>
+              <span class="control">June 2026</span>
+              <span class="action secondary">Upload</span>
+              <span class="action primary">Share</span>
+              <span class="action quiet">Sign Out</span>
+            </div>
+          </nav>
+          <div class="bodyGhost">
+            <div class="metric"></div>
+            <div class="tiles"><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mockup">
+        <header>
+          <div>
+            <h2>Option B: Light Modern Toolbar</h2>
+            <p>Cleaner, more software-native, less stadium. The nav disappears into the task while the orange Share button preserves account energy.</p>
+          </div>
+          <span class="tag">Best if the dark bar feels too heavy</span>
+        </header>
+        <div class="frame">
+          <nav class="navB">
+            <div class="brand">
+              <strong>SalesLens</strong>
+              <span>by Lester Sales</span>
+            </div>
+            <div class="links">
+              <a class="active" href="#">Scorecards</a>
+              <a href="#">Monthly</a>
+              <a href="#">Weekly</a>
+              <a href="#">Inventory</a>
+              <a href="#">Top Performers</a>
+            </div>
+            <div class="controls">
+              <span class="control">Volshop</span>
+              <span class="control">June 2026</span>
+              <span class="action secondary">Upload</span>
+              <span class="action primary">Share</span>
+              <span class="action quiet">Sign Out</span>
+            </div>
+          </nav>
+          <div class="bodyGhost">
+            <div class="metric"></div>
+            <div class="tiles"><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mockup">
+        <header>
+          <div>
+            <h2>Option C: Two-Row Pro Bar</h2>
+            <p>Separates navigation from report controls. This solves crowding most aggressively and scales best when periods/accounts get longer.</p>
+          </div>
+          <span class="tag">Best for long-term dashboard ergonomics</span>
+        </header>
+        <div class="frame">
+          <nav class="navC">
+            <div class="navCTop">
+              <div class="brand">
+                <strong>SalesLens</strong>
+                <span>by Lester Sales</span>
+              </div>
+              <div class="links">
+                <a class="active" href="#">Scorecards</a>
+                <a href="#">Monthly</a>
+                <a href="#">Weekly</a>
+                <a href="#">Inventory</a>
+                <a href="#">Top Performers</a>
+              </div>
+              <span class="action quiet">Sign Out</span>
+            </div>
+            <div class="navCBottom">
+              <div class="controls">
+                <span class="control">Volshop</span>
+                <span class="control">June 2026</span>
+              </div>
+              <div class="controls">
+                <span class="action secondary">Upload</span>
+                <span class="action primary">Share</span>
+              </div>
+            </div>
+          </nav>
+          <div class="bodyGhost">
+            <div class="metric"></div>
+            <div class="tiles"><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
