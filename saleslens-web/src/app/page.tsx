@@ -1070,6 +1070,16 @@ export default function Home() {
   const dashboardCurrentSalesText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : currencyText(currentMetrics.sales);
   const dashboardCurrentUnitsText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : numberText(currentMetrics.units);
   const dashboardPriorUnitsText = isTotalsPreparing ? "Waiting for report" : isTotalsBlocked ? "No verified report" : `${numberText(priorMetrics.units)} LY`;
+  const shareStatusText = shareStatus.toLowerCase();
+  let shareStatusTone = "";
+  if (shareUrl) {
+    shareStatusTone = "ready";
+  } else if (shareStatusText.includes("generating")) {
+    shareStatusTone = "loading";
+  } else if (shareStatusText.includes("unable") || shareStatusText.includes("again")) {
+    shareStatusTone = "error";
+  }
+  const shareStatusClassName = ["shareStatus", shareStatusTone].filter(Boolean).join(" ");
   const weeklyDecisionSummary = weeklyScorecards.length
     ? (() => {
         const bySales = [...weeklyScorecards].sort((left, right) => right.current.sales - left.current.sales);
@@ -1414,6 +1424,17 @@ export default function Home() {
     setShareUrl(url);
     setShareStatus("Share link ready.");
     await navigator.clipboard?.writeText(url).catch(() => undefined);
+  }
+
+  async function copyShareLink() {
+    if (!shareUrl) return;
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(shareUrl);
+      setShareStatus("Copied link to clipboard.");
+    } catch {
+      setShareStatus("Unable to copy automatically. Select the link to copy it.");
+    }
   }
 
   function openUploadHistoryManager() {
@@ -2398,11 +2419,11 @@ export default function Home() {
                   Generate {selectedShareCustomerIds.length > 1 ? "Multi-Account" : "Account"} Link
                 </button>
 
-                {shareStatus ? <p className="shareStatus">{shareStatus}</p> : null}
+                {shareStatus ? <p className={shareStatusClassName}>{shareStatus}</p> : null}
                 {shareUrl ? (
                   <div className="shareLinkBox">
                     <a href={shareUrl} target="_blank" rel="noreferrer">{shareUrl}</a>
-                    <button className="ghostButton" type="button" onClick={() => navigator.clipboard?.writeText(shareUrl)}>
+                    <button className="ghostButton" type="button" onClick={() => void copyShareLink()}>
                       Copy Link
                     </button>
                   </div>

@@ -52,6 +52,9 @@
   --type-metric: 1.625rem;
   --type-section-title: 2.375rem;
   --type-display: 5.25rem;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --motion-fast: 160ms;
+  --motion-medium: 220ms;
 }
 
 * {
@@ -5035,6 +5038,208 @@ select {
   width: 100%;
 }
 
+.fileButton,
+.navShareButton,
+.navSignOut,
+.shareButton,
+.shareGenerateButton,
+.browseButton,
+.ghostButton,
+.dangerActionButton,
+.shareScopeGrid button,
+.shareAccountToggles button,
+.inventoryOption,
+.imageCacheControl button,
+.pagerControls button,
+.paginationControls button {
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quart),
+    border-color var(--motion-fast) var(--ease-out-quart),
+    color var(--motion-fast) var(--ease-out-quart),
+    transform var(--motion-fast) var(--ease-out-quart);
+}
+
+.fileButton:not(:disabled):active,
+.navShareButton:not(:disabled):active,
+.navSignOut:not(:disabled):active,
+.shareButton:not(:disabled):active,
+.shareGenerateButton:not(:disabled):active,
+.browseButton:not(:disabled):active,
+.ghostButton:not(:disabled):active,
+.dangerActionButton:not(:disabled):active,
+.shareScopeGrid button:not(:disabled):active,
+.shareAccountToggles button:not(:disabled):active,
+.inventoryOption:not(:disabled):active,
+.imageCacheControl button:not(:disabled):active,
+.pagerControls button:not(:disabled):active,
+.paginationControls button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.shareScopeGrid button:not(:disabled):hover,
+.shareAccountToggles button:not(:disabled):hover,
+.inventoryOption:not(.active):hover {
+  background: color-mix(in srgb, var(--account-accent, var(--steel)) 10%, var(--surface-solid));
+  border-color: color-mix(in srgb, var(--account-accent, var(--steel)) 28%, var(--line));
+}
+
+.shareStatus {
+  align-items: center;
+  border-radius: var(--radius);
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.8rem 0 0;
+  padding: 0.65rem 0.75rem;
+}
+
+.shareStatus::before {
+  background: var(--taupe-2);
+  border-radius: var(--radius-pill);
+  content: "";
+  flex: 0 0 auto;
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+.shareStatus.ready {
+  background: color-mix(in srgb, var(--hero-positive) 26%, var(--surface-solid));
+  color: var(--text);
+}
+
+.shareStatus.ready::before {
+  background: #23834b;
+}
+
+.shareStatus.loading {
+  background: color-mix(in srgb, var(--account-accent, var(--steel)) 12%, var(--surface-solid));
+  color: var(--text);
+}
+
+.shareStatus.error {
+  background: var(--danger-surface);
+  color: var(--danger-bg);
+}
+
+.shareStatus.error::before {
+  background: var(--danger-bg);
+}
+
+.shareLinkBox {
+  animation: shareLinkReady var(--motion-medium) var(--ease-out-quart);
+}
+
+.reportTrustNotice {
+  overflow: hidden;
+  position: relative;
+}
+
+.reportTrustNotice.loading::after {
+  animation: trustNoticeScan 1400ms var(--ease-out-quart) infinite;
+  background: var(--account-accent, var(--steel));
+  bottom: 0;
+  content: "";
+  height: 2px;
+  left: 0;
+  opacity: 0.78;
+  position: absolute;
+  width: 34%;
+}
+
+.reportTrustNotice.empty::before {
+  align-items: center;
+  background: color-mix(in srgb, var(--account-accent, var(--steel)) 18%, var(--surface-solid));
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  content: "0";
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.74rem;
+  font-weight: 950;
+  height: 1.55rem;
+  justify-content: center;
+  width: 1.55rem;
+}
+
+.artImage {
+  overflow: hidden;
+}
+
+.artImage img,
+.weeklyTopProduct img,
+.topSalesProduct img {
+  transition:
+    filter var(--motion-medium) var(--ease-out-quart),
+    transform var(--motion-medium) var(--ease-out-quart);
+}
+
+.artImage b,
+.topSalesRank {
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quart),
+    color var(--motion-fast) var(--ease-out-quart),
+    transform var(--motion-fast) var(--ease-out-quart);
+}
+
+.artCard:hover .artImage img,
+.weeklyTopProduct:hover img,
+.topSalesProduct:hover img {
+  filter: saturate(1.06);
+  transform: scale(1.035);
+}
+
+.artCard:hover .artImage b,
+.topSalesProduct:hover .topSalesRank {
+  background: var(--account-accent, var(--steel));
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.artCodeLink {
+  transition:
+    color var(--motion-fast) var(--ease-out-quart),
+    text-decoration-color var(--motion-fast) var(--ease-out-quart);
+}
+
+.artCodeLink:hover {
+  color: color-mix(in srgb, var(--account-accent, var(--steel)) 38%, var(--ink));
+  text-decoration-color: var(--account-accent, var(--steel));
+}
+
+.weeklyTopProduct,
+.topSalesProduct,
+.uploadManagerRow {
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quart),
+    transform var(--motion-fast) var(--ease-out-quart);
+}
+
+.weeklyTopProduct:hover,
+.topSalesProduct:hover,
+.uploadManagerRow:hover {
+  background: color-mix(in srgb, var(--account-accent, var(--steel)) 7%, var(--flat-card));
+  transform: translateY(-1px);
+}
+
+@keyframes trustNoticeScan {
+  0% {
+    transform: translateX(-105%);
+  }
+
+  100% {
+    transform: translateX(310%);
+  }
+}
+
+@keyframes shareLinkReady {
+  0% {
+    transform: translateY(3px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
 .siteCopyright {
   color: var(--text-faint);
   font-size: 0.72rem;
@@ -5496,6 +5701,35 @@ select {
   }
 
   .artCard:hover {
+    transform: none;
+  }
+
+  .reportTrustNotice.loading::after,
+  .shareLinkBox {
+    animation: none;
+  }
+
+  .fileButton:not(:disabled):active,
+  .navShareButton:not(:disabled):active,
+  .navSignOut:not(:disabled):active,
+  .shareButton:not(:disabled):active,
+  .shareGenerateButton:not(:disabled):active,
+  .browseButton:not(:disabled):active,
+  .ghostButton:not(:disabled):active,
+  .dangerActionButton:not(:disabled):active,
+  .shareScopeGrid button:not(:disabled):active,
+  .shareAccountToggles button:not(:disabled):active,
+  .inventoryOption:not(:disabled):active,
+  .imageCacheControl button:not(:disabled):active,
+  .pagerControls button:not(:disabled):active,
+  .paginationControls button:not(:disabled):active,
+  .artCard:hover .artImage img,
+  .weeklyTopProduct:hover,
+  .weeklyTopProduct:hover img,
+  .topSalesProduct:hover,
+  .topSalesProduct:hover img,
+  .topSalesProduct:hover .topSalesRank,
+  .uploadManagerRow:hover {
     transform: none;
   }
 }
