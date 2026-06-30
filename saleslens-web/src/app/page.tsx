@@ -1066,6 +1066,7 @@ export default function Home() {
       ? `${selectedPeriodTitle}: ${changeText(currentMetrics.sales, priorMetrics.sales)} (${signedCurrencyText(monthlySalesDelta)}) vs ${priorPeriodTitle} | Top 5: ${monthlyDrivers.topFiveStyleShare.toFixed(1)}%`
       : "No sales match the current period and filters.";
   const dashboardPeriodLabel = selectedPeriodTitle === "-" ? "Choose a period" : selectedPeriodTitle;
+  const dashboardHeroPeriodLabel = heroPeriodLabel(period, periodEndMonth);
   const dashboardPriorLabel = priorPeriodTitle === "-" ? "Waiting for data" : priorPeriodTitle;
   const dashboardAccountName = selectedCustomer?.name ?? "Account";
   const dashboardAccountLogo = accountTeamLogo(dashboardAccountName);
@@ -1077,8 +1078,8 @@ export default function Home() {
   const dashboardCurrentUnitsText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : numberText(currentMetrics.units);
   const dashboardPriorUnitsText = isTotalsPreparing ? "Waiting for report" : isTotalsBlocked ? "No verified report" : `${numberText(priorMetrics.units)} LY`;
   const dashboardBiggestMove = useMemo(
-    () => biggestMoveInsight(periodRecords, priorPeriodRecords),
-    [periodRecords, priorPeriodRecords],
+    () => biggestMoveInsight(periodRecords, priorPeriodRecords) ?? biggestMoveFromGalleryRows(topSellerAllRows),
+    [periodRecords, priorPeriodRecords, topSellerAllRows],
   );
   const shareStatusText = shareStatus.toLowerCase();
   let shareStatusTone = "";
@@ -2400,7 +2401,7 @@ export default function Home() {
                 ) : null}
               </h2>
               <div className="dashboardHeroKicker">
-                <span>{dashboardPeriodLabel}</span>
+                <span>{dashboardHeroPeriodLabel}</span>
               </div>
             </div>
 
@@ -3527,6 +3528,12 @@ function periodTitle<T extends DatedRecord>(period: PeriodSelection | null, endM
   return yearLabel(period.year, endMonth);
 }
 
+function heroPeriodLabel(period: PeriodSelection | null, endMonth: string | null) {
+  if (!period) return "Choose a period";
+  const periodText = period.kind === "month" ? monthText(period.value) : yearLabel(period.year, endMonth);
+  return `Showing ${periodText}`;
+}
+
 function topPerformingRangeTitle<T extends DatedRecord>(period: PeriodSelection | null, endMonth: string | null, periodRecords: T[] = []) {
   if (!period) return "-";
   if (period.kind !== "month") return yearLabel(period.year, endMonth);
@@ -3820,14 +3827,43 @@ function biggestMoveInsight(records: SalesRecord[], priorRecords: SalesRecord[])
       };
     })
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
-    .filter((row) => row.delta > 0)
-    .sort((left, right) => right.delta - left.delta || (right.currentSales - right.priorSales) - (left.currentSales - left.priorSales));
+    .filter((row) => row.delta !== 0)
+    .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta) || Math.abs(right.currentSales - right.priorSales) - Math.abs(left.currentSales - left.priorSales));
 
   const biggest = rows[0];
   if (!biggest) return null;
 
   return {
-    label: "Largest gain",
+    label: biggest.delta > 0 ? "Largest gain" : "Largest drop",
+    title: biggest.title,
+    delta: biggest.delta,
+    detail: `${biggest.style} | ${biggest.color} | ${numberText(biggest.currentUnits)} now vs ${numberText(biggest.priorUnits)} LY`,
+  };
+}
+
+function biggestMoveFromGalleryRows(rows: ProductGalleryItem[]): BiggestMoveInsight {
+  const rankedRows = rows
+    .filter((row) => row.priorYearUnits != null)
+    .map((row) => {
+      const priorUnits = row.priorYearUnits ?? 0;
+      return {
+        title: row.artCode,
+        delta: row.monthUnits - priorUnits,
+        currentUnits: row.monthUnits,
+        priorUnits,
+        currentSales: row.monthSales,
+        style: row.style,
+        color: row.color,
+      };
+    })
+    .filter((row) => row.delta !== 0)
+    .sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta) || right.currentSales - left.currentSales);
+
+  const biggest = rankedRows[0];
+  if (!biggest) return null;
+
+  return {
+    label: biggest.delta > 0 ? "Largest gain" : "Largest drop",
     title: biggest.title,
     delta: biggest.delta,
     detail: `${biggest.style} | ${biggest.color} | ${numberText(biggest.currentUnits)} now vs ${numberText(biggest.priorUnits)} LY`,
