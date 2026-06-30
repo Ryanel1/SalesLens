@@ -5073,7 +5073,7 @@ function productCardSalesText(units: number, sales: number | null | undefined) {
 }
 
 function productGalleryViewLabel(view: ProductGalleryView) {
-  if (view === "top-sellers") return "Top Sellers";
+  if (view === "top-sellers") return "Performance";
   return "Inventory";
 }
 
