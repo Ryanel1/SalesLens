@@ -423,14 +423,14 @@ function SalesDriverGrid({
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
   const takeaways = [
-    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
+    `Sales: ${changeText(current.sales, prior.sales)} (${signedCurrencyText(salesDelta)}) vs LY.`,
     hasTransactionData
-      ? `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`
-      : `Units are ${changeText(current.units, prior.units).toLowerCase()}.`,
+      ? `Units: ${changeText(current.units, prior.units)}. Transactions: ${changeText(current.transactions, prior.transactions)}.`
+      : `Units: ${changeText(current.units, prior.units)}.`,
     hasTransactionData
-      ? `Average transaction is ${currencyText(avgSalePerTransaction)} vs ${currencyText(priorAvgSalePerTransaction)} LY.`
-      : `Average dollars per unit are ${currencyText(avgSalePerUnit)} vs ${currencyText(priorAvgSalePerUnit)} LY.`,
-    `Top 5 styles drove ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
+      ? `Avg transaction: ${currencyText(avgSalePerTransaction)} vs ${currencyText(priorAvgSalePerTransaction)} LY.`
+      : `Avg $/unit: ${currencyText(avgSalePerUnit)} vs ${currencyText(priorAvgSalePerUnit)} LY.`,
+    `Top 5 styles: ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
   ];
 
   return (
@@ -681,10 +681,10 @@ function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
         <strong>{snapshot.coverage == null ? "-" : `${snapshot.coverage.toFixed(1)}x`}</strong>
         <p>
           {snapshot.coverage == null
-            ? "Current inventory is not comparable to the selected period's selling pace."
-            : `Based on the normalized monthly sales pace, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
+            ? "Coverage is not available yet because inventory cannot be matched cleanly to this sales pace."
+            : `Current stock covers about ${snapshot.coverage.toFixed(1)} months at the normalized sales pace.`}
           {" "}
-          This helps show whether stock looks heavy, lean, or balanced against recent demand.
+          Use this with the position score to judge whether depth is lean, balanced, or heavy.
         </p>
       </div>
       <InventoryPositionCard position={position} />
@@ -1013,10 +1013,10 @@ function inventoryPositionFallback(
     score,
     label,
     headline: label === "Balanced"
-      ? "Inventory looks balanced against current pace and seasonal demand."
+      ? "Balanced inventory against current pace and seasonal demand."
       : label === "Lean"
-        ? "Inventory is leaning light for the demand window ahead."
-        : "Inventory is carrying heavier than the current selling pace.",
+        ? "Lean inventory for the demand window ahead."
+        : "Heavy inventory against the current selling pace.",
     detail: coverage == null
       ? "Current stock cannot be matched cleanly to recent selling pace yet."
       : `Current stock covers about ${coverage.toFixed(1)} months at the normalized sales pace.`,

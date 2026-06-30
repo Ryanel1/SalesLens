@@ -1058,12 +1058,12 @@ export default function Home() {
   const ytdDelta = ytdLine.currentTotal - ytdLine.priorTotal;
   const ytdDecisionSummary =
     ytdLine.currentTotal || ytdLine.priorTotal
-      ? `${changeText(ytdLine.currentTotal, ytdLine.priorTotal)} vs last year (${signedCurrencyText(ytdDelta)}). Breadth is ${numberText(ytdInsights.stylesSold)} styles, ${numberText(ytdInsights.colorsSold)} colors, and ${numberText(ytdInsights.artworksSold)} artworks.`
+      ? `YTD: ${changeText(ytdLine.currentTotal, ytdLine.priorTotal)} vs LY (${signedCurrencyText(ytdDelta)}) | ${numberText(ytdInsights.stylesSold)} styles | ${numberText(ytdInsights.colorsSold)} colors | ${numberText(ytdInsights.artworksSold)} artworks`
       : "No year-to-date sales are available for the current account and filters.";
   const monthlySalesDelta = currentMetrics.sales - priorMetrics.sales;
   const monthlyDecisionSummary =
     currentMetrics.sales || priorMetrics.sales
-      ? `${selectedPeriodTitle} is ${changeText(currentMetrics.sales, priorMetrics.sales)} vs ${priorPeriodTitle} (${signedCurrencyText(monthlySalesDelta)}). Top 5 styles drove ${monthlyDrivers.topFiveStyleShare.toFixed(1)}% of sales.`
+      ? `${selectedPeriodTitle}: ${changeText(currentMetrics.sales, priorMetrics.sales)} (${signedCurrencyText(monthlySalesDelta)}) vs ${priorPeriodTitle} | Top 5: ${monthlyDrivers.topFiveStyleShare.toFixed(1)}%`
       : "No sales match the current period and filters.";
   const dashboardPeriodLabel = selectedPeriodTitle === "-" ? "Choose a period" : selectedPeriodTitle;
   const dashboardPriorLabel = priorPeriodTitle === "-" ? "Waiting for data" : priorPeriodTitle;
@@ -1097,15 +1097,15 @@ export default function Home() {
         const lightestWeek = bySales[bySales.length - 1];
         if (!bestWeek) return "";
         return bestWeek === lightestWeek
-          ? `${bestWeek.title} totaled ${currencyText(bestWeek.current.sales)} across ${numberText(bestWeek.dayCount)} days.`
-          : `${bestWeek.title} led at ${currencyText(bestWeek.current.sales)}; ${lightestWeek.title} was lightest at ${currencyText(lightestWeek.current.sales)}.`;
+          ? `${bestWeek.title}: ${currencyText(bestWeek.current.sales)} | ${numberText(bestWeek.dayCount)} days`
+          : `Best: ${bestWeek.title} ${currencyText(bestWeek.current.sales)} | Lightest: ${lightestWeek.title} ${currencyText(lightestWeek.current.sales)}`;
       })()
     : "";
   const inventoryDecisionSummary = inventorySnapshot
-    ? `${inventorySnapshot.position.headline}. ${numberText(inventorySnapshot.totalUnits)} units across ${numberText(inventorySnapshot.styles)} styles and ${numberText(inventorySnapshot.artworks)} artworks.`
+    ? `${inventorySnapshot.position.label} inventory: ${numberText(inventorySnapshot.totalUnits)} units across ${numberText(inventorySnapshot.styles)} styles and ${numberText(inventorySnapshot.artworks)} artworks. Coverage is ${inventorySnapshot.coverage == null ? "not available yet" : `${inventorySnapshot.coverage.toFixed(1)} months`} at the current pace.`
     : "";
   const productGalleryDecisionSummary = productGalleryTotalItems
-    ? `${productGalleryViewLabel(productGalleryView)} shows ${numberText(productGalleryPageStart)}-${numberText(productGalleryPageEnd)} of ${numberText(productGalleryTotalItems)} items, sorted by ${productGallerySortLabel.toLowerCase()}. Visible rows total ${numberText(productGalleryVisibleUnits)} units and ${currencyText(productGalleryVisibleSales)}.`
+    ? `${productGalleryViewLabel(productGalleryView)}: ${numberText(productGalleryTotalItems)} items | ${productGallerySortLabel} | ${numberText(productGalleryVisibleUnits)} units | ${currencyText(productGalleryVisibleSales)}`
     : "No product rows match the current filters.";
   const bestDay = useMemo(
     () => (reportPayload?.bestDay as ReturnType<typeof bestSalesDay> | undefined) ?? bestSalesDay(periodRecords, dashboardData.images),
@@ -2901,14 +2901,14 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
   const takeaways = [
-    `Sales are ${changeText(current.sales, prior.sales).toLowerCase()} (${signedCurrencyText(salesDelta)}) vs last year.`,
+    `Sales: ${changeText(current.sales, prior.sales)} (${signedCurrencyText(salesDelta)}) vs LY.`,
     hasTransactionData
-      ? `Units are ${changeText(current.units, prior.units).toLowerCase()}; transactions are ${changeText(current.transactions, prior.transactions).toLowerCase()}.`
-      : `Units are ${changeText(current.units, prior.units).toLowerCase()}.`,
+      ? `Units: ${changeText(current.units, prior.units)}. Transactions: ${changeText(current.transactions, prior.transactions)}.`
+      : `Units: ${changeText(current.units, prior.units)}.`,
     hasTransactionData
-      ? `Average transaction is ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`
-      : `Average dollars per unit are ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY.`,
-    `Top 5 styles drove ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
+      ? `Avg transaction: ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`
+      : `Avg $/unit: ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY.`,
+    `Top 5 styles: ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
   ];
 
   return (
@@ -3113,10 +3113,10 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
         <strong>{snapshot.coverage == null ? "-" : `${snapshot.coverage.toFixed(1)}x`}</strong>
         <p>
           {snapshot.coverage == null
-            ? "Current inventory is not comparable to the selected period's selling pace."
-            : `Based on the normalized monthly sales pace, available inventory would cover about ${snapshot.coverage.toFixed(1)} months at this pace.`}
+            ? "Coverage is not available yet because inventory cannot be matched cleanly to this sales pace."
+            : `Current stock covers about ${snapshot.coverage.toFixed(1)} months at the normalized sales pace.`}
           {" "}
-          This helps show whether stock looks heavy, lean, or balanced against recent demand.
+          Use this with the position score to judge whether depth is lean, balanced, or heavy.
         </p>
       </div>
       <InventoryPositionCard position={snapshot.position} />
@@ -4701,9 +4701,9 @@ function inventoryPositionForSnapshot(
 }
 
 function inventoryPositionHeadline(label: InventoryPosition["label"]) {
-  if (label === "Lean") return "Inventory is leaning light for the demand window ahead.";
-  if (label === "Heavy") return "Inventory is carrying heavier than the current selling pace.";
-  return "Inventory looks balanced against current pace and seasonal demand.";
+  if (label === "Lean") return "Lean inventory for the demand window ahead.";
+  if (label === "Heavy") return "Heavy inventory against the current selling pace.";
+  return "Balanced inventory against current pace and seasonal demand.";
 }
 
 function inventorySeasonText(monthIndex: number | null) {
@@ -4731,7 +4731,7 @@ function inventoryTargetCoverage(monthIndex: number | null) {
 function sameMonthInventoryComparison(totalUnits: number, priorUnits: number, priorYear?: number) {
   const percent = ((totalUnits - priorUnits) / priorUnits) * 100;
   const direction = percent >= 0 ? "above" : "below";
-  return `Inventory is ${Math.abs(percent).toFixed(1)}% ${direction} ${priorYear ?? "prior-year"} same-month on-hand levels.`;
+  return `${Math.abs(percent).toFixed(1)}% ${direction} ${priorYear ?? "prior-year"} same-month on-hand.`;
 }
 
 function monthIndexFromDate(value: string) {
