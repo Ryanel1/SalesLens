@@ -19,8 +19,21 @@
   --oat: #d9c8ae;
   --chart-current: var(--steel);
   --chart-prior: #a8a39b;
+  --on-ink: #fffefa;
+  --danger-surface: #fff6f3;
+  --danger-bg: #8f2f25;
+  --hero-positive: #9dd6b4;
+  --hero-negative: #ffb4a9;
   --shadow: 0 22px 70px rgba(36, 35, 33, 0.09);
   --hairline: 1px solid var(--stone);
+  --radius-xs: 2px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-soft: 10px;
+  --radius-product: 14px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  --touch-target: 44px;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -1174,7 +1187,7 @@ select {
   display: inline-flex;
   gap: 0.65rem;
   list-style: none;
-  min-height: 42px;
+  min-height: var(--touch-target);
   padding: 0.42rem 0.72rem;
 }
 
@@ -1328,7 +1341,7 @@ select {
 }
 
 .inventoryOptionMark.square {
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .inventoryOption.active .inventoryOptionMark::after {
@@ -1813,7 +1826,7 @@ select {
 
 .monthlyScorecardGrid {
   gap: 1rem;
-  grid-template-columns: minmax(360px, 1.35fr) minmax(300px, 0.9fr);
+  grid-template-columns: minmax(300px, 1.35fr) minmax(260px, 0.9fr);
 }
 
 .monthlyScorecardHero,
@@ -1960,7 +1973,7 @@ select {
   grid-template-areas:
     "date sales metrics"
     "date products products";
-  grid-template-columns: minmax(142px, 0.22fr) minmax(280px, 0.5fr) minmax(520px, 1fr);
+  grid-template-columns: minmax(142px, 0.22fr) minmax(240px, 0.5fr) minmax(360px, 1fr);
   min-height: 232px;
 }
 
@@ -3622,7 +3635,7 @@ select {
   border: 0;
   border-radius: 0;
   box-shadow: none !important;
-  color: #fffefa;
+  color: var(--on-ink);
   display: grid;
   gap: clamp(0.75rem, 1.8vw, 1.5rem);
   grid-column: 1;
@@ -3657,7 +3670,7 @@ select {
 }
 
 .navBrand h1 {
-  color: #fffefa;
+  color: var(--on-ink);
   font-size: 0.96rem;
   font-weight: 850;
   letter-spacing: 0;
@@ -3695,7 +3708,7 @@ select {
   display: inline-flex;
   font-size: 0.72rem;
   font-weight: 760;
-  min-height: 2.2rem;
+  min-height: var(--touch-target);
   padding: 0.12rem 0;
   position: relative;
   text-align: center;
@@ -3707,7 +3720,7 @@ select {
 .sideNavItem:hover,
 .sideNavItem.active {
   background: transparent;
-  color: #fffefa;
+  color: var(--on-ink);
 }
 
 .sideNavItem::after {
@@ -3722,7 +3735,7 @@ select {
 }
 
 .sideNavItem.active::after {
-  background: #fffefa;
+  background: var(--on-ink);
 }
 
 .sideNavItem.disabled {
@@ -3752,7 +3765,7 @@ select {
   align-self: end;
   display: grid;
   gap: 0.28rem;
-  grid-template-rows: 34px;
+  grid-template-rows: var(--touch-target);
   min-width: 0;
   width: 100%;
 }
@@ -3775,19 +3788,19 @@ label {
 .navSignOut {
   align-items: center;
   appearance: none;
-  background: #fffefa;
-  border: 1px solid #fffefa;
-  border-radius: 999px;
+  background: var(--on-ink);
+  border: 1px solid var(--on-ink);
+  border-radius: var(--radius-pill);
   box-shadow: none;
   box-sizing: border-box;
   color: var(--ink);
   display: inline-grid;
   font-size: 0.68rem;
   font-weight: 900;
-  height: 34px;
+  height: var(--touch-target);
   justify-content: center;
   line-height: 1;
-  min-height: 34px;
+  min-height: var(--touch-target);
   padding: 0 0.82rem;
   text-align: center;
   width: 100%;
@@ -3909,7 +3922,7 @@ label {
     radial-gradient(circle at 78% 22%, var(--scoreboard-wash, rgba(111, 135, 149, 0.28)), transparent 34rem),
     url("/images/campus-stadium-night-blur.jpg") center / cover;
   border-top: 6px solid var(--account-accent, var(--steel));
-  color: #fffefa;
+  color: var(--on-ink);
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.42fr);
   margin: 0 0 clamp(2.4rem, 4vw, 4.4rem);
   min-height: 0;
@@ -3977,7 +3990,7 @@ label {
 }
 
 .dashboardHeader .eyebrow {
-  color: var(--account-accent, #fffefa);
+  color: var(--account-accent, var(--on-ink));
 }
 
 .dashboardHeader h2,
@@ -3990,7 +4003,7 @@ label {
 }
 
 .dashboardHeader h2 {
-  color: #fffefa;
+  color: var(--on-ink);
   font-size: clamp(3.25rem, 7vw, 6rem);
   letter-spacing: -0.02em;
   line-height: 0.86;
@@ -4036,7 +4049,7 @@ label {
 }
 
 .dashboardScoreboard strong {
-  color: #fffefa;
+  color: var(--on-ink);
   font-feature-settings: "tnum" 1, "kern" 1;
   font-size: clamp(1.45rem, 2.6vw, 2.45rem);
   font-variant-numeric: tabular-nums;
@@ -4078,11 +4091,11 @@ label {
 }
 
 .dashboardScoreboard.positive > div:nth-child(2) strong {
-  color: #9dd6b4;
+  color: var(--hero-positive);
 }
 
 .dashboardScoreboard.negative > div:nth-child(2) strong {
-  color: #ffb4a9;
+  color: var(--hero-negative);
 }
 
 .dashboardHeader .muted,
@@ -4134,7 +4147,7 @@ label {
 
 .controlDock select,
 .controlDock input {
-  min-height: 42px;
+  min-height: var(--touch-target);
   padding: 0 0.75rem;
 }
 
@@ -4147,7 +4160,7 @@ label {
   color: var(--surface-solid);
   font-size: 0.76rem;
   font-weight: 850;
-  min-height: 42px;
+  min-height: var(--touch-target);
   text-transform: uppercase;
 }
 
@@ -4429,7 +4442,7 @@ label {
   align-items: center;
   display: inline-flex;
   gap: 0.65rem;
-  min-height: 42px;
+  min-height: var(--touch-target);
   padding: 0.42rem 0.72rem;
 }
 
@@ -4479,7 +4492,7 @@ label {
   font-size: var(--type-small);
   font-weight: 850;
   gap: 0.5rem;
-  min-height: 34px;
+  min-height: var(--touch-target);
   padding: 0.26rem 0.1rem;
   text-align: left;
   width: 100%;
@@ -4547,7 +4560,7 @@ label {
 .sectionBlock .inventoryTrendChart {
   background: var(--flat-card);
   border: 0;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   box-shadow: none;
   overflow: hidden;
 }
@@ -4558,7 +4571,7 @@ label {
 }
 
 .sectionBlock .inventoryGaugeTrack {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .inventoryGaugeTrack {
@@ -4579,7 +4592,7 @@ label {
 .sectionBlock .monthlyScorecardMetrics .driverTile {
   background: var(--flat-card);
   border: 0;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   box-shadow: none;
 }
 
@@ -4660,7 +4673,7 @@ label {
 
 .sectionBlock .monthlyScorecardTrack {
   background: rgba(215, 208, 196, 0.72);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .sectionBlock .monthlyScorecardHero {
@@ -4700,7 +4713,7 @@ label {
   display: grid;
   gap: 0;
   grid-template-areas: "sales metrics products";
-  grid-template-columns: minmax(220px, 0.7fr) minmax(250px, 0.75fr) minmax(420px, 1.35fr);
+  grid-template-columns: minmax(190px, 0.7fr) minmax(220px, 0.75fr) minmax(300px, 1.35fr);
   min-height: 168px;
   overflow: visible;
   padding-top: 0.72rem;
@@ -4710,7 +4723,7 @@ label {
   align-items: baseline;
   background: var(--soft-black);
   border: 0;
-  border-radius: 10px 10px 10px 0;
+  border-radius: var(--radius-soft) var(--radius-soft) var(--radius-soft) 0;
   color: var(--paper);
   display: inline-flex;
   gap: 0.45rem;
@@ -4800,7 +4813,7 @@ label {
 .sectionBlock .weeklyTopProduct {
   align-items: start;
   background: rgba(255, 255, 255, 0.72);
-  border-radius: 14px;
+  border-radius: var(--radius-product);
   gap: 0.72rem;
   grid-template-columns: 56px minmax(0, 1fr);
   min-height: 74px;
@@ -4810,7 +4823,7 @@ label {
 .sectionBlock .weeklyTopProduct img,
 .sectionBlock .weeklyTopProductPlaceholder {
   align-self: start;
-  border-radius: 10px;
+  border-radius: var(--radius-soft);
   height: 56px;
   width: 56px;
 }
@@ -4835,7 +4848,7 @@ label {
 .artCard {
   background: var(--flat-card);
   border: 0;
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   box-shadow: none;
   overflow: hidden;
   transition: transform 160ms ease, background 160ms ease;
@@ -5385,8 +5398,13 @@ label {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .artCard {
-    transition: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 
   .artCard:hover {
@@ -5513,18 +5531,18 @@ label {
 }
 
 .deleteConfirmPanel {
-  background: #fff6f3;
+  background: var(--danger-surface);
 }
 
 .dangerActionButton {
-  background: #8f2f25;
-  border: 1px solid #8f2f25;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-bg);
   border-radius: var(--radius, 12px);
   color: #ffffff;
   cursor: pointer;
   font-size: 0.76rem;
   font-weight: 900;
-  min-height: 42px;
+  min-height: var(--touch-target);
   padding: 0 0.95rem;
   text-transform: uppercase;
 }

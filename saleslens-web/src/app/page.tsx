@@ -543,7 +543,54 @@ export default function Home() {
   }, [shareModalOpen]);
 
   useEffect(() => {
+    function activeModalElement() {
+      const dialogs = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]'));
+      return dialogs[dialogs.length - 1] ?? null;
+    }
+
+    function focusableElements(container: HTMLElement) {
+      return Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute("hidden") && element.offsetParent !== null);
+    }
+
     function handleModalKeyDown(event: KeyboardEvent) {
+      if (event.key === "Tab") {
+        const modal = activeModalElement();
+        if (!modal) return;
+
+        const focusable = focusableElements(modal);
+        if (!focusable.length) {
+          event.preventDefault();
+          modal.focus();
+          return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+
+        if (!modal.contains(active)) {
+          event.preventDefault();
+          first.focus();
+          return;
+        }
+
+        if (event.shiftKey && active === first) {
+          event.preventDefault();
+          last.focus();
+          return;
+        }
+
+        if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        }
+        return;
+      }
+
       if (event.key !== "Escape") return;
       if (deleteUploadCandidate) {
         event.preventDefault();
@@ -573,8 +620,13 @@ export default function Home() {
     }
 
     if (!importModalOpen && !uploadHistoryOpen && !deleteUploadCandidate && !shareModalOpen) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleModalKeyDown);
-    return () => window.removeEventListener("keydown", handleModalKeyDown);
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      window.removeEventListener("keydown", handleModalKeyDown);
+    };
   }, [deleteUploadCandidate, importIntent, importModalOpen, shareModalOpen, uploadHistoryOpen]);
 
   useEffect(() => {
@@ -1919,7 +1971,7 @@ export default function Home() {
 
         {importModalOpen ? (
           <div className="modalOverlay" role="presentation">
-            <section className="shareModal importTypeModal" role="dialog" aria-modal="true" aria-labelledby="import-type-title">
+            <section className="shareModal importTypeModal" role="dialog" aria-modal="true" aria-labelledby="import-type-title" tabIndex={-1}>
               <button
                 aria-label="Close import type"
                 className="modalCloseButton"
@@ -2079,7 +2131,7 @@ export default function Home() {
 
         {uploadHistoryOpen ? (
           <div className="modalOverlay" role="presentation">
-            <section className="shareModal uploadManagerModal" role="dialog" aria-modal="true" aria-labelledby="upload-manager-title">
+            <section className="shareModal uploadManagerModal" role="dialog" aria-modal="true" aria-labelledby="upload-manager-title" tabIndex={-1}>
               <button
                 aria-label="Close upload manager"
                 className="modalCloseButton"
@@ -2185,7 +2237,7 @@ export default function Home() {
                 ) : null}
               </div>
               {deleteUploadCandidate ? (
-                <div className="deleteConfirmPanel" role="alertdialog" aria-modal="true" aria-labelledby="delete-upload-title">
+                <div className="deleteConfirmPanel" role="alertdialog" aria-modal="true" aria-labelledby="delete-upload-title" tabIndex={-1}>
                   <div>
                     <p className="eyebrow">Destructive Action</p>
                     <h4 id="delete-upload-title">Delete this upload?</h4>
@@ -2310,7 +2362,7 @@ export default function Home() {
 
           {shareModalOpen ? (
             <div className="modalOverlay" role="presentation">
-              <section className="shareModal" role="dialog" aria-modal="true" aria-labelledby="share-report-title">
+              <section className="shareModal" role="dialog" aria-modal="true" aria-labelledby="share-report-title" tabIndex={-1}>
                 <button
                   aria-label="Close share report"
                   className="modalCloseButton"

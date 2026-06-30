@@ -19,6 +19,11 @@ colors:
   chart-prior: "#a8a39b"
   positive: "#23834b"
   negative: "#c62828"
+  on-ink: "#fffefa"
+  danger-surface: "#fff6f3"
+  danger-bg: "#8f2f25"
+  hero-positive: "#9dd6b4"
+  hero-negative: "#ffb4a9"
 typography:
   display:
     fontFamily: "Montserrat, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
@@ -50,8 +55,11 @@ typography:
     lineHeight: 1
     letterSpacing: "0.08em"
 rounded:
+  xs: "2px"
   sm: "8px"
+  soft: "10px"
   md: "12px"
+  product: "14px"
   lg: "18px"
   pill: "999px"
 spacing:
@@ -60,6 +68,8 @@ spacing:
   md: "1rem"
   lg: "1.35rem"
   xl: "1.85rem"
+interaction:
+  touchTarget: "44px"
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
