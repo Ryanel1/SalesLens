@@ -4182,7 +4182,7 @@ select {
 
 .dashboardHeader .dashboardAccountTitle {
   align-items: center;
-  color: var(--account-accent, var(--on-ink));
+  color: var(--on-ink);
   display: inline-flex;
   flex-wrap: nowrap;
   gap: 0.24em;
