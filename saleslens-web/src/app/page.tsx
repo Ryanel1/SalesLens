@@ -805,6 +805,14 @@ export default function Home() {
       ? serverReport.payload
       : null;
   const isReportUpdating = Boolean(reportPayload && serverReport && serverReport.key !== reportRequestKey);
+  const dashboardStatusLower = dashboardStatus.toLowerCase();
+  const isDashboardPreparing = Boolean(dashboardStatus && dashboardStatusLower.includes("loading"));
+  const isDashboardBlocked = Boolean(dashboardStatus && !isDashboardPreparing);
+  const serverReportStatusLower = serverReportStatus.toLowerCase();
+  const isReportPreparing = Boolean(!dashboardStatus && reportRequestKey && serverReportStatus && !reportPayload && (serverReportStatusLower.includes("preparing") || serverReportStatusLower.includes("updating")));
+  const isReportBlocked = Boolean(!dashboardStatus && reportRequestKey && serverReportStatus && !reportPayload && !isReportPreparing);
+  const isTotalsPreparing = isDashboardPreparing || isReportPreparing;
+  const isTotalsBlocked = isDashboardBlocked || isReportBlocked;
 
   useEffect(() => {
     if (!supabase || !user || !selectedCustomerId || !period || !reportRequestKey) {
@@ -941,6 +949,7 @@ export default function Home() {
     [reportPayload],
   );
   const inventoryTrackerMeta = reportPayload?.inventoryTrackerMeta ?? null;
+  const isConfirmedEmptyReport = Boolean(!dashboardStatus && !serverReportStatus && reportPayload && currentMetrics.sales === 0 && currentMetrics.units === 0);
   const visibleInventoryTracker = inventoryTracker;
   const inventoryPageStart = inventoryTrackerMeta?.pageStart ?? 0;
   const inventoryPageEnd = inventoryTrackerMeta?.pageEnd ?? 0;
@@ -1043,10 +1052,13 @@ export default function Home() {
       : "No sales match the current period and filters.";
   const dashboardPeriodLabel = selectedPeriodTitle === "-" ? "Choose a period" : selectedPeriodTitle;
   const dashboardPriorLabel = priorPeriodTitle === "-" ? "Waiting for data" : priorPeriodTitle;
-  const dashboardScoreTone = changeClass(monthlySalesDelta);
+  const dashboardScoreTone = isTotalsPreparing || isTotalsBlocked ? "pending" : changeClass(monthlySalesDelta);
   const dashboardScoreChange =
-    currentMetrics.sales || priorMetrics.sales ? changeText(currentMetrics.sales, priorMetrics.sales) : "No sales yet";
-  const dashboardScoreCurrency = currentMetrics.sales || priorMetrics.sales ? signedCurrencyText(monthlySalesDelta) : "";
+    isTotalsPreparing ? "Preparing report" : isTotalsBlocked ? "Report unavailable" : currentMetrics.sales || priorMetrics.sales ? changeText(currentMetrics.sales, priorMetrics.sales) : "Confirmed zero";
+  const dashboardScoreCurrency = isTotalsPreparing || isTotalsBlocked ? "" : currentMetrics.sales || priorMetrics.sales ? signedCurrencyText(monthlySalesDelta) : "";
+  const dashboardCurrentSalesText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : currencyText(currentMetrics.sales);
+  const dashboardCurrentUnitsText = isTotalsPreparing ? "Loading" : isTotalsBlocked ? "-" : numberText(currentMetrics.units);
+  const dashboardPriorUnitsText = isTotalsPreparing ? "Waiting for report" : isTotalsBlocked ? "No verified report" : `${numberText(priorMetrics.units)} LY`;
   const weeklyDecisionSummary = weeklyScorecards.length
     ? (() => {
         const bySales = [...weeklyScorecards].sort((left, right) => right.current.sales - left.current.sales);
@@ -2341,9 +2353,9 @@ export default function Home() {
 
             <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>
               <div className="scoreboardPrimary">
-                <span>Current Sales</span>
-                <strong>{currencyText(currentMetrics.sales)}</strong>
-                <em>{dashboardPeriodLabel}</em>
+                <span>{isTotalsPreparing ? "Preparing Sales" : isTotalsBlocked ? "Sales Unavailable" : "Current Sales"}</span>
+                <strong>{dashboardCurrentSalesText}</strong>
+                <em>{isTotalsPreparing ? "Report is loading" : isTotalsBlocked ? "No verified totals shown" : dashboardPeriodLabel}</em>
               </div>
               <div>
                 <span>Vs Last Year</span>
@@ -2355,8 +2367,8 @@ export default function Home() {
               </div>
               <div>
                 <span>Units</span>
-                <strong>{numberText(currentMetrics.units)}</strong>
-                <em>{numberText(priorMetrics.units)} LY</em>
+                <strong>{dashboardCurrentUnitsText}</strong>
+                <em>{dashboardPriorUnitsText}</em>
               </div>
             </div>
 
@@ -2416,10 +2428,41 @@ export default function Home() {
             </div>
           ) : null}
 
-          {dashboardStatus ? <section className="notice">{dashboardStatus}</section> : null}
-          {!dashboardStatus && serverReportStatus ? <section className="notice">{isReportUpdating ? "Updating report sections..." : serverReportStatus}</section> : null}
-          {!dashboardStatus && !serverReportStatus && reportPayload && currentMetrics.sales === 0 && currentMetrics.units === 0 ? (
-            <section className="notice">No records match the current account, period, and brand/class filters.</section>
+          {isDashboardPreparing ? (
+            <section className="notice reportTrustNotice loading" aria-live="polite">
+              Loading dashboard controls and verified report inputs. Sales and unit values will appear after the account data is ready.
+            </section>
+          ) : null}
+          {isDashboardBlocked ? (
+            <section className="notice reportTrustNotice error" aria-live="polite">
+              <span>{dashboardStatus}</span>
+              <button type="button" onClick={() => setReloadKey((key) => key + 1)}>
+                Try again
+              </button>
+            </section>
+          ) : null}
+          {!dashboardStatus && isReportPreparing ? (
+            <section className="notice reportTrustNotice loading" aria-live="polite">
+              Preparing verified report totals for {dashboardPeriodLabel}. Sales and unit values will appear when the report data is ready.
+            </section>
+          ) : null}
+          {!dashboardStatus && isReportUpdating ? (
+            <section className="notice reportTrustNotice loading" aria-live="polite">
+              Updating report sections for the latest filters. Showing the previous verified report until the new totals finish loading.
+            </section>
+          ) : null}
+          {!dashboardStatus && isReportBlocked ? (
+            <section className="notice reportTrustNotice error" aria-live="polite">
+              <span>{serverReportStatus} The scoreboard is paused so this does not read as a zero-sales period.</span>
+              <button type="button" onClick={() => setReportRefreshKey((key) => key + 1)}>
+                Rebuild report
+              </button>
+            </section>
+          ) : null}
+          {isConfirmedEmptyReport ? (
+            <section className="notice reportTrustNotice empty" aria-live="polite">
+              Confirmed zero: no records match the current account, period, and brand/class filters.
+            </section>
           ) : null}
 
           <section className="sectionBlock" id="scorecards">
