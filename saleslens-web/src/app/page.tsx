@@ -1946,7 +1946,9 @@ export default function Home() {
                 ))}
               </select>
             </label>
+          </div>
 
+          <div className="navActions">
             <div className="navUploadField">
               <button
                 aria-label="Upload or import"
@@ -1975,12 +1977,6 @@ export default function Home() {
                 </div>
               ) : null}
             </div>
-          </div>
-
-          <div className="navActions">
-            <button className="navSignOut" type="button" onClick={signOut}>
-              Sign Out
-            </button>
 
             <button
               className="navShareButton"
@@ -1994,6 +1990,10 @@ export default function Home() {
               type="button"
             >
               Share
+            </button>
+
+            <button className="navSignOut" type="button" onClick={signOut}>
+              Sign Out
             </button>
           </div>
         </nav>

@@ -3684,7 +3684,7 @@ select {
   min-width: 0;
   overflow: visible;
   padding: 0.22rem;
-  width: min(100%, 560px);
+  width: min(100%, 390px);
 }
 
 .navActions {
@@ -3706,10 +3706,6 @@ select {
 
 .navControlIsland .navField {
   flex: 1 1 0;
-}
-
-.navControlIsland .navUploadField {
-  flex: 0 0 104px;
 }
 
 .navField select,
@@ -3756,8 +3752,8 @@ select {
 }
 
 .fileButton {
-  background: transparent;
-  border-color: transparent;
+  background: var(--surface-solid);
+  border-color: var(--line);
   cursor: pointer;
   min-width: 92px;
 }
@@ -3766,8 +3762,8 @@ select {
 .navShareButton:hover,
 .navSignOut:hover,
 .navField select:hover {
-  background: rgba(255, 254, 250, 0.56);
-  border-color: transparent;
+  background: #f1eee8;
+  border-color: rgba(21, 18, 15, 0.18);
 }
 
 .navShareButton {
@@ -3797,6 +3793,14 @@ select {
   min-width: 0;
   padding-inline: 0;
   width: auto;
+}
+
+.navActions .navMessage {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  width: min(320px, 70vw);
+  z-index: 30;
 }
 
 .navDateMeta {
@@ -5357,9 +5361,6 @@ select {
     min-width: 0;
   }
 
-  .navControlIsland .navUploadField {
-    flex-basis: 92px;
-  }
 
   .dashboard > .sectionBlock,
   .publicReport > .sectionBlock,
