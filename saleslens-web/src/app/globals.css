@@ -53,8 +53,12 @@
   --type-section-title: 2.375rem;
   --type-display: 5.25rem;
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-instant: 120ms;
   --motion-fast: 160ms;
   --motion-medium: 220ms;
+  --motion-slow: 320ms;
 }
 
 * {
@@ -3678,22 +3682,22 @@ select {
 
 .navControlIsland {
   align-items: center;
-  background: #e6e4df;
-  border: 1px solid var(--line);
+  background: var(--ink);
+  border: 1px solid var(--ink);
   border-radius: 8px;
   display: flex;
-  gap: 0;
+  gap: 0.2rem;
   justify-content: center;
   min-width: 0;
   overflow: visible;
-  padding: 0.22rem;
+  padding: 0.28rem;
   width: min(100%, 390px);
 }
 
 .navActions {
   align-items: center;
   display: flex;
-  gap: 1.05rem;
+  gap: 0.55rem;
   justify-content: end;
   min-width: 0;
   width: max-content;
@@ -3717,12 +3721,12 @@ select {
 .navSignOut {
   align-items: center;
   appearance: none;
-  background: var(--surface-solid);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
   box-shadow: none;
   box-sizing: border-box;
-  color: var(--ink);
+  color: var(--on-ink);
   display: inline-grid;
   font-size: 0.72rem;
   font-weight: 900;
@@ -3738,7 +3742,7 @@ select {
 }
 
 .navField select {
-  background: transparent;
+  background: var(--ink);
   border-color: transparent;
   color-scheme: light;
   cursor: pointer;
@@ -3755,9 +3759,10 @@ select {
 }
 
 .fileButton {
-  background: var(--surface-solid);
-  border-color: var(--line);
+  background: var(--ink);
+  border-color: var(--ink);
   cursor: pointer;
+  flex: 0 0 auto;
   min-width: 92px;
 }
 
@@ -3765,8 +3770,9 @@ select {
 .navShareButton:hover,
 .navSignOut:hover,
 .navField select:hover {
-  background: #f1eee8;
-  border-color: rgba(21, 18, 15, 0.18);
+  background: var(--surface-solid);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 .navShareButton {
@@ -3775,27 +3781,30 @@ select {
   border-radius: 8px;
   color: var(--on-ink);
   cursor: pointer;
+  flex: 0 0 auto;
   min-width: 108px;
 }
 
 .navShareButton:hover {
-  background: #2c2a27;
-  border-color: #2c2a27;
+  background: var(--surface-solid);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 .navShareButton:disabled {
-  background: rgba(21, 18, 15, 0.1);
-  border-color: transparent;
-  color: var(--text-soft);
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+  opacity: 0.44;
 }
 
 .navSignOut {
-  background: transparent;
-  border-color: transparent;
-  border-radius: 0;
-  min-width: 0;
-  padding-inline: 0;
-  width: auto;
+  background: var(--ink);
+  border-color: var(--ink);
+  flex: 0 0 104px;
+  min-width: 104px;
+  padding-inline: 1rem;
+  width: 104px;
 }
 
 .navActions .navMessage {
@@ -4111,25 +4120,34 @@ select {
 }
 
 .dashboardHeader .controlDock {
+  align-content: center;
   align-self: start;
   background: rgba(255, 254, 250, 0.08);
   border: 1px solid rgba(255, 254, 250, 0.16);
   gap: 0.85rem;
-  height: max-content;
+  grid-template-columns: 1fr;
+  justify-items: center;
   justify-self: end;
   margin-top: 0;
-  max-width: 230px;
-  padding: 0.82rem;
+  min-height: 112px;
+  max-width: 260px;
+  padding: 1rem;
   width: 100%;
 }
 
 .dashboardHeader .controlDock label {
   color: rgba(255, 254, 250, 0.66);
+  justify-items: center;
+  text-align: center;
+  width: 100%;
 }
 
 .dashboardHeader .controlDock select,
 .dashboardHeader .controlDock input {
   border-color: rgba(255, 254, 250, 0.86);
+  min-height: 48px;
+  min-width: min(160px, 100%);
+  text-align: center;
 }
 
 .controlDock label {
@@ -4973,8 +4991,8 @@ select {
 }
 
 .artGrid .artCard:first-child .artStats strong {
-  font-size: clamp(0.8rem, 1.05vw, 0.96rem);
-  font-weight: 900;
+  font-size: 0.72rem;
+  font-weight: 760;
   line-height: 1.08;
 }
 
@@ -5063,6 +5081,99 @@ select {
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
+}
+
+.modalOverlay {
+  animation: modalBackdropIn var(--motion-medium) var(--ease-out-quart);
+}
+
+.shareModal {
+  animation: modalPanelIn 260ms var(--ease-out-expo);
+  transform-origin: 50% 48%;
+}
+
+.navMessage,
+.selectedFilePill,
+.inventoryActiveFilters span,
+.inventoryActiveFilters button {
+  animation: softStateIn var(--motion-medium) var(--ease-out-quart);
+}
+
+.inventoryDropdownTrigger::after {
+  transition: transform var(--motion-fast) var(--ease-out-quart);
+}
+
+.inventoryDropdown.isOpen .inventoryDropdownTrigger::after {
+  transform: rotate(180deg);
+}
+
+.inventoryDropdownMenu {
+  animation: dropdownIn var(--motion-medium) var(--ease-out-quart);
+  transform-origin: top left;
+}
+
+.inventoryOptionMark {
+  transition:
+    background-color var(--motion-fast) var(--ease-out-quart),
+    border-color var(--motion-fast) var(--ease-out-quart),
+    transform var(--motion-fast) var(--ease-out-quart);
+}
+
+.inventoryOption.active .inventoryOptionMark {
+  animation: optionMarkPop var(--motion-fast) var(--ease-out-quint);
+}
+
+.shareStatus::before,
+.reportTrustNotice.empty::before {
+  animation: statusDotIn var(--motion-fast) var(--ease-out-quint);
+}
+
+.artGrid .artCard,
+.weeklyScorecardRow {
+  animation: listItemResolve var(--motion-slow) var(--ease-out-quart);
+}
+
+.artGrid .artCard:nth-child(2),
+.weeklyScorecardRow:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.artGrid .artCard:nth-child(3),
+.weeklyScorecardRow:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.artGrid .artCard:nth-child(4),
+.weeklyScorecardRow:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+.artGrid .artCard:nth-child(5) {
+  animation-delay: 140ms;
+}
+
+.artGrid .artCard:nth-child(6) {
+  animation-delay: 175ms;
+}
+
+.artGrid .artCard:nth-child(7) {
+  animation-delay: 210ms;
+}
+
+.artGrid .artCard:nth-child(8) {
+  animation-delay: 245ms;
+}
+
+.artGrid .artCard:nth-child(9) {
+  animation-delay: 280ms;
+}
+
+.artGrid .artCard:nth-child(10) {
+  animation-delay: 315ms;
+}
+
+.artGrid .artCard:nth-child(n + 11) {
+  animation-delay: 340ms;
 }
 
 .fileButton,
@@ -5263,6 +5374,84 @@ select {
   }
 
   100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalBackdropIn {
+  0% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes modalPanelIn {
+  0% {
+    opacity: 0.82;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dropdownIn {
+  0% {
+    opacity: 0.86;
+    transform: translateY(-5px) scaleY(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes softStateIn {
+  0% {
+    opacity: 0.84;
+    transform: translateY(3px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes statusDotIn {
+  0% {
+    transform: scale(0.78);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes optionMarkPop {
+  0% {
+    transform: scale(0.86);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes listItemResolve {
+  0% {
+    opacity: 0.82;
+    transform: translateY(5px);
+  }
+
+  100% {
+    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -5579,14 +5768,10 @@ select {
   }
 
   .fileButton,
-  .navShareButton {
-    min-width: 0;
-    padding-inline: 0.55rem;
-  }
-
+  .navShareButton,
   .navSignOut {
-    padding-inline: 0;
-    width: auto;
+    min-width: 0;
+    padding-inline: 0.72rem;
   }
 
   .navField select {
@@ -5698,7 +5883,7 @@ select {
   }
 
   .artGrid .artCard:first-child .artStats strong {
-    font-size: 0.9rem;
+    font-size: 0.72rem;
   }
 }
 
@@ -5747,8 +5932,21 @@ select {
   }
 
   .reportTrustNotice.loading::after,
-  .shareLinkBox {
+  .shareLinkBox,
+  .modalOverlay,
+  .shareModal,
+  .navMessage,
+  .selectedFilePill,
+  .inventoryActiveFilters span,
+  .inventoryActiveFilters button,
+  .inventoryDropdownMenu,
+  .inventoryOption.active .inventoryOptionMark,
+  .shareStatus::before,
+  .reportTrustNotice.empty::before,
+  .artGrid .artCard,
+  .weeklyScorecardRow {
     animation: none;
+    animation-delay: 0ms;
   }
 
   .fileButton:not(:disabled):active,
@@ -5771,7 +5969,8 @@ select {
   .topSalesProduct:hover,
   .topSalesProduct:hover img,
   .topSalesProduct:hover .topSalesRank,
-  .uploadManagerRow:hover {
+  .uploadManagerRow:hover,
+  .inventoryDropdown.isOpen .inventoryDropdownTrigger::after {
     transform: none;
   }
 }
