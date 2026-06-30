@@ -2356,16 +2356,13 @@ export default function Home() {
             </div>
 
             <div className="controlDock">
-              <label>
-                Brand/Class
-                <select value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}>
-                  {brandOptions.map((brand) => (
-                    <option key={brand} value={brand}>
-                      {brand}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <select aria-label="Brand/Class" value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}>
+                {brandOptions.map((brand) => (
+                  <option key={brand} value={brand}>
+                    {brand === "All" ? "All Brands" : brand}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className={`dashboardScoreboard ${dashboardScoreTone}`} aria-label={`${dashboardPeriodLabel} sales snapshot`}>

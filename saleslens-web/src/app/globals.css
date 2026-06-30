@@ -3990,7 +3990,9 @@ select {
   font-size: var(--type-caption);
   font-weight: 850;
   min-height: 30px;
+  min-width: 8.6rem;
   padding: 0.42rem 0.7rem;
+  text-align: center;
   text-transform: uppercase;
 }
 
@@ -4166,34 +4168,34 @@ select {
 }
 
 .dashboardHeader .controlDock {
-  align-content: center;
+  align-content: start;
   align-self: start;
-  background: rgba(255, 254, 250, 0.08);
-  border: 1px solid rgba(255, 254, 250, 0.16);
-  gap: 0.85rem;
+  background: transparent;
+  border: 0;
+  gap: 0;
   grid-template-columns: 1fr;
-  justify-items: center;
+  justify-items: end;
   justify-self: end;
   margin-top: 0;
-  min-height: 112px;
-  max-width: 181px;
-  padding: 1rem;
-  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+  width: auto;
 }
 
-.dashboardHeader .controlDock label {
-  color: rgba(255, 254, 250, 0.66);
-  justify-items: center;
+.dashboardHeader .controlDock select {
+  appearance: none;
+  background: var(--account-accent, var(--steel));
+  border: 1px solid var(--account-accent, var(--steel));
+  border-radius: 999px;
+  color: var(--soft-black);
+  font-size: var(--type-caption);
+  font-weight: 850;
+  min-height: 30px;
+  padding: 0.42rem 0.7rem;
   text-align: center;
-  width: 100%;
-}
-
-.dashboardHeader .controlDock select,
-.dashboardHeader .controlDock input {
-  border-color: rgba(255, 254, 250, 0.86);
-  min-height: 48px;
-  min-width: min(145px, 100%);
-  text-align: center;
+  text-transform: uppercase;
+  width: 8.6rem;
 }
 
 .controlDock label {
