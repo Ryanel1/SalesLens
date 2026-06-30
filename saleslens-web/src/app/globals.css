@@ -3920,15 +3920,15 @@ label {
 
 .dashboardHeader::after {
   background:
-    linear-gradient(90deg, rgba(255, 254, 250, 0.13), transparent 28%),
-    linear-gradient(0deg, rgba(255, 254, 250, 0.1), transparent 54%);
+    radial-gradient(circle at 88% 26%, rgba(255, 254, 250, 0.12), transparent 26rem),
+    linear-gradient(0deg, rgba(255, 254, 250, 0.08), transparent 58%);
   bottom: 0;
   content: "";
+  left: 0;
   pointer-events: none;
   position: absolute;
   right: 0;
   top: 0;
-  width: min(34rem, 45%);
 }
 
 .dashboardTopSection {
