@@ -3693,6 +3693,8 @@ select {
   gap: 1.05rem;
   justify-content: end;
   min-width: 0;
+  width: max-content;
+  justify-self: end;
 }
 
 .navField,
@@ -3794,6 +3796,7 @@ select {
   border-radius: 0;
   min-width: 0;
   padding-inline: 0;
+  width: auto;
 }
 
 .navDateMeta {
@@ -5333,17 +5336,21 @@ select {
   }
 
   .navActions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    justify-content: stretch;
-    width: 100%;
+    display: flex;
+    justify-content: end;
+    justify-self: end;
+    width: max-content;
   }
 
   .fileButton,
-  .navShareButton,
-  .navSignOut {
+  .navShareButton {
     min-width: 0;
     padding-inline: 0.55rem;
+  }
+
+  .navSignOut {
+    padding-inline: 0;
+    width: auto;
   }
 
   .navField select {
