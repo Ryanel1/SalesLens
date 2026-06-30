@@ -18,6 +18,8 @@
   --steel-dark: #4f6878;
   --clay: #a96f4a;
   --oat: #d9c8ae;
+  --pms-151: #ff8200;
+  --pms-cool-gray-11: #53565a;
   --chart-current: var(--steel);
   --chart-prior: #a8a39b;
   --on-ink: #fffefa;
@@ -341,17 +343,19 @@ select {
 
 .accountThemeDefault {
   --account-accent: var(--steel);
+  --account-secondary-accent: var(--pms-cool-gray-11);
   --account-glow: rgba(111, 135, 149, 0.18);
   --scoreboard-wash: rgba(111, 135, 149, 0.28);
 }
 
 .accountThemeVolshop {
-  --account-accent: #ff8200;
-  --steel: #ff8200;
-  --steel-dark: #ff8200;
-  --clay: #ff8200;
+  --account-accent: var(--pms-151);
+  --account-secondary-accent: var(--pms-cool-gray-11);
+  --steel: var(--pms-151);
+  --steel-dark: var(--pms-151);
+  --clay: var(--pms-151);
   --oat: #8ecae6;
-  --chart-current: #ff8200;
+  --chart-current: var(--pms-151);
   --chart-prior: #a8a39b;
   --account-glow: rgba(255, 130, 0, 0.22);
   --focus-ring: rgba(255, 130, 0, 0.58);
@@ -362,6 +366,7 @@ select {
 
 .accountThemeRebelRags {
   --account-accent: #8ecae6;
+  --account-secondary-accent: var(--pms-cool-gray-11);
   --steel: #8ecae6;
   --steel-dark: #5caed4;
   --clay: #8ecae6;
@@ -4329,7 +4334,7 @@ select {
 }
 
 .sectionTitle h3 {
-  color: color-mix(in srgb, var(--account-accent, var(--steel)) 42%, var(--text));
+  color: var(--account-secondary-accent, var(--pms-cool-gray-11));
   font-size: var(--type-section-title);
   font-weight: 860;
   letter-spacing: 0;
