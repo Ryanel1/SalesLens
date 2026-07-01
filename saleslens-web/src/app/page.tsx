@@ -3611,23 +3611,41 @@ function shiftMonth(month: string, offset: number) {
 
 function metricSet(records: SalesRecord[]): MetricSet {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
+  const fallbackKeys = transactionKeys.length ? [] : records.map(transactionFallbackKey).filter(Boolean);
   return {
     sales: sum(records.map(amountValue)),
     units: sum(records.map((record) => record.units ?? 0)),
-    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : 0,
-    transactionsKnown: transactionKeys.length > 0,
+    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : uniqueCount(fallbackKeys),
+    transactionsKnown: transactionKeys.length > 0 || fallbackKeys.length > 0,
   };
 }
 
 function salesTransactionCount(records: SalesRecord[]) {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
-  return transactionKeys.length ? uniqueCount(transactionKeys) : 0;
+  if (transactionKeys.length) return uniqueCount(transactionKeys);
+  return uniqueCount(records.map(transactionFallbackKey).filter(Boolean));
 }
 
 function transactionKey(record: SalesRecord) {
   const transactionNumber = clean(record.transaction_number);
   if (!transactionNumber) return "";
   return `${record.transaction_date}|${transactionNumber}`;
+}
+
+function transactionFallbackKey(record: SalesRecord) {
+  const rowId = clean(record.id);
+  if (rowId) return `row|${rowId}`;
+  return [
+    record.transaction_date,
+    clean(record.source_file),
+    clean(record.style_number),
+    clean(record.art_code),
+    clean(record.raw_style_identifier),
+    clean(record.color),
+    clean(record.size),
+    Number(record.amount ?? 0).toFixed(2),
+    record.units ?? "",
+  ].join("|");
 }
 
 function topArtRows(
