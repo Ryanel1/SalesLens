@@ -346,6 +346,7 @@ select {
   --account-line-accent: var(--steel);
   --account-secondary-accent: var(--pms-cool-gray-11);
   --account-glow: rgba(111, 135, 149, 0.18);
+  --account-hero-image: url("/images/campus-stadium-night-blur.jpg");
   --account-hero-strong: rgba(21, 18, 15, 0.98);
   --account-hero-mid: rgba(21, 18, 15, 0.96);
   --account-hero-soft: rgba(21, 18, 15, 0.7);
@@ -389,9 +390,10 @@ select {
   --chart-current: var(--ole-miss-light-blue);
   --chart-prior: #a8a39b;
   --account-glow: rgba(142, 202, 230, 0.18);
-  --account-hero-strong: rgba(7, 24, 47, 0.98);
-  --account-hero-mid: rgba(20, 33, 61, 0.96);
-  --account-hero-soft: rgba(20, 33, 61, 0.74);
+  --account-hero-image: url("/images/ole-miss-stadium-overhead.png");
+  --account-hero-strong: rgba(7, 24, 47, 0.86);
+  --account-hero-mid: rgba(20, 33, 61, 0.74);
+  --account-hero-soft: rgba(20, 33, 61, 0.5);
   --account-scoreboard-line: color-mix(in srgb, var(--ole-miss-red) 68%, rgba(255, 254, 250, 0.16));
   --account-score-cell: linear-gradient(145deg, rgba(20, 33, 61, 0.76), rgba(7, 24, 47, 0.48));
   --account-score-primary: linear-gradient(135deg, color-mix(in srgb, var(--ole-miss-light-blue) 16%, rgba(20, 33, 61, 0.92)), rgba(7, 24, 47, 0.58));
@@ -4126,7 +4128,7 @@ select {
   background:
     linear-gradient(118deg, var(--account-hero-strong, rgba(21, 18, 15, 0.98)) 0%, var(--account-hero-mid, rgba(21, 18, 15, 0.96)) 48%, var(--account-hero-soft, rgba(21, 18, 15, 0.7)) 100%),
     radial-gradient(circle at 78% 22%, var(--scoreboard-wash, rgba(111, 135, 149, 0.28)), transparent 34rem),
-    url("/images/campus-stadium-night-blur.jpg") center / cover;
+    var(--account-hero-image, url("/images/campus-stadium-night-blur.jpg")) center / cover;
   border-top: 6px solid var(--account-line-accent, var(--account-accent, var(--steel)));
   color: var(--on-ink);
   grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
