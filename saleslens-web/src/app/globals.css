@@ -749,14 +749,6 @@ select {
   max-width: 34rem;
 }
 
-.importModalIntro {
-  color: var(--taupe);
-  font-size: 0.94rem;
-  font-weight: 750;
-  line-height: 1.45;
-  margin: 0 0 1rem;
-}
-
 .importDateRange {
   align-items: end;
   border: var(--hairline);
@@ -3783,7 +3775,7 @@ select {
   padding: 1rem var(--page-gutter);
   position: relative;
   width: 100%;
-  z-index: 20;
+  z-index: 90;
 }
 
 .navBrand {
@@ -3886,7 +3878,7 @@ select {
   right: 0;
   top: calc(100% + 0.5rem);
   width: max(112px, 100%);
-  z-index: 40;
+  z-index: 120;
 }
 
 .navActionMenuItem {

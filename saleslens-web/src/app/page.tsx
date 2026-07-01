@@ -1715,9 +1715,8 @@ export default function Home() {
   }
 
   function selectedImportRange(): SalesImportOptions | null {
-    if (!importRangeStart && !importRangeEnd) return {};
     if (!importRangeStart || !importRangeEnd) {
-      setCustomerStatus("Choose both a start and end date, or leave both dates blank.");
+      setCustomerStatus("Choose both a start and end date before importing sales data.");
       return null;
     }
     if (importRangeStart > importRangeEnd) {
@@ -2044,9 +2043,6 @@ export default function Home() {
               </button>
               <p className="eyebrow">{selectedCustomer?.name ?? "Account"} Import</p>
               <h3 id="import-type-title">Import report</h3>
-              <p className="importModalIntro">
-                Sales files can cover a range. Inventory files are saved as a single dated snapshot.
-              </p>
               <div className="shareScopeGrid importChoiceGrid" role="radiogroup" aria-label="Import type">
                 <button
                   aria-checked={importMode === "sales"}
@@ -2080,11 +2076,12 @@ export default function Home() {
                 <div className="importDateRange">
                   <div>
                     <strong>Sales report range</strong>
-                    <span>Optional. Use this when the sales file covers a weekly or custom range.</span>
+                    <span>Required. Choose the exact start and end dates for this sales file.</span>
                   </div>
                   <label>
                     <span>Start</span>
                     <input
+                      required
                       type="date"
                       value={importRangeStart}
                       onChange={(event) => setImportRangeStart(event.target.value)}
@@ -2093,6 +2090,7 @@ export default function Home() {
                   <label>
                     <span>End</span>
                     <input
+                      required
                       type="date"
                       value={importRangeEnd}
                       onChange={(event) => setImportRangeEnd(event.target.value)}
