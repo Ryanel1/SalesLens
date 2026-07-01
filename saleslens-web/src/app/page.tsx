@@ -498,6 +498,7 @@ export default function Home() {
   const [reportRefreshKey, setReportRefreshKey] = useState(0);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [pendingImportFiles, setPendingImportFiles] = useState<File[]>([]);
+  const [importMode, setImportMode] = useState<ImportIntent>("sales");
   const [importIntent, setImportIntent] = useState<ImportIntent | null>(null);
   const [importRangeStart, setImportRangeStart] = useState("");
   const [importRangeEnd, setImportRangeEnd] = useState("");
@@ -1674,6 +1675,7 @@ export default function Home() {
   function closeImportModal() {
     setImportModalOpen(false);
     setPendingImportFiles([]);
+    setImportMode("sales");
     setImportIntent(null);
     setImportRangeStart("");
     setImportRangeEnd("");
@@ -1690,15 +1692,17 @@ export default function Home() {
       setCustomerStatus("Choose at least one file before reviewing an import.");
       return;
     }
-    const range = selectedImportRange();
-    if (!range) return;
+    if (intent === "sales") {
+      const range = selectedImportRange();
+      if (!range) return;
+    }
     setCustomerStatus("");
     setImportIntent(intent);
   }
 
   function confirmReviewedImport() {
     if (!importIntent) return;
-    const range = selectedImportRange();
+    const range = importIntent === "sales" ? selectedImportRange() : {};
     if (!range) return;
     const files = pendingImportFiles;
     const intent = importIntent;
@@ -2039,7 +2043,68 @@ export default function Home() {
                 X
               </button>
               <p className="eyebrow">{selectedCustomer?.name ?? "Account"} Import</p>
-              <h3 id="import-type-title">What are you uploading?</h3>
+              <h3 id="import-type-title">Import report</h3>
+              <p className="importModalIntro">
+                Sales files can cover a range. Inventory files are saved as a single dated snapshot.
+              </p>
+              <div className="shareScopeGrid importChoiceGrid" role="radiogroup" aria-label="Import type">
+                <button
+                  aria-checked={importMode === "sales"}
+                  className={importMode === "sales" ? "active" : ""}
+                  onClick={() => {
+                    setImportMode("sales");
+                    setImportIntent(null);
+                  }}
+                  ref={uploadImportButtonRef}
+                  role="radio"
+                  type="button"
+                >
+                  <strong>Sales Data</strong>
+                  <span>POS dollars, units, receipts, and product rows. Add a range only when the file needs one.</span>
+                </button>
+                <button
+                  aria-checked={importMode === "inventory"}
+                  className={importMode === "inventory" ? "active" : ""}
+                  onClick={() => {
+                    setImportMode("inventory");
+                    setImportIntent(null);
+                  }}
+                  role="radio"
+                  type="button"
+                >
+                  <strong>Inventory Snapshot</strong>
+                  <span>On-hand units captured at one moment. No sales range applies.</span>
+                </button>
+              </div>
+              {importMode === "sales" ? (
+                <div className="importDateRange">
+                  <div>
+                    <strong>Sales report range</strong>
+                    <span>Optional. Use this when the sales file covers a weekly or custom range.</span>
+                  </div>
+                  <label>
+                    <span>Start</span>
+                    <input
+                      type="date"
+                      value={importRangeStart}
+                      onChange={(event) => setImportRangeStart(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>End</span>
+                    <input
+                      type="date"
+                      value={importRangeEnd}
+                      onChange={(event) => setImportRangeEnd(event.target.value)}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="importSnapshotNotice">
+                  <strong>Snapshot date comes from the file</strong>
+                  <span>SalesLens stores each Rebel Rags inventory upload as dated on-hand inventory, then uses the latest snapshot in reports.</span>
+                </div>
+              )}
               <div className="importFilePicker">
                 <label className="browseButton">
                   Browse
@@ -2078,52 +2143,23 @@ export default function Home() {
                 </p>
               ) : null}
               {customerStatus ? <p className="shareStatus">{customerStatus}</p> : null}
-              <div className="importDateRange">
-                <div>
-                  <strong>Sales report date range</strong>
-                  <span>Optional. Use this when the file covers a weekly or custom range.</span>
+              {!importIntent ? (
+                <div className="importReviewActions importPrimaryReviewActions">
+                  <button
+                    className="shareGenerateButton"
+                    disabled={pendingImportFiles.length === 0}
+                    onClick={() => reviewImport(importMode)}
+                    type="button"
+                  >
+                    Review {importMode === "sales" ? "Sales Import" : "Inventory Snapshot"}
+                  </button>
                 </div>
-                <label>
-                  <span>Start</span>
-                  <input
-                    type="date"
-                    value={importRangeStart}
-                    onChange={(event) => setImportRangeStart(event.target.value)}
-                  />
-                </label>
-                <label>
-                  <span>End</span>
-                  <input
-                    type="date"
-                    value={importRangeEnd}
-                    onChange={(event) => setImportRangeEnd(event.target.value)}
-                  />
-                </label>
-              </div>
-              <div className="shareScopeGrid">
-                <button
-                  disabled={pendingImportFiles.length === 0}
-                  onClick={() => reviewImport("sales")}
-                  ref={uploadImportButtonRef}
-                  type="button"
-                >
-                  <strong>Sales Data</strong>
-                  <span>Review POS sales with units and dollars before replacing overlapping records.</span>
-                </button>
-                <button
-                  disabled={pendingImportFiles.length === 0}
-                  onClick={() => reviewImport("inventory")}
-                  type="button"
-                >
-                  <strong>Inventory Report</strong>
-                  <span>Review standalone on-hand units before replacing inventory for the file dates.</span>
-                </button>
-              </div>
+              ) : null}
               {importIntent ? (
                 <div className="importReviewPanel" aria-live="polite">
                   <div className="importReviewHeader">
                     <span>Review before import</span>
-                    <strong>{importIntent === "sales" ? "Sales Data" : "Inventory Report"}</strong>
+                    <strong>{importIntent === "sales" ? "Sales Data" : "Inventory Snapshot"}</strong>
                   </div>
                   <div className="importImpactGrid">
                     <div>
@@ -2135,7 +2171,7 @@ export default function Home() {
                       <strong>{numberText(pendingImportSummary.fileCount)} file{pendingImportSummary.fileCount === 1 ? "" : "s"} | {fileSizeText(pendingImportSummary.totalBytes)}</strong>
                     </div>
                     <div>
-                      <span>{importIntent === "sales" ? "Sales Range" : "Inventory Dates"}</span>
+                      <span>{importIntent === "sales" ? "Sales Range" : "Snapshot Date"}</span>
                       <strong>
                         {importIntent === "sales"
                           ? importRangeStart || importRangeEnd
@@ -2150,7 +2186,7 @@ export default function Home() {
                     <p>
                       {importIntent === "sales"
                         ? "Sales import will create an upload record, then replace existing records for this account where the file date range and brand/class overlap."
-                        : "Inventory import will create an upload record, then replace existing on-hand records for this account on the inventory dates found in the file."}
+                        : "Inventory import will create an upload record, then replace existing on-hand records for the snapshot date found in each file."}
                     </p>
                   </div>
                   <ul className="importFileReviewList">
@@ -2168,7 +2204,7 @@ export default function Home() {
                       ref={importReviewConfirmRef}
                       onClick={confirmReviewedImport}
                     >
-                      Import {importIntent === "sales" ? "Sales Data" : "Inventory Report"}
+                      Import {importIntent === "sales" ? "Sales Data" : "Inventory Snapshot"}
                     </button>
                   </div>
                 </div>

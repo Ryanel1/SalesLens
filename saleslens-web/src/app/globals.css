@@ -749,6 +749,14 @@ select {
   max-width: 34rem;
 }
 
+.importModalIntro {
+  color: var(--taupe);
+  font-size: 0.94rem;
+  font-weight: 750;
+  line-height: 1.45;
+  margin: 0 0 1rem;
+}
+
 .importDateRange {
   align-items: end;
   border: var(--hairline);
@@ -787,11 +795,42 @@ select {
   width: 100%;
 }
 
+.importSnapshotNotice {
+  background: rgba(255, 253, 248, 0.74);
+  border: var(--hairline);
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+}
+
+.importSnapshotNotice strong {
+  color: var(--soft-black);
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.importSnapshotNotice span {
+  color: var(--taupe);
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 760;
+  line-height: 1.45;
+  max-width: 38rem;
+}
+
 .shareScopeGrid {
   display: grid;
   gap: 0.85rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 1.4rem 0;
+}
+
+.importChoiceGrid {
+  margin: 1.1rem 0 0;
 }
 
 .shareScopeGrid button {
@@ -810,6 +849,22 @@ select {
   background: color-mix(in srgb, var(--account-accent, var(--steel)) 12%, rgba(255, 253, 248, 0.88));
   border-color: color-mix(in srgb, var(--account-accent, var(--steel)) 62%, var(--stone));
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--account-accent, var(--steel)) 14%, transparent);
+}
+
+.importChoiceGrid button {
+  min-height: 112px;
+}
+
+.importChoiceGrid button.active {
+  background: var(--soft-black);
+  border-color: var(--soft-black);
+  box-shadow: none;
+  color: var(--surface-solid);
+}
+
+.importChoiceGrid button.active strong,
+.importChoiceGrid button.active span {
+  color: var(--surface-solid);
 }
 
 .shareScopeGrid button:disabled {
@@ -3446,6 +3501,7 @@ tbody tr:nth-child(even) {
   .inventorySummaryGrid,
   .importFilePicker,
   .importDateRange,
+  .importChoiceGrid,
   .navControls,
   .controlDock {
     grid-template-columns: 1fr;
@@ -5543,6 +5599,12 @@ select {
 .inventoryOption:not(.active):hover {
   background: color-mix(in srgb, var(--account-accent, var(--steel)) 10%, var(--surface-solid));
   border-color: color-mix(in srgb, var(--account-accent, var(--steel)) 28%, var(--line));
+}
+
+.importChoiceGrid button.active:not(:disabled):hover {
+  background: var(--soft-black);
+  border-color: var(--soft-black);
+  color: var(--surface-solid);
 }
 
 .shareStatus {
