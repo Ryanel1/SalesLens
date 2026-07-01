@@ -343,13 +343,22 @@ select {
 
 .accountThemeDefault {
   --account-accent: var(--steel);
+  --account-line-accent: var(--steel);
   --account-secondary-accent: var(--pms-cool-gray-11);
   --account-glow: rgba(111, 135, 149, 0.18);
+  --account-hero-strong: rgba(21, 18, 15, 0.98);
+  --account-hero-mid: rgba(21, 18, 15, 0.96);
+  --account-hero-soft: rgba(21, 18, 15, 0.7);
+  --account-scoreboard-line: color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(255, 254, 250, 0.16));
+  --account-score-cell: linear-gradient(145deg, color-mix(in srgb, var(--account-accent, var(--steel)) 13%, rgba(21, 18, 15, 0.55)), rgba(21, 18, 15, 0.42));
+  --account-score-primary: linear-gradient(135deg, color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(21, 18, 15, 0.9)), rgba(21, 18, 15, 0.5));
+  --account-product-card: linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 34%, rgba(21, 18, 15, 0.92)));
   --scoreboard-wash: rgba(111, 135, 149, 0.28);
 }
 
 .accountThemeVolshop {
   --account-accent: var(--pms-151);
+  --account-line-accent: var(--pms-151);
   --account-secondary-accent: var(--pms-cool-gray-11);
   --steel: var(--pms-151);
   --steel-dark: var(--pms-151);
@@ -365,18 +374,32 @@ select {
 }
 
 .accountThemeRebelRags {
-  --account-accent: #8ecae6;
-  --account-secondary-accent: var(--pms-cool-gray-11);
-  --steel: #8ecae6;
+  --ole-miss-navy: #14213d;
+  --ole-miss-navy-deep: #07182f;
+  --ole-miss-navy-soft: #1b3152;
+  --ole-miss-red: #ce1126;
+  --ole-miss-light-blue: #8ecae6;
+  --account-accent: var(--ole-miss-light-blue);
+  --account-line-accent: var(--ole-miss-red);
+  --account-secondary-accent: var(--ole-miss-red);
+  --steel: var(--ole-miss-light-blue);
   --steel-dark: #5caed4;
-  --clay: #8ecae6;
-  --oat: #9ed4ee;
-  --chart-current: #8ecae6;
+  --clay: var(--ole-miss-red);
+  --oat: #b7e4f5;
+  --chart-current: var(--ole-miss-light-blue);
   --chart-prior: #a8a39b;
-  --account-glow: rgba(142, 202, 230, 0.22);
+  --account-glow: rgba(142, 202, 230, 0.18);
+  --account-hero-strong: rgba(7, 24, 47, 0.98);
+  --account-hero-mid: rgba(20, 33, 61, 0.96);
+  --account-hero-soft: rgba(20, 33, 61, 0.74);
+  --account-scoreboard-line: color-mix(in srgb, var(--ole-miss-red) 68%, rgba(255, 254, 250, 0.16));
+  --account-score-cell: linear-gradient(145deg, rgba(20, 33, 61, 0.76), rgba(7, 24, 47, 0.48));
+  --account-score-primary: linear-gradient(135deg, color-mix(in srgb, var(--ole-miss-light-blue) 16%, rgba(20, 33, 61, 0.92)), rgba(7, 24, 47, 0.58));
+  --account-product-card: linear-gradient(135deg, rgba(7, 24, 47, 0.98), rgba(20, 33, 61, 0.94));
   --focus-ring: rgba(92, 174, 212, 0.58);
   --focus-ring-soft: rgba(142, 202, 230, 0.2);
-  --scoreboard-wash: rgba(142, 202, 230, 0.34);
+  --scoreboard-wash: rgba(142, 202, 230, 0.2);
+  --hero-negative: #ff6675;
 }
 
 .topNav {
@@ -4053,10 +4076,10 @@ select {
 
 .dashboardHeader {
   background:
-    linear-gradient(118deg, rgba(21, 18, 15, 0.98) 0%, rgba(21, 18, 15, 0.96) 48%, rgba(21, 18, 15, 0.7) 100%),
+    linear-gradient(118deg, var(--account-hero-strong, rgba(21, 18, 15, 0.98)) 0%, var(--account-hero-mid, rgba(21, 18, 15, 0.96)) 48%, var(--account-hero-soft, rgba(21, 18, 15, 0.7)) 100%),
     radial-gradient(circle at 78% 22%, var(--scoreboard-wash, rgba(111, 135, 149, 0.28)), transparent 34rem),
     url("/images/campus-stadium-night-blur.jpg") center / cover;
-  border-top: 6px solid var(--account-accent, var(--steel));
+  border-top: 6px solid var(--account-line-accent, var(--account-accent, var(--steel)));
   color: var(--on-ink);
   grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
   margin: 0 0 clamp(1.65rem, 3vw, 3rem);
@@ -4123,7 +4146,7 @@ select {
   align-content: center;
   align-self: center;
   background: rgba(21, 18, 15, 0.66);
-  border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 34%, rgba(255, 254, 250, 0.16));
+  border: 1px solid color-mix(in srgb, var(--account-line-accent, var(--account-accent, var(--steel))) 46%, rgba(255, 254, 250, 0.16));
   display: grid;
   gap: 0.3rem;
   grid-area: insight;
@@ -4232,8 +4255,8 @@ select {
 }
 
 .dashboardScoreboard {
-  background: color-mix(in srgb, var(--account-accent, var(--steel)) 18%, rgba(255, 254, 250, 0.08));
-  border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(255, 254, 250, 0.16));
+  background: var(--account-scoreboard-line, color-mix(in srgb, var(--account-accent, var(--steel)) 18%, rgba(255, 254, 250, 0.08)));
+  border: 1px solid var(--account-scoreboard-line, color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(255, 254, 250, 0.16)));
   display: grid;
   gap: 1px;
   grid-area: score;
@@ -4248,8 +4271,7 @@ select {
 
 .dashboardScoreboard > div {
   align-content: end;
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--account-accent, var(--steel)) 13%, rgba(21, 18, 15, 0.55)), rgba(21, 18, 15, 0.42));
+  background: var(--account-score-cell, linear-gradient(145deg, color-mix(in srgb, var(--account-accent, var(--steel)) 13%, rgba(21, 18, 15, 0.55)), rgba(21, 18, 15, 0.42)));
   display: grid;
   gap: 0.45rem;
   min-height: clamp(104px, 8.5vw, 132px);
@@ -4257,8 +4279,7 @@ select {
 }
 
 .dashboardScoreboard .scoreboardPrimary {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(21, 18, 15, 0.9)), rgba(21, 18, 15, 0.5));
+  background: var(--account-score-primary, linear-gradient(135deg, color-mix(in srgb, var(--account-accent, var(--steel)) 46%, rgba(21, 18, 15, 0.9)), rgba(21, 18, 15, 0.5)));
 }
 
 .dashboardScoreboard span {
@@ -5022,8 +5043,8 @@ select {
 }
 
 .sectionBlock .monthlyScorecardHero {
-  background:
-    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 36%, rgba(21, 18, 15, 0.9)));
+  background: var(--account-product-card, linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 36%, rgba(21, 18, 15, 0.9))));
+  border: 1px solid color-mix(in srgb, var(--account-line-accent, var(--account-accent, var(--steel))) 24%, transparent);
   color: #fffefa;
 }
 
@@ -5218,8 +5239,7 @@ select {
 
 .artGrid .artCard:first-child .artMeta {
   align-content: center;
-  background:
-    linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 34%, rgba(21, 18, 15, 0.92)));
+  background: var(--account-product-card, linear-gradient(135deg, rgba(21, 18, 15, 0.98), color-mix(in srgb, var(--account-accent, var(--steel)) 34%, rgba(21, 18, 15, 0.92))));
   color: #fffefa;
   display: grid;
   gap: 1rem;
@@ -5229,6 +5249,7 @@ select {
 
 .artGrid .artCard:first-child .artIdentity {
   min-width: 0;
+  border-bottom-color: color-mix(in srgb, var(--account-line-accent, var(--account-accent, var(--steel))) 70%, rgba(255, 254, 250, 0.3));
   width: 100%;
 }
 
@@ -5263,7 +5284,8 @@ select {
 
 .artGrid .artCard:first-child .artStats span {
   align-content: start;
-  background: rgba(255, 254, 250, 0.08);
+  background: color-mix(in srgb, var(--account-line-accent, var(--account-accent, var(--steel))) 14%, rgba(255, 254, 250, 0.07));
+  border: 1px solid color-mix(in srgb, var(--account-line-accent, var(--account-accent, var(--steel))) 22%, transparent);
   display: grid;
   gap: 0.28rem;
   justify-content: stretch;
@@ -5907,7 +5929,7 @@ select {
 .publicReport > .publicDashboardHeader .publicContactCard.dashboardHeroContact,
 .publicBundleReport > .accountReportSwitcher > .publicDashboardHeader .publicContactCard.dashboardHeroContact {
   background: rgba(21, 18, 15, 0.92);
-  border: 1px solid color-mix(in srgb, var(--account-accent, var(--steel)) 44%, rgba(255, 254, 250, 0.16));
+  border: 1px solid color-mix(in srgb, var(--account-line-accent, var(--account-accent, var(--steel))) 48%, rgba(255, 254, 250, 0.16));
   color: var(--on-ink);
   gap: 0.3rem;
   min-height: 104px;
