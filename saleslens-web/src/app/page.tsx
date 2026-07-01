@@ -81,6 +81,7 @@ type MetricSet = {
   units: number;
   transactions: number;
   transactionsKnown?: boolean;
+  transactionBasis?: "receipt" | "product-line" | "none";
 };
 
 function ProductMedia({
@@ -2784,16 +2785,19 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
   const avgTransactionDelta = drivers.avgSalePerTransaction - drivers.priorAvgSalePerTransaction;
   const avgUnitDelta = drivers.avgSalePerUnit - drivers.priorAvgSalePerUnit;
   const hasTransactionData = hasComparableTransactionData(current, prior);
+  const transactionBasis = comparableTransactionBasis(current, prior);
+  const transactionLabel = transactionMetricLabel(transactionBasis);
+  const transactionUnitLabel = transactionBasis === "product-line" ? "line" : "transaction";
   const maxSales = Math.max(current.sales, prior.sales, 1);
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
   const takeaways = [
     `Sales: ${changeText(current.sales, prior.sales)} (${signedCurrencyText(salesDelta)}) vs LY.`,
     hasTransactionData
-      ? `Units: ${changeText(current.units, prior.units)}. Transactions: ${changeText(current.transactions, prior.transactions)}.`
+      ? `Units: ${changeText(current.units, prior.units)}. ${transactionLabel}: ${changeText(current.transactions, prior.transactions)}.`
       : `Units: ${changeText(current.units, prior.units)}.`,
     hasTransactionData
-      ? `Avg transaction: ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`
+      ? `${transactionAverageLabel(transactionBasis)}: ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`
       : `Avg $/unit: ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY.`,
     `Top 5 styles: ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
   ];
@@ -2835,9 +2839,9 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
 
       <div className="monthlyDriverMetricsRow monthlyScorecardMetrics">
         <DriverTile
-          label="Transactions"
+          label={transactionLabel}
           value={hasTransactionData ? `${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY` : "NA"}
-          details={[hasTransactionData ? `Change: ${deltaText(transactionDelta, current.transactions, prior.transactions)}` : "No receipt data"]}
+          details={[hasTransactionData ? `Change: ${deltaText(transactionDelta, current.transactions, prior.transactions)}` : "No transaction data"]}
           tone={hasTransactionData ? transactionDelta : 0}
         />
         <DriverTile
@@ -2851,11 +2855,11 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
         />
         {hasTransactionData ? (
           <DriverTile
-            label="Avg Transaction"
+            label={transactionAverageLabel(transactionBasis)}
             value={currencyText(drivers.avgSalePerTransaction)}
             details={[
-              `${decimalText(drivers.avgUnitsPerTransaction)} units / transaction`,
-              `LY: ${currencyText(drivers.priorAvgSalePerTransaction)} | ${decimalText(drivers.priorAvgUnitsPerTransaction)} units`,
+              `${decimalText(drivers.avgUnitsPerTransaction)} units / ${transactionUnitLabel}`,
+              `LY: ${currencyText(drivers.priorAvgSalePerTransaction)} | ${decimalText(drivers.priorAvgUnitsPerTransaction)} units / ${transactionUnitLabel}`,
             ]}
             tone={avgTransactionDelta}
           />
@@ -2902,6 +2906,7 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
         const hasSalesActivity =
           row.current.sales !== 0 || row.current.units !== 0 || row.prior.sales !== 0 || row.prior.units !== 0;
         const hasTransactionData = hasComparableTransactionData(row.current, row.prior);
+        const transactionLabel = transactionMetricLabel(comparableTransactionBasis(row.current, row.prior));
         return (
           <article className="weeklyScorecardRow" key={row.dateRange}>
             <div className="weeklyDateRail">
@@ -2925,10 +2930,10 @@ function WeeklyScorecard({ rows }: { rows: WeeklyScorecardRow[] }) {
                 <small className={changeClass(unitsDelta)}>{signedNumberText(unitsDelta)} vs LY</small>
               </span>
               <span>
-                <em>Transactions</em>
+                <em>{transactionLabel}</em>
                 <strong>{hasTransactionData ? numberText(row.current.transactions) : "NA"}</strong>
                 <small className={hasTransactionData ? changeClass(transactionDelta) : ""}>
-                  {hasTransactionData ? `${signedNumberText(transactionDelta)} vs LY` : hasSalesActivity ? "No receipt data" : "0 vs LY"}
+                  {hasTransactionData ? `${signedNumberText(transactionDelta)} vs LY` : hasSalesActivity ? "No transaction data" : "0 vs LY"}
                 </small>
               </span>
             </div>
@@ -3611,23 +3616,40 @@ function shiftMonth(month: string, offset: number) {
 
 function metricSet(records: SalesRecord[]): MetricSet {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
+  const productLineKeys = transactionKeys.length ? [] : records.map(transactionProductLineKey).filter(Boolean);
+  const transactionBasis: MetricSet["transactionBasis"] = transactionKeys.length ? "receipt" : productLineKeys.length ? "product-line" : "none";
   return {
     sales: sum(records.map(amountValue)),
     units: sum(records.map((record) => record.units ?? 0)),
-    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : 0,
-    transactionsKnown: transactionKeys.length > 0,
+    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : uniqueCount(productLineKeys),
+    transactionsKnown: transactionBasis !== "none",
+    transactionBasis,
   };
 }
 
 function salesTransactionCount(records: SalesRecord[]) {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
-  return transactionKeys.length ? uniqueCount(transactionKeys) : 0;
+  if (transactionKeys.length) return uniqueCount(transactionKeys);
+  return uniqueCount(records.map(transactionProductLineKey).filter(Boolean));
 }
 
 function transactionKey(record: SalesRecord) {
   const transactionNumber = clean(record.transaction_number);
   if (!transactionNumber) return "";
   return `${record.transaction_date}|${transactionNumber}`;
+}
+
+function transactionProductLineKey(record: SalesRecord) {
+  const key = [
+    clean(record.parent_sku),
+    clean(record.sku),
+    clean(record.style_number),
+    clean(record.art_code),
+    clean(record.raw_style_identifier),
+    clean(record.color),
+    clean(record.size),
+  ].join("|");
+  return key.replace(/\|/g, "") ? key : "";
 }
 
 function topArtRows(
@@ -4869,10 +4891,26 @@ function sortWeeklyTopItems(left: WeeklyTopItem, right: WeeklyTopItem) {
 }
 
 function hasComparableTransactionData(current: MetricSet, prior: MetricSet) {
-  const currentKnown = current.transactionsKnown ?? current.transactions > 0;
-  const priorKnown = prior.transactionsKnown ?? prior.transactions > 0;
+  const basis = comparableTransactionBasis(current, prior);
+  const currentKnown = basis !== "none" && (current.transactionsKnown ?? current.transactions > 0);
+  const priorKnown = basis !== "none" && (prior.transactionsKnown ?? prior.transactions > 0);
   const priorHasActivity = prior.sales !== 0 || prior.units !== 0 || prior.transactions !== 0;
   return currentKnown && (priorKnown || !priorHasActivity);
+}
+
+function comparableTransactionBasis(current: MetricSet, prior: MetricSet) {
+  if (current.transactionBasis === "receipt" || prior.transactionBasis === "receipt") return "receipt";
+  if (current.transactionBasis === "product-line" || prior.transactionBasis === "product-line") return "product-line";
+  if ((current.transactionsKnown ?? current.transactions > 0) || (prior.transactionsKnown ?? prior.transactions > 0)) return "receipt";
+  return "none";
+}
+
+function transactionMetricLabel(basis: ReturnType<typeof comparableTransactionBasis>) {
+  return basis === "product-line" ? "Selling Lines" : "Transactions";
+}
+
+function transactionAverageLabel(basis: ReturnType<typeof comparableTransactionBasis>) {
+  return basis === "product-line" ? "Avg Line" : "Avg Transaction";
 }
 
 function changeText(current: number, prior: number) {

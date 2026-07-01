@@ -29,6 +29,7 @@ export type MetricSet = {
   units: number;
   transactions: number;
   transactionsKnown?: boolean;
+  transactionBasis?: "receipt" | "product-line" | "none";
 };
 
 export type WeeklyTopItem = {
@@ -778,23 +779,40 @@ function shiftMonth(month: string, offset: number) {
 
 function metricSet(records: SalesRecord[]): MetricSet {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
+  const productLineKeys = transactionKeys.length ? [] : records.map(transactionProductLineKey).filter(Boolean);
+  const transactionBasis: MetricSet["transactionBasis"] = transactionKeys.length ? "receipt" : productLineKeys.length ? "product-line" : "none";
   return {
     sales: sum(records.map(amountValue)),
     units: sum(records.map((record) => record.units ?? 0)),
-    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : 0,
-    transactionsKnown: transactionKeys.length > 0,
+    transactions: transactionKeys.length ? uniqueCount(transactionKeys) : uniqueCount(productLineKeys),
+    transactionsKnown: transactionBasis !== "none",
+    transactionBasis,
   };
 }
 
 function salesTransactionCount(records: SalesRecord[]) {
   const transactionKeys = records.map(transactionKey).filter(Boolean);
-  return transactionKeys.length ? uniqueCount(transactionKeys) : 0;
+  if (transactionKeys.length) return uniqueCount(transactionKeys);
+  return uniqueCount(records.map(transactionProductLineKey).filter(Boolean));
 }
 
 function transactionKey(record: SalesRecord) {
   const transactionNumber = clean(record.transaction_number);
   if (!transactionNumber) return "";
   return `${record.transaction_date}|${transactionNumber}`;
+}
+
+function transactionProductLineKey(record: SalesRecord) {
+  const key = [
+    clean(record.parent_sku),
+    clean(record.sku),
+    clean(record.style_number),
+    clean(record.art_code),
+    clean(record.raw_style_identifier),
+    clean(record.color),
+    clean(record.size),
+  ].join("|");
+  return key.replace(/\|/g, "") ? key : "";
 }
 
 function topArtRows(

@@ -368,16 +368,19 @@ function SalesDriverGrid({
   const avgTransactionDelta = avgSalePerTransaction - priorAvgSalePerTransaction;
   const avgUnitDelta = avgSalePerUnit - priorAvgSalePerUnit;
   const hasTransactionData = hasComparableTransactionData(current, prior);
+  const transactionBasis = comparableTransactionBasis(current, prior);
+  const transactionLabel = transactionMetricLabel(transactionBasis);
+  const transactionUnitLabel = transactionBasis === "product-line" ? "line" : "transaction";
   const maxSales = Math.max(current.sales, prior.sales, 1);
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
   const takeaways = [
     `Sales: ${changeText(current.sales, prior.sales)} (${signedCurrencyText(salesDelta)}) vs LY.`,
     hasTransactionData
-      ? `Units: ${changeText(current.units, prior.units)}. Transactions: ${changeText(current.transactions, prior.transactions)}.`
+      ? `Units: ${changeText(current.units, prior.units)}. ${transactionLabel}: ${changeText(current.transactions, prior.transactions)}.`
       : `Units: ${changeText(current.units, prior.units)}.`,
     hasTransactionData
-      ? `Avg transaction: ${currencyText(avgSalePerTransaction)} vs ${currencyText(priorAvgSalePerTransaction)} LY.`
+      ? `${transactionAverageLabel(transactionBasis)}: ${currencyText(avgSalePerTransaction)} vs ${currencyText(priorAvgSalePerTransaction)} LY.`
       : `Avg $/unit: ${currencyText(avgSalePerUnit)} vs ${currencyText(priorAvgSalePerUnit)} LY.`,
     `Top 5 styles: ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
   ];
@@ -419,9 +422,9 @@ function SalesDriverGrid({
 
       <div className="monthlyDriverMetricsRow monthlyScorecardMetrics">
         <DriverTile
-          label="Transactions"
+          label={transactionLabel}
           value={hasTransactionData ? `${numberText(current.transactions)} vs ${numberText(prior.transactions)} LY` : "NA"}
-          details={[hasTransactionData ? `Change: ${deltaText(transactionDelta, current.transactions, prior.transactions)}` : "No receipt data"]}
+          details={[hasTransactionData ? `Change: ${deltaText(transactionDelta, current.transactions, prior.transactions)}` : "No transaction data"]}
           tone={hasTransactionData ? transactionDelta : 0}
         />
         <DriverTile
@@ -435,11 +438,11 @@ function SalesDriverGrid({
         />
         {hasTransactionData ? (
           <DriverTile
-            label="Avg Transaction"
+            label={transactionAverageLabel(transactionBasis)}
             value={currencyText(avgSalePerTransaction)}
             details={[
-              `${decimalText(avgUnitsPerTransaction)} units / transaction`,
-              `LY: ${currencyText(priorAvgSalePerTransaction)} | ${decimalText(priorAvgUnitsPerTransaction)} units`,
+              `${decimalText(avgUnitsPerTransaction)} units / ${transactionUnitLabel}`,
+              `LY: ${currencyText(priorAvgSalePerTransaction)} | ${decimalText(priorAvgUnitsPerTransaction)} units / ${transactionUnitLabel}`,
             ]}
             tone={avgTransactionDelta}
           />
@@ -486,6 +489,7 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
         const hasSalesActivity =
           row.current.sales !== 0 || row.current.units !== 0 || row.prior.sales !== 0 || row.prior.units !== 0;
         const hasTransactionData = hasComparableTransactionData(row.current, row.prior);
+        const transactionLabel = transactionMetricLabel(comparableTransactionBasis(row.current, row.prior));
         const topProducts = row.topItems?.length ? row.topItems : row.topItem ? [row.topItem] : [];
         return (
           <article className="weeklyScorecardRow" key={row.dateRange}>
@@ -510,10 +514,10 @@ function WeeklyScorecard({ rows }: { rows: SnapshotWeeklyScorecardRow[] }) {
                 <small className={changeClass(unitsDelta)}>{signedNumberText(unitsDelta)} vs LY</small>
               </span>
               <span>
-                <em>Transactions</em>
+                <em>{transactionLabel}</em>
                 <strong>{hasTransactionData ? numberText(row.current.transactions) : "NA"}</strong>
                 <small className={hasTransactionData ? changeClass(transactionDelta) : ""}>
-                  {hasTransactionData ? `${signedNumberText(transactionDelta)} vs LY` : hasSalesActivity ? "No receipt data" : "0 vs LY"}
+                  {hasTransactionData ? `${signedNumberText(transactionDelta)} vs LY` : hasSalesActivity ? "No transaction data" : "0 vs LY"}
                 </small>
               </span>
             </div>
@@ -815,10 +819,26 @@ function compactNumber(value: number) {
 }
 
 function hasComparableTransactionData(current: SnapshotMetricSet, prior: SnapshotMetricSet) {
-  const currentKnown = current.transactionsKnown ?? current.transactions > 0;
-  const priorKnown = prior.transactionsKnown ?? prior.transactions > 0;
+  const basis = comparableTransactionBasis(current, prior);
+  const currentKnown = basis !== "none" && (current.transactionsKnown ?? current.transactions > 0);
+  const priorKnown = basis !== "none" && (prior.transactionsKnown ?? prior.transactions > 0);
   const priorHasActivity = prior.sales !== 0 || prior.units !== 0 || prior.transactions !== 0;
   return currentKnown && (priorKnown || !priorHasActivity);
+}
+
+function comparableTransactionBasis(current: SnapshotMetricSet, prior: SnapshotMetricSet) {
+  if (current.transactionBasis === "receipt" || prior.transactionBasis === "receipt") return "receipt";
+  if (current.transactionBasis === "product-line" || prior.transactionBasis === "product-line") return "product-line";
+  if ((current.transactionsKnown ?? current.transactions > 0) || (prior.transactionsKnown ?? prior.transactions > 0)) return "receipt";
+  return "none";
+}
+
+function transactionMetricLabel(basis: ReturnType<typeof comparableTransactionBasis>) {
+  return basis === "product-line" ? "Selling Lines" : "Transactions";
+}
+
+function transactionAverageLabel(basis: ReturnType<typeof comparableTransactionBasis>) {
+  return basis === "product-line" ? "Avg Line" : "Avg Transaction";
 }
 
 function changeText(current: number, prior: number) {

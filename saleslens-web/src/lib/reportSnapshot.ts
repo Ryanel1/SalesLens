@@ -3,6 +3,7 @@ export type SnapshotMetricSet = {
   units: number;
   transactions: number;
   transactionsKnown?: boolean;
+  transactionBasis?: "receipt" | "product-line" | "none";
 };
 
 export type SnapshotSalesMixSlice = {
