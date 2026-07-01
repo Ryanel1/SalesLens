@@ -368,6 +368,10 @@ select {
   --chart-current: var(--pms-151);
   --chart-prior: #a8a39b;
   --account-glow: rgba(255, 130, 0, 0.22);
+  --account-hero-image: url("/images/volshop-stadium-fireworks.jpg");
+  --account-hero-strong: rgba(21, 18, 15, 0.9);
+  --account-hero-mid: rgba(61, 34, 12, 0.78);
+  --account-hero-soft: rgba(61, 34, 12, 0.52);
   --focus-ring: rgba(255, 130, 0, 0.58);
   --focus-ring-soft: rgba(255, 130, 0, 0.18);
   --scoreboard-wash: rgba(255, 130, 0, 0.32);
