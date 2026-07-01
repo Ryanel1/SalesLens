@@ -394,7 +394,7 @@ select {
   --chart-current: var(--ole-miss-light-blue);
   --chart-prior: #a8a39b;
   --account-glow: rgba(142, 202, 230, 0.18);
-  --account-hero-image: url("/images/ole-miss-stadium-overhead.png");
+  --account-hero-image: url("/images/ole-miss-stadium-sunset.jpg");
   --account-hero-strong: rgba(7, 24, 47, 0.86);
   --account-hero-mid: rgba(20, 33, 61, 0.74);
   --account-hero-soft: rgba(20, 33, 61, 0.5);
