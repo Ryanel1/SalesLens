@@ -2787,20 +2787,21 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
   const hasTransactionData = hasComparableTransactionData(current, prior);
   const transactionBasis = comparableTransactionBasis(current, prior);
   const transactionLabel = transactionMetricLabel(transactionBasis);
-  const transactionUnitLabel = transactionBasis === "product-line" ? "line" : "transaction";
+  const transactionUnitLabel = "transaction";
   const maxSales = Math.max(current.sales, prior.sales, 1);
   const currentSalesWidth = Math.max(3, (current.sales / maxSales) * 100);
   const priorSalesWidth = Math.max(3, (prior.sales / maxSales) * 100);
   const takeaways = [
     `Sales: ${changeText(current.sales, prior.sales)} (${signedCurrencyText(salesDelta)}) vs LY.`,
+    `Units: ${changeText(current.units, prior.units)}.`,
     hasTransactionData
-      ? `Units: ${changeText(current.units, prior.units)}. ${transactionLabel}: ${changeText(current.transactions, prior.transactions)}.`
-      : `Units: ${changeText(current.units, prior.units)}.`,
+      ? `${transactionLabel}: ${changeText(current.transactions, prior.transactions)}.`
+      : null,
     hasTransactionData
       ? `${transactionAverageLabel(transactionBasis)}: ${currencyText(drivers.avgSalePerTransaction)} vs ${currencyText(drivers.priorAvgSalePerTransaction)} LY.`
       : `Avg $/unit: ${currencyText(drivers.avgSalePerUnit)} vs ${currencyText(drivers.priorAvgSalePerUnit)} LY.`,
     `Top 5 styles: ${drivers.topFiveStyleShare.toFixed(1)}% of sales (${currencyText(drivers.topFiveStyleSales)}).`,
-  ];
+  ].filter(Boolean);
 
   return (
     <div className="salesDriverGrid monthlyScorecardGrid">
@@ -2872,7 +2873,7 @@ function SalesDriverGrid({ current, prior, drivers, periodTitle, priorPeriodTitl
           />
         )}
         <DriverTile
-          label="Top Style Dependence"
+          label="Core Style Dependence"
           value={`${drivers.topFiveStyleShare.toFixed(1)}%`}
           details={[`Top 5 styles: ${currencyText(drivers.topFiveStyleSales)}`]}
           tone={0}
@@ -4906,11 +4907,13 @@ function comparableTransactionBasis(current: MetricSet, prior: MetricSet) {
 }
 
 function transactionMetricLabel(basis: ReturnType<typeof comparableTransactionBasis>) {
-  return basis === "product-line" ? "Selling Lines" : "Transactions";
+  void basis;
+  return "Transactions";
 }
 
 function transactionAverageLabel(basis: ReturnType<typeof comparableTransactionBasis>) {
-  return basis === "product-line" ? "Avg Line" : "Avg Transaction";
+  void basis;
+  return "Avg Transaction";
 }
 
 function changeText(current: number, prior: number) {
