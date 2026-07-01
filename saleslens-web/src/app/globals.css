@@ -6146,6 +6146,10 @@ select {
   width: min(7.5rem, 52%);
 }
 
+.sectionBlock .inventoryTotal::after {
+  margin-top: 0.35rem;
+}
+
 .sectionBlock .inventoryTotal span {
   color: var(--ink);
   font-size: clamp(0.8rem, 1vw, 0.94rem);
@@ -6157,7 +6161,7 @@ select {
   color: var(--ink);
   font-size: clamp(4.5rem, 8.2vw, 7.2rem);
   letter-spacing: -0.015em;
-  line-height: 0.82;
+  line-height: 0.88;
 }
 
 .sectionBlock .monthlyScorecardMetrics .driverTile > strong {
