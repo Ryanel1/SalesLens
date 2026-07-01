@@ -631,9 +631,9 @@ function InventoryCard({ snapshot }: { snapshot: SnapshotInventory }) {
         <p>
           {snapshot.coverage == null
             ? "Coverage is not available yet because inventory cannot be matched cleanly to this sales pace."
-            : `Current stock covers about ${snapshot.coverage.toFixed(1)} months at the normalized sales pace.`}
+            : `At the current sales pace only, this equals about ${snapshot.coverage.toFixed(1)} months of supply.`}
           {" "}
-          Use this with the position score to judge whether depth is lean, balanced, or heavy.
+          Use the position read to account for the faster campus and football demand window ahead.
         </p>
       </div>
       <InventoryPositionCard position={position} />
@@ -656,7 +656,7 @@ function InventoryPositionCard({
       <div className="inventoryGauge" aria-label={`Inventory position is ${position.label}`}>
         <div className="inventoryGaugeLabels">
           <span>Lean</span>
-          <span>Heavy</span>
+          <span>{position.label === "Heavy" ? "Heavy" : "Built"}</span>
         </div>
         <div className="inventoryGaugeTrack">
           <i style={{ left: `${position.score}%` }} />

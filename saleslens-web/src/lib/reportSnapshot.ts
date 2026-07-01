@@ -78,7 +78,7 @@ export type SnapshotInventoryLine = {
 
 export type SnapshotInventoryPosition = {
   score: number;
-  label: "Lean" | "Balanced" | "Heavy";
+  label: "Lean" | "Balanced" | "Built" | "Heavy";
   headline: string;
   detail: string;
   comparison: string;

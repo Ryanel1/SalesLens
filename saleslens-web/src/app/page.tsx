@@ -260,7 +260,7 @@ type InventoryLine = {
 
 type InventoryPosition = {
   score: number;
-  label: "Lean" | "Balanced" | "Heavy";
+  label: "Lean" | "Balanced" | "Built" | "Heavy";
   headline: string;
   detail: string;
   comparison: string;
@@ -3001,9 +3001,9 @@ function InventoryCard({ snapshot }: { snapshot: InventorySnapshot }) {
         <p>
           {snapshot.coverage == null
             ? "Coverage is not available yet because inventory cannot be matched cleanly to this sales pace."
-            : `Current stock covers about ${snapshot.coverage.toFixed(1)} months at the normalized sales pace.`}
+            : `At the current sales pace only, this equals about ${snapshot.coverage.toFixed(1)} months of supply.`}
           {" "}
-          Use this with the position score to judge whether depth is lean, balanced, or heavy.
+          Use the position read to account for the faster campus and football demand window ahead.
         </p>
       </div>
       <InventoryPositionCard position={snapshot.position} />
@@ -3022,7 +3022,7 @@ function InventoryPositionCard({ position }: { position: InventoryPosition }) {
       <div className="inventoryGauge" aria-label={`Inventory position is ${position.label}`}>
         <div className="inventoryGaugeLabels">
           <span>Lean</span>
-          <span>Heavy</span>
+          <span>{position.label === "Heavy" ? "Heavy" : "Built"}</span>
         </div>
         <div className="inventoryGaugeTrack">
           <i style={{ left: `${position.score}%` }} />
@@ -4535,14 +4535,15 @@ function inventoryPositionForSnapshot(
     ? clamp(((totalUnits - priorSameMonth) / priorSameMonth) * 22, -12, 12)
     : 0;
   const score = Math.round(clamp(coverageScore + priorShift, 5, 95));
-  const label: InventoryPosition["label"] = score < 40 ? "Lean" : score > 60 ? "Heavy" : "Balanced";
+  const seasonalRampWindow = monthIndex != null && monthIndex >= 5 && monthIndex <= 10;
+  const label: InventoryPosition["label"] = score < 40 ? "Lean" : score > 62 ? (seasonalRampWindow ? "Built" : "Heavy") : "Balanced";
   const coverageText = coverage == null
     ? "Current stock cannot be matched cleanly to recent selling pace yet."
-    : `Current stock covers about ${coverage.toFixed(1)} months at the normalized sales pace.`;
+    : `Raw coverage is about ${coverage.toFixed(1)} months at the current sales pace.`;
   const detail = `${coverageText} ${inventorySeasonText(monthIndex)}`;
   const comparison = priorSameMonth && priorSameMonth > 0
     ? sameMonthInventoryComparison(totalUnits, priorSameMonth, line?.priorYear)
-    : "Prior-year same-month inventory is not available yet, so this read leans more on current sales pace.";
+    : "Prior-year same-month inventory is not available yet, so this read leans on current stock plus the upcoming seasonal demand window.";
 
   return {
     score,
@@ -4555,14 +4556,15 @@ function inventoryPositionForSnapshot(
 
 function inventoryPositionHeadline(label: InventoryPosition["label"]) {
   if (label === "Lean") return "Lean inventory for the demand window ahead.";
-  if (label === "Heavy") return "Heavy inventory against the current selling pace.";
+  if (label === "Built") return "Built for the demand window ahead.";
+  if (label === "Heavy") return "Inventory is above the current selling pace.";
   return "Balanced inventory against current pace and seasonal demand.";
 }
 
 function inventorySeasonText(monthIndex: number | null) {
   if (monthIndex == null) return "Use this as a directional read until more dated inventory history is available.";
   if (monthIndex === 5 || monthIndex === 6) {
-    return "Because August back-to-school and football traffic are close, a healthy position should sit above an ordinary month without getting overbuilt.";
+    return "Treat that as a current-pace baseline, not a sell-through forecast; back-to-school and football traffic should accelerate unit velocity.";
   }
   if (monthIndex >= 7 && monthIndex <= 10) {
     return "This is the back-to-school and football demand window, so weekly sell-through can accelerate quickly.";
@@ -4575,8 +4577,8 @@ function inventorySeasonText(monthIndex: number | null) {
 
 function inventoryTargetCoverage(monthIndex: number | null) {
   if (monthIndex == null) return 3.4;
-  if (monthIndex === 5 || monthIndex === 6) return 4.2;
-  if (monthIndex >= 7 && monthIndex <= 10) return 3.1;
+  if (monthIndex === 5 || monthIndex === 6) return 8.8;
+  if (monthIndex >= 7 && monthIndex <= 10) return 5.2;
   if (monthIndex === 11 || monthIndex === 0) return 2.5;
   return 3.3;
 }
