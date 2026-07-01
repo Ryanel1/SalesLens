@@ -1457,7 +1457,7 @@ export default function Home() {
         return;
       }
 
-      setUploadHistoryRows(payload.uploads);
+      setUploadHistoryRows(sortUploadHistoryRows(payload.uploads));
       setUploadHistoryStatus(payload.uploads.length ? "" : "No uploads found for this account.");
       cancelEditUpload();
     } finally {
@@ -1561,7 +1561,7 @@ export default function Home() {
       return;
     }
 
-    setUploadHistoryRows((rows) => rows.map((row) => (row.id === upload.id ? payload.upload! : row)));
+    setUploadHistoryRows((rows) => sortUploadHistoryRows(rows.map((row) => (row.id === upload.id ? payload.upload! : row))));
     cancelEditUpload();
     reportCache.current.clear();
     setReportRefreshKey((key) => key + 1);
@@ -5169,6 +5169,20 @@ function nullableNumber(value: number | string | null | undefined) {
   if (value == null || value === "") return null;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+function sortUploadHistoryRows(rows: UploadHistoryRow[]) {
+  return [...rows].sort((left, right) => {
+    const leftEnd = left.sales_period_end ?? left.sales_period_start ?? left.received_date ?? "";
+    const rightEnd = right.sales_period_end ?? right.sales_period_start ?? right.received_date ?? "";
+    if (leftEnd !== rightEnd) return rightEnd.localeCompare(leftEnd);
+
+    const leftStart = left.sales_period_start ?? left.received_date ?? "";
+    const rightStart = right.sales_period_start ?? right.received_date ?? "";
+    if (leftStart !== rightStart) return rightStart.localeCompare(leftStart);
+
+    return right.created_at.localeCompare(left.created_at);
+  });
 }
 
 function roundCurrency(value: number) {

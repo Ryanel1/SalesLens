@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
     .from("uploads")
     .select(UPLOAD_SELECT)
     .eq("customer_id", customerId)
+    .order("sales_period_end", { ascending: false, nullsFirst: false })
+    .order("sales_period_start", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(40);
 
