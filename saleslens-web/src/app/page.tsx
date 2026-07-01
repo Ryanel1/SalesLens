@@ -5185,13 +5185,21 @@ async function insertSalesRecords(
   records: ParsedSalesRecord[],
 ) {
   for (const chunk of chunks(records, 500)) {
-    const { error } = await client.from("sales_records").insert(
-      chunk.map((record) => ({
-        ...record,
-        customer_id: customerId,
-        upload_id: uploadId,
-      })),
-    );
+    const rows = chunk.map((record) => ({
+      ...record,
+      customer_id: customerId,
+      upload_id: uploadId,
+      record_fingerprint: recordFingerprint(record),
+    }));
+    const { error } = await client.from("sales_records").insert(rows);
+
+    if (error && missingRecordFingerprintColumn(error.message)) {
+      const { error: retryError } = await client.from("sales_records").insert(
+        rows.map(({ record_fingerprint: _recordFingerprint, ...row }) => row),
+      );
+      if (retryError) throw new Error(retryError.message);
+      continue;
+    }
 
     if (error) throw new Error(error.message);
   }
@@ -5302,6 +5310,14 @@ function recordKey(record: ParsedSalesRecord | SalesRecordForDuplicateCheck) {
     compactKey(record.master_style),
     compactKey(record.raw_style_identifier),
   ].join("|");
+}
+
+function recordFingerprint(record: ParsedSalesRecord) {
+  return recordKey(record);
+}
+
+function missingRecordFingerprintColumn(message: string) {
+  return message.includes("record_fingerprint") && message.includes("sales_records");
 }
 
 function compactKey(value: string | number | null | undefined) {

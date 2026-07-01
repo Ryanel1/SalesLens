@@ -59,6 +59,7 @@ create table if not exists public.sales_records (
   year_to_date_units integer,
   inventory_units integer,
   inventory_retail_value numeric(14, 2),
+  record_fingerprint text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -67,7 +68,8 @@ alter table public.sales_records
   add column if not exists transaction_number text,
   add column if not exists barcode text,
   add column if not exists parent_sku text,
-  add column if not exists sku text;
+  add column if not exists sku text,
+  add column if not exists record_fingerprint text;
 
 create index if not exists sales_records_customer_date_idx
   on public.sales_records(customer_id, transaction_date);
@@ -77,6 +79,10 @@ create index if not exists sales_records_customer_style_idx
 
 create index if not exists sales_records_upload_idx
   on public.sales_records(upload_id);
+
+create unique index if not exists sales_records_upload_fingerprint_uidx
+  on public.sales_records(upload_id, record_fingerprint)
+  where upload_id is not null and record_fingerprint is not null;
 
 create table if not exists public.inventory_records (
   id uuid primary key default gen_random_uuid(),

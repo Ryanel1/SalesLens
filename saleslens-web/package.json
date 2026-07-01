@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "audit:data": "node scripts/audit-data-quality.mjs",
+    "repair:volshop-june": "node scripts/repair-volshop-june-2026.mjs",
     "sync:images": "node scripts/sync-product-images.mjs",
     "cache:product-images": "node scripts/cache-product-images.mjs"
   },

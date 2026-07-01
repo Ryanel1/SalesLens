@@ -21,7 +21,7 @@ const uploads = await fetchRows(
   "uploads",
   "id,customer_id,source_file,original_file_name,sales_period_start,sales_period_end,row_count,skipped_count,total_sales,total_units,status,created_at",
   "",
-  "created_at.asc",
+  "created_at.asc,id.asc",
 );
 const salesRecords = await fetchRows(
   "sales_records",
@@ -49,13 +49,13 @@ const salesRecords = await fetchRows(
     "year_to_date_units",
   ].join(","),
   "",
-  "transaction_date.asc",
+  "transaction_date.asc,id.asc",
 );
 const inventoryRecords = await fetchRows(
   "inventory_records",
   "id,customer_id,upload_id,inventory_date,source_file,product_class,style_number,raw_style_identifier,art_code,color,size,inventory_units,current_retail",
   "",
-  "inventory_date.asc",
+  "inventory_date.asc,id.asc",
 );
 
 const customerById = new Map(customers.map((customer) => [customer.id, customer]));
