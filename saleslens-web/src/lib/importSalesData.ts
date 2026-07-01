@@ -671,7 +671,9 @@ function salesPeriodEndDateFromFileName(fileName: string) {
 function monthDateFromText(value: string) {
   const lower = value.toLowerCase();
   for (const [name, month] of Object.entries(MONTHS)) {
-    const rangeMatch = lower.match(new RegExp(`\\b${name}\\b\\D*(\\d{1,2})\\s*(?:-|–|—|to|through|thru)\\s*(\\d{1,2})\\D*(\\d{2,4})`));
+    const rangeMatch = lower.match(
+      new RegExp(`\\b${name}\\b[^0-9]*(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:-|–|—|to|through|thru)\\s*(\\d{1,2})(?:st|nd|rd|th)?[^0-9]*(\\d{2,4})\\b`),
+    );
     if (rangeMatch) {
       const year = normalizeYear(rangeMatch[3]);
       if (!year) continue;
@@ -684,7 +686,23 @@ function monthDateFromText(value: string) {
       };
     }
 
-    const match = lower.match(new RegExp(`\\b${name}\\b\\D*(\\d{1,2})?\\D*(\\d{2,4})`));
+    const fullYearMatch = lower.match(
+      new RegExp(`\\b${name}\\b[^0-9]*(?:(\\d{1,2})(?:st|nd|rd|th)?[^0-9]+)?(\\d{4})\\b`),
+    );
+    if (fullYearMatch) {
+      const year = normalizeYear(fullYearMatch[2]);
+      if (!year) continue;
+      return {
+        month,
+        day: fullYearMatch[1] ? Number(fullYearMatch[1]) : null,
+        year,
+        isRange: false,
+      };
+    }
+
+    const match = lower.match(
+      new RegExp(`\\b${name}\\b[^0-9]*(?:(\\d{1,2})(?:st|nd|rd|th)?[^0-9]+)?(\\d{2})\\b`),
+    );
     if (!match) continue;
     const year = normalizeYear(match[2]);
     if (!year) continue;
